@@ -1,8 +1,23 @@
+# CMake
 cmake-build-debug/
-*.o
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+
+
+# Outputs
 build/*
 bin/*
 results/*
+
+# Unwanted C++ files
+*.o
+*.a
+
+# MAC
 .DS_Store
+
+# Editor/IDE specific
 .vscode
 .idea
