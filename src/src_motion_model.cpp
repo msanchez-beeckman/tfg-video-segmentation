@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
     // OptStruct opt_list_points = {"l:", 0, nullptr, nullptr, "File to save list of tracked points"};options.push_back(&opt_list_points);
     OptStruct opt_output = {"o:", 0, "out.txt", nullptr, "File with the weight of each trajectory"}; options.push_back(&opt_output);
     OptStruct opt_images = {"m:", 0, nullptr, nullptr, "File containing image names"}; options.push_back(&opt_images);
+    OptStruct opt_brox = {"b", 0, nullptr, nullptr, "Parse tracks using Brox codification"}; options.push_back(&opt_brox);
 
     std::vector<ParStruct *> parameters;
     ParStruct pinput = {"input", nullptr, "input file"}; parameters.push_back(&pinput);
@@ -21,7 +22,11 @@ int main(int argc, char* argv[]) {
     // Read tracks from text file and put the points
     std::ifstream trackFile(pinput.value);
     std::vector<tfg::Track> tracks;
-    tfg::readTracks(trackFile, tracks);
+    if(opt_brox.flag) {
+        tfg::readTracksBrox(trackFile, tracks);
+    } else {
+        tfg::readTracks(trackFile, tracks);
+    }
     trackFile.close();
 
     // homography::pairList<homography::pairList<float>> mappings;

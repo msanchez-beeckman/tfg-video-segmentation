@@ -70,6 +70,37 @@ namespace tfg {
                 coordinates.second.push_back(yCoord);
             }
             Track track(coordinates, frameInit);
+            if(track.getDuration() < 5) continue;
+            tracks.push_back(track);
+        }
+    }
+
+    void readTracksBrox(std::ifstream &file, std::vector<Track> &tracks) {
+        std::string line;
+        std::getline(file, line);
+        const unsigned int NUMBER_OF_FRAMES = std::stoi(line);
+        std::getline(file, line);
+        const unsigned int NUMBER_OF_TRACKS = std::stoi(line);
+
+        for(unsigned int t = 0; t < NUMBER_OF_TRACKS; t++) {
+            std::getline(file, line);
+            std::vector<std::string> words;
+            boost::split(words, line, boost::is_any_of(" "));
+            const unsigned int TRACK_DURATION = std::stoi(words[1]);
+            pairList<float> coordinates;
+            int frameInit;
+            for(unsigned int i = 0; i < TRACK_DURATION; i++) {
+                std::getline(file, line);
+                boost::split(words, line, boost::is_any_of(" "));
+                const int xCoord = std::stof(words[0]);
+                const int yCoord = std::stof(words[1]);
+                if(i == 0) frameInit = std::stoi(words[2]);
+
+                coordinates.first.push_back(xCoord);
+                coordinates.second.push_back(yCoord);
+            }
+            if(TRACK_DURATION < 5) continue;
+            Track track(coordinates, frameInit);
             tracks.push_back(track);
         }
     }
