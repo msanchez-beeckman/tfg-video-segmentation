@@ -77,6 +77,8 @@ namespace tfg {
     };
 
     void readTracks(std::ifstream &file, std::vector<Track> &tracks);
+    void readTracksBrox(std::ifstream &file, std::vector<Track> &tracks);
+
     void getMappings(std::vector<Track> &tracks, std::vector<Mapping> &mappings);
     void printMappings(std::vector<Mapping> &mappings);
 }
