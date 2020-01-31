@@ -34,7 +34,7 @@ namespace tfg {
 
         for (unsigned int ii = 0; ii < iImages.size(); ii++) {
             std::stringstream ss;
-            ss << "../results/" << "out" << ii << ".png";
+            ss << "results/model/" << "out" << ii << ".png";
             std::string fileName = ss.str();
             iImages[ii].save(fileName.c_str());
         }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.5)
 project(tfg_video_segmentation)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -24,8 +24,7 @@ set(EXTERNAL_LIBS
         png
         tiff
         lapack
-        blas
-        armadillo)
+        blas)
 
 add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/src_motion_model.cpp)
 add_library(segmentation ${OWN_LIBS})

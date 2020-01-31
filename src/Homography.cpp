@@ -1,4 +1,4 @@
-#include <armadillo>
+// #include <armadillo>
 #include <chrono>
 #include "Homography.h"
 
@@ -437,7 +437,7 @@ namespace tfg {
                 tfg::compute_ransac_WLS(&(originX[0]), &(originY[0]),
                                         &(destinationX[0]), &(destinationY[0]),
                                         originX.size(), trajectories, weightsTmp,
-                                        50, 0.1f, homographiesTmp[f], nullptr);
+                                        100, 0.1f, homographiesTmp[f], nullptr);
                 homographiesTmp[f] = homographiesTmp[f]/homographiesTmp[f][2][2];
                 std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
                 std::cout << "(" << k + 1 << ") Homography " << f << ": " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds" << std::endl;
