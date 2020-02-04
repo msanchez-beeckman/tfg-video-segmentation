@@ -22,11 +22,12 @@ namespace tfg {
 
                 for(int i = x_left; i < x_right + 1; i++) {
                     for(int j = y_down; j < y_up + 1; j++) {
-                        int blue = weights[t] < 0.5 ? 255 : iImages[initFrame + f][w*h + j*w + i];
-                        int green = weights[t] < 0.5 ? iImages[initFrame + f][2*w*h + j*w + i] : 255;
+                        int red = weights[t] > 0.5 ? 255 : iImages[initFrame + f][j*w + i];
+                        int green = weights[t] > 0.5 ? iImages[initFrame + f][w*h + j*w + i] : 255;
+                        
 
-                        iImages[initFrame + f][w*h + j*w + i] = blue;
-                        iImages[initFrame + f][2*w*h + j*w + i] = green;
+                        iImages[initFrame + f][j*w + i] = red;
+                        iImages[initFrame + f][w*h + j*w + i] = green;
                     }
                 }
             }

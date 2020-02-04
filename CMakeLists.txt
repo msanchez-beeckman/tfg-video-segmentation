@@ -4,6 +4,9 @@ project(tfg_video_segmentation)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 set(UIB_LIBS
         ${CMAKE_SOURCE_DIR}/library/libBasic.cpp
         ${CMAKE_SOURCE_DIR}/library/libColorSpace.cpp
@@ -16,7 +19,8 @@ set(UIB_LIBS
 set(OWN_LIBS
         ${CMAKE_SOURCE_DIR}/src/Track.cpp
         ${CMAKE_SOURCE_DIR}/src/Homography.cpp
-        ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp)
+        ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
+        ${CMAKE_SOURCE_DIR}/src/MotionModel.cpp)
 set(EXTERNAL_LIBS
         fftw3
         fftw3f
@@ -24,7 +28,8 @@ set(EXTERNAL_LIBS
         png
         tiff
         lapack
-        blas)
+        blas
+        )
 
 add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/src_motion_model.cpp)
 add_library(segmentation ${OWN_LIBS})
@@ -33,5 +38,5 @@ add_library(UIB ${UIB_LIBS})
 target_include_directories(motionModel
         PUBLIC ${CMAKE_SOURCE_DIR}/library)
 target_link_libraries(motionModel segmentation)
-target_link_libraries(segmentation UIB)
+target_link_libraries(segmentation UIB ${OpenCV_LIBRARIES})
 target_link_libraries(UIB ${EXTERNAL_LIBS})

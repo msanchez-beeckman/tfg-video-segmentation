@@ -46,7 +46,7 @@ namespace tfg {
         f_trajectories.clear();
 
         for(unsigned int i = 0; i < trajectory.size(); i++) {
-            if(weights[trajectory[i]] < 0.05) continue;
+            if(weights[trajectory[i]] < 0.000001) continue;
 
             f_origin_x.push_back(origin.first[i]);
             f_origin_y.push_back(origin.second[i]);
