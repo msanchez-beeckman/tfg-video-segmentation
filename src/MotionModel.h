@@ -1,18 +1,18 @@
 #ifndef TFG_VIDEO_SEGMENTATION_MOTIONMODEL_H
 #define TFG_VIDEO_SEGMENTATION_MOTIONMODEL_H
 
-#include "Track.h"
+#include <opencv4/opencv2/core.hpp>
+#include "TrackTable.h"
 
 namespace tfg {
 
     class MotionModel {
     private:
-        std::vector<tfg::Track> tracks;
-        std::vector<tfg::Mapping> mappings;
+        tfg::TrackTable trackTable;
         std::vector<float> weights2;
         float tau;
 
-        std::vector<libUSTG::laMatrix> homographies;
+        std::vector<cv::Matx33f> homographies;
         std::vector<float> residuals2;
         float cost;
 
@@ -25,8 +25,8 @@ namespace tfg {
         MotionModel();
         ~MotionModel();
 
-        void fitFromWeights(std::vector<tfg::Track> &tracks, std::vector<tfg::Mapping> &mappings, std::vector<float> &weights2, float tau);
-        void fitFromRANSAC(std::vector<tfg::Track> &tracks, std::vector<tfg::Mapping> &mappings, float tau);
+        void fitFromWeights(tfg::TrackTable &trackTable, std::vector<float> &weights2, float tau);
+        void fitFromRANSAC(tfg::TrackTable &trackTable, float tau);
 
         void printHomography(int n);
         inline std::vector<float> getResiduals2() const {
@@ -35,12 +35,9 @@ namespace tfg {
         inline float getCost() const {
             return cost;
         };
-        inline std::vector<tfg::Track> getTracks() const {
+        inline const tfg::TrackTable& getTrackTable() const {
             return tracks;
-        }
-        inline std::vector<tfg::Mapping> getMappings() const {
-            return mappings;
-        }
+        };
     };
 
 }

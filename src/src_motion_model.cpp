@@ -23,42 +23,17 @@ int main(int argc, char* argv[]) {
 
     // Read tracks from text file
     std::ifstream trackFile(pinput.value);
-    std::vector<tfg::Track> tracks;
+    std::unique_ptr<tfg::TrackTable> trackTable = std::make_unique<tfg::TrackTable>();
     if(opt_brox.flag) {
-        tfg::readTracksBrox(trackFile, tracks);
+        trackTable->buildFromBroxFile(trackFile);
     } else {
-        tfg::readTracks(trackFile, tracks);
+        trackTable->buildFromFile(trackFile);
     }
     trackFile.close();
 
     // Create a vector of correspondences between points in origin and destination frame
     std::vector<tfg::Mapping> mappings;
     tfg::getMappings(tracks, mappings);
-
-    // Create vector of matrices, which serves as a motion model
-    // const unsigned int NUMBER_OF_FRAMES = mappings.size();
-    // std::vector<libUSTG::laMatrix> homographies;
-    // homographies.reserve(NUMBER_OF_FRAMES);
-
-    // // Compute first homographies using RANSAC
-    // for(unsigned int f = 0; f < NUMBER_OF_FRAMES; f++) {
-    //     libUSTG::laMatrix H(3, 3);
-    //     homographies.push_back(H);
-
-    //     std::vector<float> originX = mappings[f].getOrigin_x();
-    //     std::vector<float> originY = mappings[f].getOrigin_y();
-    //     std::vector<float> destinationX = mappings[f].getDestination_x();
-    //     std::vector<float> destinationY = mappings[f].getDestination_y();
-
-    //     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    //     libUSTG::compute_ransac_planar_homography_n_points(&(originX[0]), &(originY[0]),
-    //                                                        &(destinationX[0]), &(destinationY[0]),
-    //                                                        originX.size(), 100, 2.0f, homographies[f], nullptr, 1);
-    //     homographies[f] = homographies[f]/homographies[f][2][2];
-    //     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    //     std::cout << "(0) Homography " << f << ": " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds" << std::endl;
-    //     if(f == 0) tfg::printMatrix(homographies[f]);
-    // }
 
     std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

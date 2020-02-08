@@ -7,36 +7,25 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(UIB_LIBS
-        ${CMAKE_SOURCE_DIR}/library/libBasic.cpp
-        ${CMAKE_SOURCE_DIR}/library/libColorSpace.cpp
-        ${CMAKE_SOURCE_DIR}/library/libFlow.cpp
-        ${CMAKE_SOURCE_DIR}/library/libImage.cpp
-        ${CMAKE_SOURCE_DIR}/library/libImageFormatPM.cpp
-        ${CMAKE_SOURCE_DIR}/library/libImageFormats.c
-        ${CMAKE_SOURCE_DIR}/library/libMW.cpp
-        ${CMAKE_SOURCE_DIR}/library/libPyramid.cpp)
 set(OWN_LIBS
         ${CMAKE_SOURCE_DIR}/src/Track.cpp
         ${CMAKE_SOURCE_DIR}/src/Homography.cpp
         ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
         ${CMAKE_SOURCE_DIR}/src/MotionModel.cpp)
-set(EXTERNAL_LIBS
-        fftw3
-        fftw3f
-        jpeg
-        png
-        tiff
-        lapack
-        blas
-        )
+# set(EXTERNAL_LIBS
+#         fftw3
+#         fftw3f
+#         jpeg
+#         png
+#         tiff
+#         lapack
+#         blas
+#         )
 
 add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/src_motion_model.cpp)
 add_library(segmentation ${OWN_LIBS})
-add_library(UIB ${UIB_LIBS})
 
 target_include_directories(motionModel
         PUBLIC ${CMAKE_SOURCE_DIR}/library)
 target_link_libraries(motionModel segmentation)
-target_link_libraries(segmentation UIB ${OpenCV_LIBRARIES})
-target_link_libraries(UIB ${EXTERNAL_LIBS})
+target_link_libraries(segmentation ${OpenCV_LIBRARIES})
