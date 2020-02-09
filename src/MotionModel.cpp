@@ -1,3 +1,4 @@
+#include <iostream>
 #include <chrono>
 #include "MotionModel.h"
 #include "Homography.h"
@@ -35,7 +36,7 @@ namespace tfg {
     void MotionModel::computeResiduals2(std::unique_ptr<tfg::TrackTable> &trackTable) {
         residuals2.clear();
         residuals2.reserve(trackTable->numberOfTracks());
-        for(unsigned int t = 0; t < tracks.size(); t++) {
+        for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
             const std::vector<cv::Vec2f> coordinates = trackTable->pointsInTrack(t);
 
             float maxReprojectionError2 = 0.0f;
@@ -47,8 +48,6 @@ namespace tfg {
 
                 cv::Vec3f pred = (homographies[trackTable->firstFrameOfTrack(t) + i])*pointL;
                 
-                // cv::Vec3f diff = pointR - pred;
-                // float reprojectionError2 = diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2];
                 float reprojectionError2 = cv::norm(pointR - pred, cv::NORM_L2SQR);
                 if(reprojectionError2 > maxReprojectionError2) maxReprojectionError2 = reprojectionError2;
             }
@@ -77,14 +76,14 @@ namespace tfg {
     void MotionModel::computeHomographiesRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable) {
         homographies.clear();
         homographies.reserve(trackTable->numberOfFrames());
-        for(unsigned int f = 0; f < mappings.size(); f++) {
+        for(unsigned int f = 0; f < trackTable->numberOfFrames(); f++) {
             cv::Matx33f H;
             homographies.push_back(H);
 
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
             std::vector<int> inliers;
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 100, 0.8f, homographies[f], inliers);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.25f, homographies[f], inliers);
         }
     }
 

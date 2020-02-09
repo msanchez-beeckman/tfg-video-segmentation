@@ -9,9 +9,12 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(OWN_LIBS
         ${CMAKE_SOURCE_DIR}/src/Track.cpp
+        ${CMAKE_SOURCE_DIR}/src/Mapping.cpp
+        ${CMAKE_SOURCE_DIR}/src/TrackTable.cpp
         ${CMAKE_SOURCE_DIR}/src/Homography.cpp
         ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/MotionModel.cpp)
+        ${CMAKE_SOURCE_DIR}/src/MotionModel.cpp
+        ${CMAKE_SOURCE_DIR}/src/CmdParser.cpp)
 # set(EXTERNAL_LIBS
 #         fftw3
 #         fftw3f
@@ -25,7 +28,7 @@ set(OWN_LIBS
 add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/src_motion_model.cpp)
 add_library(segmentation ${OWN_LIBS})
 
-target_include_directories(motionModel
-        PUBLIC ${CMAKE_SOURCE_DIR}/library)
+#target_include_directories(motionModel
+#        PUBLIC ${CMAKE_SOURCE_DIR}/library)
 target_link_libraries(motionModel segmentation)
 target_link_libraries(segmentation ${OpenCV_LIBRARIES})

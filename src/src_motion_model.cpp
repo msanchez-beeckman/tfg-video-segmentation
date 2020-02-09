@@ -1,10 +1,11 @@
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <chrono>
-#include "../library/libImage.h"
-#include "Track.h"
+#include "TrackTable.h"
 #include "Homography.h"
 #include "ImageUtils.h"
 #include "MotionModel.h"
+#include "CmdParser.h"
 
 int main(int argc, char* argv[]) {
 
@@ -12,7 +13,7 @@ int main(int argc, char* argv[]) {
     std::vector<OptStruct *> options;
     OptStruct opt_output = {"o:", 0, "out.txt", nullptr, "File with the weight of each trajectory"}; options.push_back(&opt_output);
     OptStruct opt_images = {"m:", 0, nullptr, nullptr, "File containing image names"}; options.push_back(&opt_images);
-    OptStruct opt_brox = {"b", 0, nullptr, nullptr, "Parse tracks using Brox codification"}; options.push_back(&opt_brox);
+    OptStruct opt_brox = {"b", 0, nullptr, nullptr, "Parse tracks using Brox's codification"}; options.push_back(&opt_brox);
 
     std::vector<ParStruct *> parameters;
     ParStruct pinput = {"input", nullptr, "input file"}; parameters.push_back(&pinput);

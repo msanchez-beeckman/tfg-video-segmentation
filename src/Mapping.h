@@ -14,7 +14,7 @@ namespace tfg {
 
     public:
         Mapping();
-        Mapping(std::vector<cv::Vec2f> &origin, std::vector<cv::Vec2f> &destination, std::vector<unsigned int> &trajectory);
+        Mapping(const std::vector<cv::Vec2f> &origin, const std::vector<cv::Vec2f> &destination, const std::vector<unsigned int> &trajectory);
 
         ~Mapping();
 

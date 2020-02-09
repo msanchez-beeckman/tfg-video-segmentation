@@ -2,7 +2,7 @@
 
 namespace tfg {
     Mapping::Mapping() {}
-    Mapping::Mapping(const std::vector<cv::Vec2f> &origin, const std::vector<cv::Vec2f> &destination, const std::vector<unsigned int> trajectory) {
+    Mapping::Mapping(const std::vector<cv::Vec2f> &origin, const std::vector<cv::Vec2f> &destination, const std::vector<unsigned int> &trajectory) {
         this->origin = origin;
         this->destination = destination;
         this->trajectory = trajectory;

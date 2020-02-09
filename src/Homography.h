@@ -16,7 +16,7 @@ namespace tfg {
     void isotropicNormalization(const std::vector<cv::Vec2f> &points, std::vector<cv::Vec2f> &normalizedPoints, cv::Vec2f &center, cv::Vec2f &scale);
     void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2);
 
-    void writeWeights(std::ofstream &file, std::vector<float> &weights);
+    void writeWeights(std::ostream &file, std::vector<float> &weights);
 }
 
 #endif //TFG_VIDEO_SEGMENTATION_HOMOGRAPHY_H

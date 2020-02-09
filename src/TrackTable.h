@@ -12,16 +12,16 @@ namespace tfg {
         std::vector<tfg::Track> tracks;
         std::vector<tfg::Mapping> mappings;
 
-        void readTracks(std::ifstream &file);
-        void readTracksBrox(std::ifstream &file);
+        void readTracks(std::istream &file);
+        void readTracksBrox(std::istream &file);
         void getMappingsFromTracks();
     
     public:
         TrackTable();
         ~TrackTable();
 
-        void buildFromFile(std::ifstream &file);
-        void buildFromBroxFile(std::ifstream &file);
+        void buildFromFile(std::istream &file);
+        void buildFromBroxFile(std::istream &file);
 
         void printMappings() const;
 

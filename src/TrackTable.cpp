@@ -1,4 +1,6 @@
 #include <boost/algorithm/string.hpp>
+#include <string>
+#include <iostream>
 #include "TrackTable.h"
 
 namespace tfg {
@@ -6,12 +8,12 @@ namespace tfg {
     TrackTable::TrackTable() {}
     TrackTable::~TrackTable() {}
 
-    void TrackTable::buildFromFile(std::ifstream &file) {
-        readTracks(std::ifstream &file);
+    void TrackTable::buildFromFile(std::istream &file) {
+        readTracks(file);
         getMappingsFromTracks();
     }
 
-    void TrackTable::readTracks(std::ifstream &file) {
+    void TrackTable::readTracks(std::istream &file) {
         tracks.clear();
         for(std::string line; std::getline(file, line); ) {
             std::vector<std::string> words;
@@ -52,12 +54,12 @@ namespace tfg {
         }
     }
 
-    void TrackTable::buildFromBroxFile(std::ifstream &file) {
-        readTracksBrox(std::ifstream &file);
+    void TrackTable::buildFromBroxFile(std::istream &file) {
+        readTracksBrox(file);
         getMappingsFromTracks();
     }
 
-    void TrackTable::readTracksBrox(std::ifstream &file) {
+    void TrackTable::readTracksBrox(std::istream &file) {
         tracks.clear();
         std::string line;
 
@@ -91,7 +93,7 @@ namespace tfg {
         }
     }
 
-    TrackTable::printMappings() const {
+    void TrackTable::printMappings() const {
         for(unsigned int f = 0; f < mappings.size(); f++) {
             std::vector<cv::Vec2f> origin = mappings[f].getOrigin();
             std::vector<cv::Vec2f> destination = mappings[f].getDestination();

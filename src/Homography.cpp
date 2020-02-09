@@ -1,3 +1,4 @@
+#include <iostream>
 #include <chrono>
 #include <limits>
 #include <random>
@@ -94,7 +95,7 @@ namespace tfg {
         inliers.swap(bestInliers);
     }
 
-    void computeHomographyWLS(std::vector<cv::Vec2f> &p0, std::vector<cv::Vec2f> &p1, int n, std::vector<unsigned int> &trajectories, std::vector<float> &weights2, cv::Matx33f &H) {
+    void computeHomographyWLS(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, const std::vector<unsigned int> &trajectories, const std::vector<float> &weights2, cv::Matx33f &H) {
         
         // Normalize the left and right observations
         std::vector<cv::Vec2f> pnorm0;
@@ -142,7 +143,7 @@ namespace tfg {
 
         // Compute eigenvalues and eigenvectors
         cv::Mat eigvals;
-        float eigvects[9][9];
+        double eigvects[9][9];
         cv::Mat matEigvects(9, 9, CV_64FC1, &eigvects[0][0]);
         cv::eigen(matAtA, eigvals, matEigvects);
 
@@ -161,7 +162,7 @@ namespace tfg {
     }
 
     void isotropicNormalization(const std::vector<cv::Vec2f> &points, std::vector<cv::Vec2f> &normalizedPoints, cv::Vec2f &center, cv::Vec2f &scale) {
-        const unsigned int NUMBER_OF_POINTS = points.size();
+        const int NUMBER_OF_POINTS = points.size();
         normalizedPoints.clear();
         normalizedPoints.reserve(NUMBER_OF_POINTS);
 
@@ -245,7 +246,7 @@ namespace tfg {
     }
 
 
-    void writeWeights(std::ofstream &file, std::vector<float> &weights) {
+    void writeWeights(std::ostream &file, std::vector<float> &weights) {
         for(float weight : weights) {
             file << weight << std::endl;
         }
