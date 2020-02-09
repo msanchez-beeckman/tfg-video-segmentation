@@ -1,5 +1,7 @@
 #include <chrono>
 #include <limits>
+#include <random>
+#include <array>
 #include <opencv4/opencv2/core.hpp>
 #include "Homography.h"
 
@@ -19,6 +21,77 @@ namespace tfg {
             std::cout << vector[i] << std::endl;
         }
         std::cout << std::endl;
+    }
+
+    void computeHomographyRANSAC(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, int niter, float tolerance, cv::Matx33f &H, std::vector<int> &inliers) {
+        
+        float tolerance2 = tolerance * tolerance;
+        unsigned int maxInliers = 0;
+        std::vector<int> bestInliers;
+
+        std::array<int, 4> randomIndices;
+        std::random_device randomDevice;
+        std::mt19937 mersenneTwister(randomDevice());
+        std::uniform_int_distribution<int> uniformIntDist(0, n-1);
+
+        for(int iter = 0; iter < niter; iter++) {
+
+            // Sample 4 different numbers between 0 and n-1
+            for(int i = 0; i < 4; i++) {
+                int randomNumber = uniformIntDist(mersenneTwister);
+                while(std::find(randomIndices.begin(), randomIndices.end(), randomNumber) != randomIndices.end()) {
+                    randomNumber = uniformIntDist(mersenneTwister);
+                }
+                randomIndices[i] = randomNumber;
+            }
+
+            // Obtain the 4 points corresponding to the random indices
+            std::vector<cv::Vec2f> pointsL(4); 
+            std::vector<cv::Vec2f> pointsR(4);
+            for(int i = 0; i < 4; i++) {
+                pointsL[i] = p0[randomIndices[i]];
+                pointsR[i] = p1[randomIndices[i]];
+            }
+
+            // Compute homography using Least Squares method
+            cv::Matx33f Haux;
+            std::vector<unsigned int> zeros(4, 0);
+            std::vector<float> ones(1, 1.0f);
+            tfg::computeHomographyWLS(pointsL, pointsR, 4, zeros, ones, Haux);
+
+            // Obtain the inliers for this iteration
+            std::vector<int> iterationInliers;
+            iterationInliers.reserve(n);
+            for(int i = 0; i < n; i++) {
+                cv::Vec3f pointOrigin;
+                cv::Vec3f pointDestination;
+                pointOrigin(0) = p0[i](0);      pointOrigin(1) = p0[i](1);      pointOrigin(2) = 1.0f;
+                pointDestination(0) = p1[i](0); pointDestination(1) = p1[i](1); pointDestination(2) = 1.0f;
+
+                cv::Vec3f pred = Haux * pointOrigin;
+
+                if(pred(2) == 0.0f) continue;
+
+                pred(0) = pred(0)/pred(2); pred(1) = pred(1)/pred(2); pred(2) = 1.0f;
+                float reprojectionError2 = cv::norm(pointDestination - pred, cv::NORM_L2SQR);
+                if(reprojectionError2 < tolerance2) {
+                    iterationInliers.push_back(i);
+                }
+            }
+
+            // If the number of inliers has increased from the best iteration, update it along with the homography
+            const unsigned int numInliers = iterationInliers.size();
+            if(numInliers > maxInliers) {
+                maxInliers = numInliers;
+                bestInliers.swap(iterationInliers);
+
+                H(0,0) = Haux(0,0); H(0,1) = Haux(0,1); H(0,2) = Haux(0,2);
+                H(1,0) = Haux(1,0); H(1,1) = Haux(1,1); H(1,2) = Haux(1,2);
+                H(2,0) = Haux(2,0); H(2,1) = Haux(2,1); H(2,2) = Haux(2,2);
+            }
+
+        }
+        inliers.swap(bestInliers);
     }
 
     void computeHomographyWLS(std::vector<cv::Vec2f> &p0, std::vector<cv::Vec2f> &p1, int n, std::vector<unsigned int> &trajectories, std::vector<float> &weights2, cv::Matx33f &H) {
@@ -116,12 +189,9 @@ namespace tfg {
         }
     }
 
-    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::vector<float> &weights2) {
+    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2) {
         std::cout << "First homography of the initial model:" << std::endl;
         model->printHomography(0);
-
-        std::vector<tfg::Track> tracks = model->getTracks();
-        std::vector<tfg::Mapping> mappings = model->getMappings();
 
         float s = 1.0f;
         unsigned int k = 0;
@@ -139,7 +209,7 @@ namespace tfg {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             refinedModel = std::make_shared<tfg::MotionModel>();
-            refinedModel->fitFromWeights(tracks, mappings, initialWeights2, 4);
+            refinedModel->fitFromWeights(trackTable, initialWeights2, 4);
 
             std::vector<float> residuals2 = refinedModel->getResiduals2();
             std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, 4);

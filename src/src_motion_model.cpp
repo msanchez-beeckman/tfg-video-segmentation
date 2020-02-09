@@ -9,7 +9,7 @@
 int main(int argc, char* argv[]) {
 
     // Parse command line arguments
-    std::vector <OptStruct *> options;
+    std::vector<OptStruct *> options;
     OptStruct opt_output = {"o:", 0, "out.txt", nullptr, "File with the weight of each trajectory"}; options.push_back(&opt_output);
     OptStruct opt_images = {"m:", 0, nullptr, nullptr, "File containing image names"}; options.push_back(&opt_images);
     OptStruct opt_brox = {"b", 0, nullptr, nullptr, "Parse tracks using Brox codification"}; options.push_back(&opt_brox);
@@ -31,13 +31,9 @@ int main(int argc, char* argv[]) {
     }
     trackFile.close();
 
-    // Create a vector of correspondences between points in origin and destination frame
-    std::vector<tfg::Mapping> mappings;
-    tfg::getMappings(tracks, mappings);
-
     std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    model->fitFromRANSAC(tracks, mappings, 4);
+    model->fitFromRANSAC(trackTable, 4);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "(0) Cost: " << model->getCost() << std::endl;
     std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
@@ -47,7 +43,7 @@ int main(int argc, char* argv[]) {
     std::vector<float> weights2 = tfg::getWeights2(residuals2, 4);
     
     // tfg::IRLS(mappings, tracks, homographies, weights);
-    tfg::IRLS(model, weights2);
+    tfg::IRLS(model, trackTable, weights2);
 
 
     // tfg::printVector(weights);
@@ -56,10 +52,10 @@ int main(int argc, char* argv[]) {
 
 
 
-    std::ifstream imagesFile(opt_images.value);
-    std::vector<libUSTG::cflimage> iImages;
-    tfg::readImages(imagesFile, iImages);
-    tfg::paintTracks(tracks, weights2, iImages);
+    // std::ifstream imagesFile(opt_images.value);
+    // std::vector<libUSTG::cflimage> iImages;
+    // tfg::readImages(imagesFile, iImages);
+    // tfg::paintTracks(tracks, weights2, iImages);
 
 
     return EXIT_SUCCESS;

@@ -8,7 +8,7 @@ namespace tfg {
 
     class MotionModel {
     private:
-        tfg::TrackTable trackTable;
+        // tfg::TrackTable trackTable;
         std::vector<float> weights2;
         float tau;
 
@@ -16,17 +16,17 @@ namespace tfg {
         std::vector<float> residuals2;
         float cost;
 
-        void computeHomographiesWLS();
-        void computeHomographiesRANSAC();
-        void computeResiduals2();
+        void computeHomographiesWLS(std::unique_ptr<tfg::TrackTable> &trackTable);
+        void computeHomographiesRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable);
+        void computeResiduals2(std::unique_ptr<tfg::TrackTable> &trackTable);
         void computeModelCost();
     
     public:
         MotionModel();
         ~MotionModel();
 
-        void fitFromWeights(tfg::TrackTable &trackTable, std::vector<float> &weights2, float tau);
-        void fitFromRANSAC(tfg::TrackTable &trackTable, float tau);
+        void fitFromWeights(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau);
+        void fitFromRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, float tau);
 
         void printHomography(int n);
         inline std::vector<float> getResiduals2() const {
@@ -34,9 +34,6 @@ namespace tfg {
         };
         inline float getCost() const {
             return cost;
-        };
-        inline const tfg::TrackTable& getTrackTable() const {
-            return tracks;
         };
     };
 
