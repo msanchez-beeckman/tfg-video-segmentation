@@ -14,7 +14,7 @@ namespace tfg {
     void computeHomographyRANSAC(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, int niter, float tolerance, cv::Matx33f &H, std::vector<int> &inliers);
     void computeHomographyWLS(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, const std::vector<unsigned int> &trajectories, const std::vector<float> &weights2, cv::Matx33f &H);
     void isotropicNormalization(const std::vector<cv::Vec2f> &points, std::vector<cv::Vec2f> &normalizedPoints, cv::Vec2f &center, cv::Vec2f &scale);
-    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2);
+    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau);
 
     void writeWeights(std::ostream &file, std::vector<float> &weights);
 }

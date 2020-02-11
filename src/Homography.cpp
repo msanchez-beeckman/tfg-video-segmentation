@@ -156,7 +156,7 @@ namespace tfg {
         // Divide every entry by H(2, 2) so the bottom right entry is 1
         for(int i = 0; i < 3; i++) {
             for(int j = 0; j < 3; j++) {
-                H(i, j) = (float) Vdenorm(i, j)/Vdenorm(2, 2);
+                H(i, j) = static_cast<float>(Vdenorm(i, j)/Vdenorm(2, 2));
             }
         }
     }
@@ -190,7 +190,7 @@ namespace tfg {
         }
     }
 
-    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2) {
+    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
         std::cout << "First homography of the initial model:" << std::endl;
         model->printHomography(0);
 
@@ -210,10 +210,10 @@ namespace tfg {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             refinedModel = std::make_shared<tfg::MotionModel>();
-            refinedModel->fitFromWeights(trackTable, initialWeights2, 4);
+            refinedModel->fitFromWeights(trackTable, initialWeights2, tau);
 
             std::vector<float> residuals2 = refinedModel->getResiduals2();
-            std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, 4);
+            std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, tau);
             for(unsigned int i = 0; i < weights2.size(); i++) {
                 refinedWeights2[i] = s*currentWeights2[i] + (1-s)*bestWeights2[i];
             }

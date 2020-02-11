@@ -64,16 +64,15 @@ namespace tfg {
         }
     }
 
-    void MotionModel::fitFromRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, float tau) {
-        // this->trackTable = trackTable;
+    void MotionModel::fitFromRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<int> &inliers, float tau) {
         this->tau = tau;
 
-        computeHomographiesRANSAC(trackTable);
+        computeHomographiesRANSAC(trackTable, inliers);
         computeResiduals2(trackTable);
         computeModelCost();
     }
 
-    void MotionModel::computeHomographiesRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable) {
+    void MotionModel::computeHomographiesRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<int> &inliers) {
         homographies.clear();
         homographies.reserve(trackTable->numberOfFrames());
         for(unsigned int f = 0; f < trackTable->numberOfFrames(); f++) {
@@ -82,8 +81,7 @@ namespace tfg {
 
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
-            std::vector<int> inliers;
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.25f, homographies[f], inliers);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.05f, homographies[f], inliers);
         }
     }
 
