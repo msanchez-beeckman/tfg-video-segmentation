@@ -96,7 +96,7 @@ namespace tfg {
     }
 
     void computeHomographyWLS(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, const std::vector<unsigned int> &trajectories, const std::vector<float> &weights2, cv::Matx33f &H) {
-        
+
         // Normalize the left and right observations
         std::vector<cv::Vec2f> pnorm0;
         std::vector<cv::Vec2f> pnorm1;

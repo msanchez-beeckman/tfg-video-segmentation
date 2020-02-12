@@ -81,7 +81,7 @@ namespace tfg {
 
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.05f, homographies[f], inliers);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.25f, homographies[f], inliers);
         }
     }
 

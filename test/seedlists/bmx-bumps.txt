@@ -1,0 +1,3 @@
+data/bmx-bumps/seeds/00000.png 0
+data/bmx-bumps/seeds/00010.png 10
+data/bmx-bumps/seeds/00020.png 20

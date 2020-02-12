@@ -11,6 +11,7 @@ namespace tfg {
         std::vector<cv::Vec2f> coordinates;
         unsigned int initFrame;
         unsigned int duration;
+        int label;
 
     public:
         static unsigned int count;
@@ -27,9 +28,16 @@ namespace tfg {
         inline unsigned int getInitFrame() const {
             return initFrame;
         };
+
         inline unsigned int getDuration() const {
             return duration;
         };
+
+        inline int getLabel() const {
+            return label;
+        }
+
+        void setLabel(int label);
     };
 }
 

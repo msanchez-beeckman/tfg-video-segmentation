@@ -5,16 +5,22 @@ namespace tfg {
 
     Track::Track() {
         ++Track::count;
+        this->label = -1;
     }
 
     Track::Track(const std::vector<cv::Vec2f> &coordinates, const unsigned int initFrame) {
-        ++count;
+        ++Track::count;
         this->coordinates = coordinates;
         this->initFrame = initFrame;
         this->duration = coordinates.size();
+        this->label = -1;
     }
 
     Track::~Track() {
         --Track::count;
+    }
+
+    void Track::setLabel(int label) {
+        this->label = label;
     }
 }

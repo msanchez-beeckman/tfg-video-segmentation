@@ -1,10 +1,9 @@
 #include <iostream>
 #include <opencv4/opencv2/core.hpp>
+#include <unordered_map>
 #include <chrono>
 #include "TrackTable.h"
-#include "Homography.h"
 #include "ImageUtils.h"
-#include "MotionModel.h"
 #include "CmdParser.h"
 
 int main(int argc, char* argv[]) {
@@ -12,11 +11,12 @@ int main(int argc, char* argv[]) {
     // Parse command line arguments
     std::vector<OptStruct *> options;
     OptStruct opt_outweights = {"w:", 0, "weights.txt", nullptr, "Text file where the resulting weights should be stored, in order corresponding to each track"}; options.push_back(&opt_outweights);
-    OptStruct opt_outmodel = {"o:", 0, "./results/model/", nullptr, "Folder where the results of the track segmentation should be stored"}; options.push_back(&opt_outmodel);
+    OptStruct opt_outmodel = {"o:", 0, "./results/seedplusimages/", nullptr, "Folder where the results of the track segmentation should be stored"}; options.push_back(&opt_outmodel);
     OptStruct opt_brox = {"b", 0, nullptr, nullptr, "Parse tracks using Brox's codification"}; options.push_back(&opt_brox);
 
     std::vector<ParStruct *> parameters;
     ParStruct par_tracks = {"tracks", nullptr, "Text file containing codified tracks"}; parameters.push_back(&par_tracks);
+    ParStruct par_seeds = {"seeds", nullptr, "Text file containing the path and frame number of the seeds for the random walker"}; parameters.push_back(&par_seeds);
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images whose tracks are being segmented"}; parameters.push_back(&par_images);
 
     if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
@@ -33,39 +33,20 @@ int main(int argc, char* argv[]) {
     }
     trackFile.close();
 
-    std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>();
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    std::vector<int> inliers;
-    model->fitFromRANSAC(trackTable, inliers, 4.0f);
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "(0) Cost: " << model->getCost() << std::endl;
-    std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
+    // Read images that serve as seeds
+    std::ifstream seedFile(par_seeds.value);
+    std::unordered_map<int, cv::Mat> seedImages;
+    tfg::readSeedImages(seedFile, seedImages);
 
-    
-    std::vector<float> residuals2 = model->getResiduals2();
-    std::vector<float> weights2 = tfg::getWeights2(residuals2, 4.0f);
-    // std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
-    // for(unsigned int i = 0; i < inliers.size(); i++) {
-    //     inlierWeights[inliers[i]] = 1.0f;
-    // }
-    
-    tfg::IRLS(model, trackTable, weights2, 4.0f);
-    // tfg::IRLS(model, trackTable, inlierWeights);
-
-
-    std::ofstream weightsFile(opt_outweights.value);
-    tfg::writeWeights(weightsFile, weights2);
-    // tfg::writeWeights(weightsFile, inlierWeights);
-
-
+    trackTable->seed(seedImages);
 
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
     std::string resultsFolder(opt_outmodel.value);
-    tfg::paintTracks(trackTable, weights2, images, resultsFolder);
-    // tfg::paintTracks(trackTable, inlierWeights, images);
+    tfg::paintSeededTracks(trackTable, images, resultsFolder);
 
-
+    std::cout << "Painted tracks according to seeds" << std::endl;
+    
     return EXIT_SUCCESS;
 }

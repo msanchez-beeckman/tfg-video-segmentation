@@ -106,4 +106,30 @@ namespace tfg {
             }
         }
     }
+
+    void TrackTable::seed(std::unordered_map<int, cv::Mat> &seedImages) {
+        for(auto& [ frame, image ] : seedImages) {
+            for(tfg::Track& track : tracks) {
+                const int trackLabel = track.getLabel();
+                if(trackLabel == -2) continue;
+                if(frame < track.getInitFrame() || frame > track.getInitFrame() + track.getDuration() - 1) continue;
+
+                const cv::Vec2f position = track.getPoints()[frame - track.getInitFrame()];
+                const int posX = static_cast<int>(position(0));
+                const int posY = static_cast<int>(position(1));
+                cv::Vec3b& color = image.at<cv::Vec3b>(posY, posX);
+
+                // std::cout << "Position (" << posX << ", " << posY << ") has an RGB value of (" << (int) color[2] << ", " << (int) color[1] << ", " << (int) color[0] << ")" << std::endl;
+
+                int label = color[1]/255 + 2*(color[2]/255) - 1;
+                if(trackLabel >= 0 && trackLabel != label) {
+                    track.setLabel(-2);
+                    std::cout << "Inconsistent data: trajectories with two different labels. Ignoring the trajectory." << std::endl;
+                } else {
+                    track.setLabel(label);
+                    std::cout << "Label: " << label << std::endl;
+                }
+            }
+        }
+    }
 }

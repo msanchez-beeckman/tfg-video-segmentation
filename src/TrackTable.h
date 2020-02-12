@@ -2,6 +2,7 @@
 #define TFG_VIDEO_SEGMENTATION_TRACKTABLE_H
 
 #include <opencv4/opencv2/core.hpp>
+#include <unordered_map>
 #include "Track.h"
 #include "Mapping.h"
 
@@ -55,6 +56,12 @@ namespace tfg {
 
         inline std::vector<unsigned int> trajectoriesInFrame(unsigned int frame) const {
             return mappings[frame].getTrajectories();
+        }
+
+        void seed(std::unordered_map<int, cv::Mat> &seedImages);
+
+        inline int labelOfTrack(unsigned int track) const {
+            return tracks[track].getLabel();
         }
 
     };
