@@ -38,6 +38,10 @@ namespace tfg {
         }
 
         void setLabel(int label);
+
+        float maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const;
+        cv::Vec2f deriveForwardDifferences(unsigned int frame) const;
+        float averageSpatialDistance(const Track &trackB) const;
     };
 }
 
