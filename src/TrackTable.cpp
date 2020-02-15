@@ -3,6 +3,10 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/IterativeLinearSolvers>
+#include <chrono>
 #include "TrackTable.h"
 
 namespace tfg {
@@ -17,6 +21,7 @@ namespace tfg {
 
     void TrackTable::readTracks(std::istream &file) {
         tracks.clear();
+        unsigned int trackNumber = 0;
         for(std::string line; std::getline(file, line); ) {
             std::vector<std::string> words;
             boost::split(words, line, boost::is_any_of(" "));
@@ -32,6 +37,8 @@ namespace tfg {
             tfg::Track track(coordinates, frameInit);
             if(track.getDuration() < 5) continue;
             tracks.push_back(track);
+            trackNumber++;
+            track.setNumber(trackNumber);
         }
     }
 
@@ -63,6 +70,7 @@ namespace tfg {
 
     void TrackTable::readTracksBrox(std::istream &file) {
         tracks.clear();
+        unsigned int trackNumber = 0;
         std::string line;
 
         std::getline(file, line);
@@ -91,7 +99,9 @@ namespace tfg {
             }
             if(TRACK_DURATION < 5) continue;
             Track track(coordinates, frameInit);
+            trackNumber++;
             tracks.push_back(track);
+            track.setNumber(trackNumber);
         }
     }
 
@@ -146,8 +156,9 @@ namespace tfg {
         std::cout << "Sorted tracks according to labels" << std::endl;
         std::cout << "There are " << UNLABELED_TRACKS << " unlabeled tracks and " << LABELED_TRACKS << " labeled tracks" << std::endl;
 
-        cv::Mat laplacianUnlabeled = cv::Mat::zeros(UNLABELED_TRACKS, UNLABELED_TRACKS, CV_32FC1);
-        cv::Mat minusBt = cv::Mat::zeros(UNLABELED_TRACKS, LABELED_TRACKS, CV_32FC1);
+        //Eigen::MatrixXf laplacianUnlabeled(UNLABELED_TRACKS, UNLABELED_TRACKS);
+        Eigen::SparseMatrix<float> laplacianUnlabeled(UNLABELED_TRACKS, UNLABELED_TRACKS);
+        Eigen::MatrixXf minusBt(UNLABELED_TRACKS, LABELED_TRACKS);
 
         std::cout << "Laplacian and -Bt matrices created" << std::endl;
 
@@ -155,51 +166,76 @@ namespace tfg {
         const std::vector<float> ones(mappings.size(), 1.0f);
 
         std::cout << "Filling matrices for the system of equations" << std::endl;
+        
+        std::chrono::steady_clock::time_point beginFill = std::chrono::steady_clock::now();
+        std::vector<Eigen::Triplet<float>> laplacianEntries;
+        laplacianEntries.reserve(UNLABELED_TRACKS * UNLABELED_TRACKS);
         for(unsigned int tA = 0; tA < UNLABELED_TRACKS; tA++) {
-            for(unsigned int tB = tA + 1; tB < tracks.size(); tB++) {
+            float degreeTrackA = 0.0f;
+            for(unsigned int tB = 0; tB < UNLABELED_TRACKS + LABELED_TRACKS; tB++) {
+                if(tB == tA) continue;
+
                 const float trackDistance2 = tracks[tA].maximalMotionDistance2(tracks[tB], ones);
                 const float weightAB = exp(-lambda * trackDistance2);
 
-                // std::cout << "Distance: " << trackDistance2 << " Weight: " << weightAB << std::endl;
+                degreeTrackA += weightAB;
+
+                if(tB < tA) continue;
 
                 if(tB >= UNLABELED_TRACKS) {
-                    minusBt.at<float>(tA, tB - UNLABELED_TRACKS) = weightAB;
+                    minusBt(tA, tB - UNLABELED_TRACKS) = weightAB;
                 } else {
-                    // Upper half of the graph laplacian, without its diagonal
-                    laplacianUnlabeled.at<float>(tA, tB) = -weightAB;
+                    if(weightAB > 1e-8) {
+                        laplacianEntries.push_back(Eigen::Triplet<float>(tA, tB, -weightAB));
+                        laplacianEntries.push_back(Eigen::Triplet<float>(tB, tA, -weightAB));
+                    }
                 }
             }
+            laplacianEntries.push_back(Eigen::Triplet<float>(tA, tA, degreeTrackA));
         }
-
-        std::cout << "Completing laplacian" << std::endl;
-
-        // Lower half and diagonal of the graph laplacian
-        cv::completeSymm(laplacianUnlabeled);
-        for(int i = 0; i < UNLABELED_TRACKS; i++) {
-            float degreeTrackI = 0;
-            for(int j = 0; j < UNLABELED_TRACKS; j++) {
-                if(j == i) continue;
-                degreeTrackI += laplacianUnlabeled.at<float>(i, j);
-            }
-            laplacianUnlabeled.at<float>(i, i) = degreeTrackI;
-        }
-
-        std::cout << "Laplacian = " << laplacianUnlabeled.at<float>(0,0) << std::endl;
+        laplacianUnlabeled.setFromTriplets(laplacianEntries.begin(), laplacianEntries.end());
+        std::chrono::steady_clock::time_point endFill = std::chrono::steady_clock::now();
+        std::cout << "Filled in " << (std::chrono::duration_cast<std::chrono::microseconds>(endFill-beginFill).count())/1000000.0 << " seconds" << std::endl;
 
         std::cout << "Creating matrix of label presence" << std::endl;
-        cv::Mat M = cv::Mat::zeros(LABELED_TRACKS, 1, CV_32FC1);
+        Eigen::VectorXf M(LABELED_TRACKS);
         for(int i = 0; i < LABELED_TRACKS; i++) {
-            M.at<float>(i, 0) = tracks[i + UNLABELED_TRACKS].getLabel() == 0 ? 1 : 0;
+            M(i) = tracks[i + UNLABELED_TRACKS].getLabel() == 0 ? 1 : 0;
         }
 
         std::cout << "Multiplying -Bt and M" << std::endl;
-        cv::Mat minusBtByM = minusBt * M;
-        cv::Mat probabilityBackground;
+        Eigen::VectorXf minusBtByM = minusBt * M;
 
         std::cout << "Solving system of equations" << std::endl;
-        cv::solve(laplacianUnlabeled, minusBtByM, probabilityBackground);
+        std::chrono::steady_clock::time_point beginSolve = std::chrono::steady_clock::now();
+        // Eigen::VectorXf probabilityBackground = laplacianUnlabeled.ldlt().solve(minusBtByM);
+        Eigen::ConjugateGradient<Eigen::SparseMatrix<float>, Eigen::Lower|Eigen::Upper> conjGrad;
+        // conjGrad.compute(laplacianUnlabeled.selfadjointView<Eigen::Upper>());
+        conjGrad.compute(laplacianUnlabeled);
+        Eigen::VectorXf probabilityBackground = conjGrad.solve(minusBtByM);
+        std::chrono::steady_clock::time_point endSolve = std::chrono::steady_clock::now();
+        std::cout << "Solved in " << (std::chrono::duration_cast<std::chrono::microseconds>(endSolve-beginSolve).count())/1000000.0 << " seconds" << std::endl;
 
-        std::cout << "P = " << probabilityBackground << std::endl;
+        for(unsigned int t = 0; t < UNLABELED_TRACKS; t++) {
+            if(probabilityBackground(t) < 0.5) {
+                tracks[t].setLabel(1);
+            } else {
+                tracks[t].setLabel(0);
+            }
+        }
+
+        // std::cout << probabilityBackground << std::endl;
+
+        std::cout << "Labels updated" << std::endl;
+        probabilities.clear();
+        probabilities.reserve(UNLABELED_TRACKS + LABELED_TRACKS);
+        for(unsigned int t = 0; t < UNLABELED_TRACKS; t++) {
+            probabilities[tracks[t].getNumber()] = probabilityBackground(t);
+        }
+        std::cout << "Put probabilities of unlabeled tracks in vector" << std::endl;
+        for(unsigned int t = UNLABELED_TRACKS; t < UNLABELED_TRACKS + LABELED_TRACKS; t++) {
+            probabilities[tracks[t].getNumber()] = tracks[t].getLabel() == 0 ? 1 : 0;
+        }
 
 
     }

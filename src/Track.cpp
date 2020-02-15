@@ -1,26 +1,24 @@
 #include <limits>
+#include <iostream>
 #include "Track.h"
 
 namespace tfg {
-    unsigned int Track::count = 0;
 
     Track::Track() {
-        this->number = Track::count;
         this->label = -1;
-        ++Track::count;
     }
 
     Track::Track(const std::vector<cv::Vec2f> &coordinates, const unsigned int initFrame) {
         this->coordinates = coordinates;
         this->initFrame = initFrame;
         this->duration = coordinates.size();
-        this->number = Track::count;
         this->label = -1;
-        ++Track::count;
     }
 
-    Track::~Track() {
-        --Track::count;
+    Track::~Track() {}
+
+    void Track::setNumber(unsigned int number) {
+        this->number = number;
     }
 
     void Track::setLabel(int label) {

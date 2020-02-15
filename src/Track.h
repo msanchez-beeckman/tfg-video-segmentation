@@ -15,7 +15,6 @@ namespace tfg {
         int label;
 
     public:
-        static unsigned int count;
 
         Track();
         Track(const std::vector<cv::Vec2f> &coordinates, const unsigned int initFrame);
@@ -42,6 +41,7 @@ namespace tfg {
             return label;
         }
 
+        void setNumber(unsigned int number);
         void setLabel(int label);
 
         float maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const;
