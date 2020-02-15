@@ -5,16 +5,18 @@ namespace tfg {
     unsigned int Track::count = 0;
 
     Track::Track() {
-        ++Track::count;
+        this->number = Track::count;
         this->label = -1;
+        ++Track::count;
     }
 
     Track::Track(const std::vector<cv::Vec2f> &coordinates, const unsigned int initFrame) {
-        ++Track::count;
         this->coordinates = coordinates;
         this->initFrame = initFrame;
         this->duration = coordinates.size();
+        this->number = Track::count;
         this->label = -1;
+        ++Track::count;
     }
 
     Track::~Track() {
@@ -26,15 +28,17 @@ namespace tfg {
     }
 
     float Track::maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const {
+        const unsigned int MIN_COMMON_FRAMES = 3;
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
         const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
-        if(firstCommonFrame > lastCommonFrame) return std::numeric_limits<float>::infinity();
+        if(lastCommonFrame - firstCommonFrame + 1 < MIN_COMMON_FRAMES) return std::numeric_limits<float>::infinity();
 
         float averageSpatialDistance = this->averageSpatialDistance(trackB);
         float maxDistance2 = 0.0f;
-        for(unsigned int frame = firstCommonFrame; frame <= lastCommonFrame; frame++) {
-            cv::Vec2f derivativeA = this->deriveForwardDifferences(frame);
-            cv::Vec2f derivativeB = trackB.deriveForwardDifferences(frame);
+        for(unsigned int frame = firstCommonFrame; frame < lastCommonFrame; frame++) {
+            cv::Vec2f derivativeA, derivativeB;
+            this->deriveForwardDifferences(frame, derivativeA);
+            trackB.deriveForwardDifferences(frame, derivativeB);
 
             float frameDistance2 = averageSpatialDistance * cv::norm(derivativeA - derivativeB, cv::NORM_L2SQR);
             frameDistance2 /= flowVariances[frame];
@@ -45,20 +49,12 @@ namespace tfg {
         return maxDistance2;
     }
 
-    cv::Vec2f Track::deriveForwardDifferences(unsigned int frame) const {
-        assert(frame >= initFrame && frame < initFrame + duration);
+    void Track::deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const {
+        assert(frame >= initFrame && frame < initFrame + duration - 1);
 
-        cv::Vec2f derivative;
-        if(frame == initFrame + duration - 1) { // For the last frame, use backward differences
-            const int framesBackward = 5;
-            const int step = frame - framesBackward >= initFrame ? framesBackward : frame - initFrame;
-            derivative = (coordinates[frame - initFrame] - coordinates[frame - initFrame - step])/step;
-        } else {
-            const int framesForward = 5;
-            const int step = frame + framesForward < initFrame + duration ? framesForward : initFrame + duration - frame - 1;
-            derivative = (coordinates[frame - initFrame + step] - coordinates[frame - initFrame])/step;
-        }
-        return derivative;
+        const int framesForward = 5;
+        const int step = frame + framesForward < initFrame + duration ? framesForward : initFrame + duration - frame - 1;
+        derivative = (coordinates[frame - initFrame + step] - coordinates[frame - initFrame])/step;
     }
 
     float Track::averageSpatialDistance(const Track &trackB) const {

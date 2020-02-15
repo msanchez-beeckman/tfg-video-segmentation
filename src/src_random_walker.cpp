@@ -39,6 +39,8 @@ int main(int argc, char* argv[]) {
     tfg::readSeedImages(seedFile, seedImages);
 
     trackTable->seed(seedImages);
+    std::vector<float> probabilities;
+    trackTable->propagateSeedsRandomWalk(probabilities);
 
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;

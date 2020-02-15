@@ -58,11 +58,13 @@ namespace tfg {
             return mappings[frame].getTrajectories();
         }
 
-        void seed(std::unordered_map<int, cv::Mat> &seedImages);
-
         inline int labelOfTrack(unsigned int track) const {
             return tracks[track].getLabel();
         }
+
+        void seed(const std::unordered_map<int, cv::Mat> &seedImages);
+
+        void propagateSeedsRandomWalk(std::vector<float> &probabilities);
 
     };
 }

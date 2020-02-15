@@ -80,7 +80,7 @@ namespace tfg {
 
             if(label < 0) continue;
 
-            std::cout << "Correctly labeled image" << std::endl;
+            // std::cout << "Correctly labeled image" << std::endl;
 
             for(unsigned int f = 0; f < points.size(); f++) {
                 int x = static_cast<int>(points[f](0));
@@ -98,8 +98,8 @@ namespace tfg {
                 for(int i = x_left; i < x_right + 1; i++) {
                     for(int j = y_down; j < y_up + 1; j++) {
                         cv::Vec3b& color = images[initFrame + f].at<cv::Vec3b>(j, i);
-                        color[1] = label == 0 ? 255 : color[1];
-                        color[2] = label == 1 ? 255 : color[2];
+                        color[1] = label == 1 ? 255 : color[1];
+                        color[2] = label == 0 ? 255 : color[2];
                     }
                 }
             }

@@ -11,6 +11,7 @@ namespace tfg {
         std::vector<cv::Vec2f> coordinates;
         unsigned int initFrame;
         unsigned int duration;
+        unsigned int number;
         int label;
 
     public:
@@ -33,6 +34,10 @@ namespace tfg {
             return duration;
         };
 
+        inline unsigned int getNumber() const {
+            return number;
+        }
+
         inline int getLabel() const {
             return label;
         }
@@ -40,7 +45,7 @@ namespace tfg {
         void setLabel(int label);
 
         float maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const;
-        cv::Vec2f deriveForwardDifferences(unsigned int frame) const;
+        void deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const;
         float averageSpatialDistance(const Track &trackB) const;
     };
 }
