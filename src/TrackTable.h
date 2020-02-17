@@ -2,7 +2,6 @@
 #define TFG_VIDEO_SEGMENTATION_TRACKTABLE_H
 
 #include <opencv4/opencv2/core.hpp>
-#include <unordered_map>
 #include "Track.h"
 #include "Mapping.h"
 
@@ -62,9 +61,22 @@ namespace tfg {
             return tracks[track].getLabel();
         }
 
-        void seed(const std::unordered_map<int, cv::Mat> &seedImages);
+        void setLabelToTrack(int label, unsigned int track);
 
-        void propagateSeedsRandomWalk(std::vector<float> &probabilities);
+        inline int numberOfTrack(unsigned int track) const {
+            return tracks[track].getNumber();
+        }
+
+        inline float distance2BetweenTracks(unsigned int A, unsigned int B, const std::vector<float> &variances) {
+            return tracks[A].maximalMotionDistance2(tracks[B], variances);
+        }
+
+        void sortTracksByLabel();
+        void sortTracksByNumber();
+        unsigned int indexOfFirstLabel();
+
+        // void seed(const std::unordered_map<int, cv::Mat> &seedImages);
+        // void propagateSeedsRandomWalk(std::vector<float> &probabilities);
 
     };
 }

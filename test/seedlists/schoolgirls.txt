@@ -1,0 +1,4 @@
+data/schoolgirls/seeds/00000.png 0
+data/schoolgirls/seeds/00020.png 20
+data/schoolgirls/seeds/00040.png 40
+data/schoolgirls/seeds/00060.png 60

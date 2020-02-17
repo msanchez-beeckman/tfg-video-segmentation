@@ -9,7 +9,6 @@ namespace tfg {
     MotionModel::~MotionModel() {}
 
     void MotionModel::fitFromWeights(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
-        // this->trackTable = trackTable;
         this->weights2 = weights2;
         this->tau = tau;
 
