@@ -33,11 +33,7 @@ namespace tfg {
                 trackTable->setLabelToTrack(labelWithValidityCheck, t);
             }
         }
-
-        for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
-            std::cout << "Track " << t << " has number " << trackTable->numberOfTrack(t) << std::endl;
-        }
-
+        
         trackTable->sortTracksByLabel();
         this->numberOfLabels = trackTable->labelOfTrack(trackTable->numberOfTracks() - 1) + 1;
         this->unlabeledTracks = trackTable->indexOfFirstLabel();
