@@ -51,7 +51,7 @@ namespace tfg {
 
         std::cout << "Laplacian and -Bt matrices created" << std::endl;
 
-        const float lambda = 0.1;
+        const float lambda = 0.1f;
         const std::vector<float> ones(trackTable->numberOfFrames(), 1.0f);
 
         std::cout << "Filling matrices for the system of equations" << std::endl;

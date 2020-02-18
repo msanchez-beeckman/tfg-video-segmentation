@@ -28,3 +28,4 @@ data/bear/00026.jpg
 data/bear/00027.jpg
 data/bear/00028.jpg
 data/bear/00029.jpg
+data/bear/00030.jpg
