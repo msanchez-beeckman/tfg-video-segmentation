@@ -11,6 +11,7 @@ namespace tfg {
     void TrackTable::buildFromFile(std::istream &file) {
         readTracks(file);
         getMappingsFromTracks();
+        computeFlowStatistics();
     }
 
     void TrackTable::readTracks(std::istream &file) {
@@ -60,6 +61,7 @@ namespace tfg {
     void TrackTable::buildFromBroxFile(std::istream &file) {
         readTracksBrox(file);
         getMappingsFromTracks();
+        computeFlowStatistics();
     }
 
     void TrackTable::readTracksBrox(std::istream &file) {
@@ -110,6 +112,35 @@ namespace tfg {
                 std::cout << ": Point (" << origin[i](0) << ", " << origin[i](1);
                 std::cout << ") maps to (" << destination[i](0) << ", " << destination[i](1) << ")" << std::endl;
             }
+        }
+    }
+
+    void TrackTable::computeFlowStatistics() {
+        flowMeans.clear();
+        flowVariances.clear();
+        const unsigned int NUMBER_OF_MAPPINGS = mappings.size();
+        flowMeans.reserve(NUMBER_OF_MAPPINGS);
+        flowVariances.reserve(NUMBER_OF_MAPPINGS);
+
+        for(unsigned int f = 0; f < NUMBER_OF_MAPPINGS; f++) {
+            // Compute mean
+            cv::Vec2f mean(0, 0);
+            std::vector<cv::Vec2f> originPoints = mappings[f].getOrigin();
+            std::vector<cv::Vec2f> destinationPoints = mappings[f].getDestination();
+            const unsigned int NUMBER_OF_POINTS = originPoints.size();
+            for(unsigned int i = 0; i < NUMBER_OF_POINTS; i++) {
+                mean += destinationPoints[i] - originPoints[i];
+            }
+            mean(0) /= NUMBER_OF_POINTS; mean(1) /= NUMBER_OF_POINTS;
+            flowMeans.push_back(mean);
+
+            // Compute variance
+            float variance = 0.0f;
+            for(unsigned int i = 0; i < NUMBER_OF_POINTS; i++) {
+                variance += cv::norm(destinationPoints[i] - originPoints[i] - mean, cv::NORM_L2SQR);
+            }
+            variance /= NUMBER_OF_POINTS;
+            flowVariances.push_back(variance);
         }
     }
 

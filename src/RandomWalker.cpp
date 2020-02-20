@@ -51,8 +51,8 @@ namespace tfg {
 
         std::cout << "Laplacian and -Bt matrices created" << std::endl;
 
-        const float lambda = 0.1f;
-        const std::vector<float> ones(trackTable->numberOfFrames(), 1.0f);
+        const float lambda = 0.25f;
+        // const std::vector<float> ones(trackTable->numberOfFrames(), 1.0f);
 
         std::cout << "Filling matrices for the system of equations" << std::endl;
         
@@ -66,7 +66,7 @@ namespace tfg {
         for(unsigned int tA = 0; tA < unlabeledTracks; tA++) {
             for(unsigned int tB = tA + 1; tB < unlabeledTracks + labeledTracks; tB++) {
 
-                const float trackDistance2 = trackTable->distance2BetweenTracks(tA, tB, ones);
+                const float trackDistance2 = trackTable->distance2BetweenTracks(tA, tB);
                 const float weightAB = exp(-lambda * trackDistance2);
 
                 if(weightAB < 1e-8) continue;

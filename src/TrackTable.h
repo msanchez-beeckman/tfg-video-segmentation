@@ -12,9 +12,14 @@ namespace tfg {
         std::vector<tfg::Track> tracks;
         std::vector<tfg::Mapping> mappings;
 
+        std::vector<cv::Vec2f> flowMeans;
+        std::vector<float> flowVariances;
+
         void readTracks(std::istream &file);
         void readTracksBrox(std::istream &file);
         void getMappingsFromTracks();
+
+        void computeFlowStatistics();
     
     public:
         TrackTable();
@@ -22,6 +27,10 @@ namespace tfg {
 
         void buildFromFile(std::istream &file);
         void buildFromBroxFile(std::istream &file);
+
+        void sortTracksByLabel();
+        void sortTracksByNumber();
+        unsigned int indexOfFirstLabel();
 
         void printMappings() const;
 
@@ -55,28 +64,26 @@ namespace tfg {
 
         inline std::vector<unsigned int> trajectoriesInFrame(unsigned int frame) const {
             return mappings[frame].getTrajectories();
-        }
+        };
 
         inline int labelOfTrack(unsigned int track) const {
             return tracks[track].getLabel();
-        }
+        };
 
         void setLabelToTrack(int label, unsigned int track);
 
         inline int numberOfTrack(unsigned int track) const {
             return tracks[track].getNumber();
-        }
+        };
 
-        inline float distance2BetweenTracks(unsigned int A, unsigned int B, const std::vector<float> &variances) {
-            return tracks[A].maximalMotionDistance2(tracks[B], variances);
-        }
+        inline float distance2BetweenTracks(unsigned int A, unsigned int B) const {
+            return tracks[A].maximalMotionDistance2(tracks[B], flowVariances);
+        };
 
-        void sortTracksByLabel();
-        void sortTracksByNumber();
-        unsigned int indexOfFirstLabel();
-
-        // void seed(const std::unordered_map<int, cv::Mat> &seedImages);
-        // void propagateSeedsRandomWalk(std::vector<float> &probabilities);
+        inline cv::Vec2f flowMeanOfFrame(unsigned int frame) const {
+            return flowMeans[frame];
+        };
+        
 
     };
 }
