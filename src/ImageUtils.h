@@ -13,7 +13,7 @@ namespace tfg {
 
     void readImages(std::istream &file, std::vector<cv::Mat> &images);
     void readSeedImages(std::istream &file, std::unordered_map<int, cv::Mat> &seedImages);
-    void paintTracks(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, std::vector<cv::Mat> &images, std::string &folder);
+    void paintTracks(std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, std::vector<cv::Mat> &images, std::string &folder);
     void paintSeededTracks(std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<cv::Mat> &images, std::string &folder);
 }
 

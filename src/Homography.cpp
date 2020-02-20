@@ -190,7 +190,7 @@ namespace tfg {
         }
     }
 
-    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
+    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
         std::cout << "First homography of the initial model:" << std::endl;
         model->printHomography(0);
 
@@ -209,8 +209,8 @@ namespace tfg {
         while(numIter < 50 && !converged) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-            refinedModel = std::make_shared<tfg::MotionModel>();
-            refinedModel->fitFromWeights(trackTable, initialWeights2, tau);
+            refinedModel = std::make_shared<tfg::MotionModel>(trackTable, tau);
+            refinedModel->fitFromWeights(initialWeights2);
 
             std::vector<float> residuals2 = refinedModel->getResiduals2();
             std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, tau);

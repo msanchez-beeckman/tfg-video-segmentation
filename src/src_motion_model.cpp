@@ -22,10 +22,13 @@ int main(int argc, char* argv[]) {
     if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
         return EXIT_FAILURE;
 
+    
+    const float tau = 4.0f;
+
 
     // Read tracks from text file
     std::ifstream trackFile(par_tracks.value);
-    std::unique_ptr<tfg::TrackTable> trackTable = std::make_unique<tfg::TrackTable>();
+    std::shared_ptr<tfg::TrackTable> trackTable = std::make_shared<tfg::TrackTable>();
     if(opt_brox.flag) {
         trackTable->buildFromBroxFile(trackFile);
     } else {
@@ -33,23 +36,23 @@ int main(int argc, char* argv[]) {
     }
     trackFile.close();
 
-    std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>();
+    std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>(trackTable, tau);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::vector<int> inliers;
-    model->fitFromRANSAC(trackTable, inliers, 4.0f);
+    model->fitFromRANSAC(inliers);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "(0) Cost: " << model->getCost() << std::endl;
     std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
 
     
     std::vector<float> residuals2 = model->getResiduals2();
-    std::vector<float> weights2 = tfg::getWeights2(residuals2, 4.0f);
+    std::vector<float> weights2 = tfg::getWeights2(residuals2, tau);
     // std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
     // for(unsigned int i = 0; i < inliers.size(); i++) {
     //     inlierWeights[inliers[i]] = 1.0f;
     // }
     
-    tfg::IRLS(model, trackTable, weights2, 4.0f);
+    tfg::IRLS(model, trackTable, weights2, tau);
     // tfg::IRLS(model, trackTable, inlierWeights);
 
 

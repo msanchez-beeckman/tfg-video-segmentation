@@ -1,3 +1,4 @@
+#include <opencv4/opencv2/calib3d/calib3d.hpp>
 #include <iostream>
 #include <chrono>
 #include "MotionModel.h"
@@ -5,34 +6,35 @@
 
 namespace tfg {
 
-    MotionModel::MotionModel() {}
+    MotionModel::MotionModel(std::shared_ptr<tfg::TrackTable> &trackTable, float tau) {
+        this->trackTable = trackTable;
+        this->tau = tau;
+    }
     MotionModel::~MotionModel() {}
 
-    void MotionModel::fitFromWeights(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
+    void MotionModel::fitFromWeights(std::vector<float> &weights2) {
         this->weights2 = weights2;
-        this->tau = tau;
 
-        computeHomographiesWLS(trackTable);
-        computeResiduals2(trackTable);
+        computeHomographiesWLS();
+        computeResiduals2();
         computeModelCost();
     }
 
-    void MotionModel::computeHomographiesWLS(std::unique_ptr<tfg::TrackTable> &trackTable) {
+    void MotionModel::computeHomographiesWLS() {
         homographies.clear();
         homographies.reserve(trackTable->numberOfFrames());
         for(unsigned int f = 0; f < trackTable->numberOfFrames(); f++) {
-            cv::Matx33f H;
-            homographies.push_back(H);
-
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
             std::vector<unsigned int> trajectories = trackTable->trajectoriesInFrame(f);
 
-            tfg::computeHomographyWLS(origin, destination, origin.size(), trajectories, weights2, homographies[f]);
+            cv::Matx33f H;
+            tfg::computeHomographyWLS(origin, destination, origin.size(), trajectories, weights2, H);
+            homographies.push_back(H);
         }
     }
 
-    void MotionModel::computeResiduals2(std::unique_ptr<tfg::TrackTable> &trackTable) {
+    void MotionModel::computeResiduals2() {
         residuals2.clear();
         residuals2.reserve(trackTable->numberOfTracks());
         for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
@@ -63,24 +65,23 @@ namespace tfg {
         }
     }
 
-    void MotionModel::fitFromRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<int> &inliers, float tau) {
-        this->tau = tau;
-
-        computeHomographiesRANSAC(trackTable, inliers);
-        computeResiduals2(trackTable);
+    void MotionModel::fitFromRANSAC(std::vector<int> &inliers) {
+        computeHomographiesRANSAC(inliers);
+        computeResiduals2();
         computeModelCost();
     }
 
-    void MotionModel::computeHomographiesRANSAC(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<int> &inliers) {
+    void MotionModel::computeHomographiesRANSAC(std::vector<int> &inliers) {
         homographies.clear();
         homographies.reserve(trackTable->numberOfFrames());
         for(unsigned int f = 0; f < trackTable->numberOfFrames(); f++) {
-            cv::Matx33f H;
-            homographies.push_back(H);
 
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 0.25f, homographies[f], inliers);
+            cv::Matx33f H;
+            // cv::Matx33f H = cv::findHomography(origin, destination, cv::RANSAC, 1.0);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 1.0f, H, inliers);
+            homographies.push_back(H);
         }
     }
 

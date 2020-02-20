@@ -32,7 +32,7 @@ namespace tfg {
         }
     }
 
-    void paintTracks(std::unique_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, std::vector<cv::Mat> &images, std::string &folder) {
+    void paintTracks(std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, std::vector<cv::Mat> &images, std::string &folder) {
         for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
             std::vector<cv::Vec2f> points = trackTable->pointsInTrack(t);
             unsigned int initFrame = trackTable->firstFrameOfTrack(t);
