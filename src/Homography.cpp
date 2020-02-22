@@ -19,7 +19,27 @@ namespace tfg {
         return weights2;
     }
 
-    void printVector(std::vector<float> &vector) {
+    std::vector<float> getWeightsFromInliers(std::vector<std::vector<int>> &inliers, std::shared_ptr<tfg::TrackTable> &trackTable) {
+        std::vector<float> weights(trackTable->numberOfTracks(), 0);
+        std::vector<unsigned int> timesCountedAsInlier(trackTable->numberOfTracks(), 0);
+        for(unsigned int f = 0; f < inliers.size(); f++) {
+            std::vector<unsigned int> trajectories = trackTable->trajectoriesInFrame(f);
+            for(unsigned int i = 0; i < inliers[f].size(); i++) {
+                timesCountedAsInlier[trajectories[inliers[f][i]]]++;
+            }
+        }
+
+        for(unsigned int t = 0; t < weights.size(); t++) {
+            const unsigned int trackDuration = trackTable->durationOfTrack(t);
+            // weights[t] = timesCountedAsInlier[t] == 0 ? 0 : 1;
+            weights[t] = timesCountedAsInlier[t] == trackDuration - 1 ? 1 : 0;
+        }
+
+        return weights;
+    }
+
+    template <typename T>
+    void printVector(std::vector<T> &vector) {
         for(unsigned int i = 0; i < vector.size(); i++) {
             std::cout << vector[i] << std::endl;
         }

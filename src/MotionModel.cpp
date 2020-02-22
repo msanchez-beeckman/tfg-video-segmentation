@@ -83,7 +83,7 @@ namespace tfg {
             cv::Matx33f H;
             // cv::Matx33f H = cv::findHomography(origin, destination, cv::RANSAC, 6.0);
             std::vector<int> frameInliers;
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 1.0f, H, frameInliers);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 1.5f, H, frameInliers);
             inliers.push_back(frameInliers);
             homographies.push_back(H);
         }

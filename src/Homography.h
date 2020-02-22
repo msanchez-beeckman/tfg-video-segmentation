@@ -8,8 +8,10 @@
 
 namespace tfg {
     std::vector<float> getWeights2(std::vector<float> &residuals, float tau);
+    std::vector<float> getWeightsFromInliers(std::vector<std::vector<int>> &inliers, std::shared_ptr<tfg::TrackTable> &trackTable);
 
-    void printVector(std::vector<float> &vector);
+    template <typename T>
+    void printVector(std::vector<T> &vector);
 
     void computeHomographyRANSAC(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, int niter, float tolerance, cv::Matx33f &H, std::vector<int> &inliers);
     void computeHomographyWLS(const std::vector<cv::Vec2f> &p0, const std::vector<cv::Vec2f> &p1, int n, const std::vector<unsigned int> &trajectories, const std::vector<float> &weights2, cv::Matx33f &H);

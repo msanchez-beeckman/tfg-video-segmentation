@@ -47,10 +47,12 @@ int main(int argc, char* argv[]) {
     
     std::vector<float> residuals2 = model->getResiduals2();
     std::vector<float> weights2 = tfg::getWeights2(residuals2, tau);
-    std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
-    for(unsigned int i = 0; i < inliers.size(); i++) {
-        inlierWeights[inliers[i]] = 1.0f;
-    }
+
+    std::vector<float> inlierWeights = tfg::getWeightsFromInliers(inliers, trackTable);
+    // std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
+    // for(unsigned int i = 0; i < inliers.size(); i++) {
+    //     inlierWeights[inliers[i]] = 1.0f;
+    // }
     std::cout << "inlierWeights size: " << inlierWeights.size() << std::endl;
     
     tfg::IRLS(model, trackTable, weights2, tau);
@@ -70,8 +72,8 @@ int main(int argc, char* argv[]) {
     tfg::copyImages(images, images2);
 
     std::string resultsFolder(opt_outmodel.value);
-    std::string fileNameModel = "out";
-    std::string fileNameInliers = "ransacInliers";
+    std::string fileNameModel = "finalModel";
+    std::string fileNameInliers = "ransacModel";
     tfg::paintTracks(trackTable, weights2, images, resultsFolder, fileNameModel);
     tfg::paintTracks(trackTable, inlierWeights, images2, resultsFolder, fileNameInliers);
 
