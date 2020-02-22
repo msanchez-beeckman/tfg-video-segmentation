@@ -54,7 +54,9 @@ int main(int argc, char* argv[]) {
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
     std::string resultsFolder(opt_outmodel.value);
-    tfg::paintSeededTracks(trackTable, images, resultsFolder);
+
+    std::string fileName = "out";
+    tfg::paintSeededTracks(trackTable, images, resultsFolder, fileName);
 
     std::cout << "Painted tracks according to seeds" << std::endl;
     

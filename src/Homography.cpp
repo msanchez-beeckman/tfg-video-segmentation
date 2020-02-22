@@ -9,10 +9,12 @@
 namespace tfg {
 
     std::vector<float> getWeights2(std::vector<float> &residuals2, float tau) {
-        std::vector<float> weights2(residuals2.size());
+        std::vector<float> weights2;
+        weights2.reserve(residuals2.size());
         for(unsigned int i = 0; i < residuals2.size(); i++) {
             float boundedResidual2 = residuals2[i] < tau*tau ? residuals2[i] : tau*tau;
-            weights2[i] = 1 - boundedResidual2/(tau*tau);
+            float weight2 = 1 - boundedResidual2/(tau*tau);
+            weights2.push_back(weight2);
         }
         return weights2;
     }

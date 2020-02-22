@@ -65,22 +65,26 @@ namespace tfg {
         }
     }
 
-    void MotionModel::fitFromRANSAC(std::vector<int> &inliers) {
+    void MotionModel::fitFromRANSAC(std::vector<std::vector<int>> &inliers) {
         computeHomographiesRANSAC(inliers);
         computeResiduals2();
         computeModelCost();
     }
 
-    void MotionModel::computeHomographiesRANSAC(std::vector<int> &inliers) {
+    void MotionModel::computeHomographiesRANSAC(std::vector<std::vector<int>> &inliers) {
         homographies.clear();
+        inliers.clear();
         homographies.reserve(trackTable->numberOfFrames());
+        inliers.reserve(trackTable->numberOfFrames());
         for(unsigned int f = 0; f < trackTable->numberOfFrames(); f++) {
 
             std::vector<cv::Vec2f> origin = trackTable->originPointsInFrame(f);
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
             cv::Matx33f H;
-            // cv::Matx33f H = cv::findHomography(origin, destination, cv::RANSAC, 1.0);
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 1.0f, H, inliers);
+            // cv::Matx33f H = cv::findHomography(origin, destination, cv::RANSAC, 6.0);
+            std::vector<int> frameInliers;
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 1.0f, H, frameInliers);
+            inliers.push_back(frameInliers);
             homographies.push_back(H);
         }
     }

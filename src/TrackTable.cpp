@@ -30,7 +30,7 @@ namespace tfg {
                 coordinates.push_back(point);
             }
             tfg::Track track(coordinates, frameInit);
-            if(track.getDuration() < 5) continue;
+            if(track.getDuration() < 10) continue;
             track.setNumber(trackNumber);
             trackNumber++;
             tracks.push_back(track);
@@ -93,7 +93,7 @@ namespace tfg {
 
                 coordinates.push_back(point);
             }
-            if(TRACK_DURATION < 5) continue;
+            if(TRACK_DURATION < 10) continue;
             Track track(coordinates, frameInit);
             track.setNumber(trackNumber);
             trackNumber++;

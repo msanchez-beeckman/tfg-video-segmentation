@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 
     std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>(trackTable, tau);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    std::vector<int> inliers;
+    std::vector<std::vector<int>> inliers;
     model->fitFromRANSAC(inliers);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "(0) Cost: " << model->getCost() << std::endl;
@@ -47,10 +47,11 @@ int main(int argc, char* argv[]) {
     
     std::vector<float> residuals2 = model->getResiduals2();
     std::vector<float> weights2 = tfg::getWeights2(residuals2, tau);
-    // std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
-    // for(unsigned int i = 0; i < inliers.size(); i++) {
-    //     inlierWeights[inliers[i]] = 1.0f;
-    // }
+    std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
+    for(unsigned int i = 0; i < inliers.size(); i++) {
+        inlierWeights[inliers[i]] = 1.0f;
+    }
+    std::cout << "inlierWeights size: " << inlierWeights.size() << std::endl;
     
     tfg::IRLS(model, trackTable, weights2, tau);
     // tfg::IRLS(model, trackTable, inlierWeights);
@@ -65,9 +66,14 @@ int main(int argc, char* argv[]) {
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
+    std::vector<cv::Mat> images2;
+    tfg::copyImages(images, images2);
+
     std::string resultsFolder(opt_outmodel.value);
-    tfg::paintTracks(trackTable, weights2, images, resultsFolder);
-    // tfg::paintTracks(trackTable, inlierWeights, images);
+    std::string fileNameModel = "out";
+    std::string fileNameInliers = "ransacInliers";
+    tfg::paintTracks(trackTable, weights2, images, resultsFolder, fileNameModel);
+    tfg::paintTracks(trackTable, inlierWeights, images2, resultsFolder, fileNameInliers);
 
 
     return EXIT_SUCCESS;
