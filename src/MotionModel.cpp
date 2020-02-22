@@ -6,9 +6,9 @@
 
 namespace tfg {
 
-    MotionModel::MotionModel(std::shared_ptr<tfg::TrackTable> &trackTable, float tau) {
+    MotionModel::MotionModel(std::shared_ptr<tfg::TrackTable> &trackTable, float tau2) {
         this->trackTable = trackTable;
-        this->tau = tau;
+        this->tau2 = tau2;
     }
     MotionModel::~MotionModel() {}
 
@@ -48,6 +48,9 @@ namespace tfg {
                 pointR(0) = coordinates[i+1](0); pointR(1) = coordinates[i+1](1); pointR(2) = 1.0f;
 
                 cv::Vec3f pred = (homographies[trackTable->firstFrameOfTrack(t) + i])*pointL;
+                pred(0) = pred(0)/pred(2); pred(1) = pred(1) / pred(2); pred(2) = 1.0f;
+                // std::cout << homographies[trackTable->firstFrameOfTrack(t) + i] << std::endl << std::endl;
+                //std::cout << pred << std::endl;
                 
                 float reprojectionError2 = cv::norm(pointR - pred, cv::NORM_L2SQR);
                 if(reprojectionError2 > maxReprojectionError2) maxReprojectionError2 = reprojectionError2;
@@ -60,7 +63,7 @@ namespace tfg {
     void MotionModel::computeModelCost() {
         cost = 0.0f;
         for(unsigned int i = 0; i < residuals2.size(); i++) {
-            float trackCost = tau*tau < residuals2[i] ? tau*tau/4 : (residuals2[i]/2)*(1-residuals2[i]/(2*tau*tau));
+            float trackCost = tau2 < residuals2[i] ? tau2/4 : (residuals2[i]/2)*(1-residuals2[i]/(2*tau2));
             cost += trackCost;
         }
     }

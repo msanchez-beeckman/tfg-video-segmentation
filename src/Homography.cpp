@@ -8,12 +8,12 @@
 
 namespace tfg {
 
-    std::vector<float> getWeights2(std::vector<float> &residuals2, float tau) {
+    std::vector<float> getWeights2(std::vector<float> &residuals2, float tau2) {
         std::vector<float> weights2;
         weights2.reserve(residuals2.size());
         for(unsigned int i = 0; i < residuals2.size(); i++) {
-            float boundedResidual2 = residuals2[i] < tau*tau ? residuals2[i] : tau*tau;
-            float weight2 = 1 - boundedResidual2/(tau*tau);
+            float boundedResidual2 = residuals2[i] < tau2 ? residuals2[i] : tau2;
+            float weight2 = 1 - boundedResidual2/tau2;
             weights2.push_back(weight2);
         }
         return weights2;
@@ -212,7 +212,7 @@ namespace tfg {
         }
     }
 
-    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau) {
+    void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau2) {
         std::cout << "First homography of the initial model:" << std::endl;
         model->printHomography(0);
 
@@ -231,11 +231,11 @@ namespace tfg {
         while(numIter < 50 && !converged) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-            refinedModel = std::make_shared<tfg::MotionModel>(trackTable, tau);
+            refinedModel = std::make_shared<tfg::MotionModel>(trackTable, tau2);
             refinedModel->fitFromWeights(initialWeights2);
 
             std::vector<float> residuals2 = refinedModel->getResiduals2();
-            std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, tau);
+            std::vector<float> currentWeights2 = tfg::getWeights2(residuals2, tau2);
             for(unsigned int i = 0; i < weights2.size(); i++) {
                 refinedWeights2[i] = s*currentWeights2[i] + (1-s)*bestWeights2[i];
             }

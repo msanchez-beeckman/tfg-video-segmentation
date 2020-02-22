@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
 
     
-    const float tau = 4.0f;
+    const float tau2 = 16.0f;
 
 
     // Read tracks from text file
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     }
     trackFile.close();
 
-    std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>(trackTable, tau);
+    std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>(trackTable, tau2);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::vector<std::vector<int>> inliers;
     model->fitFromRANSAC(inliers);
@@ -46,16 +46,11 @@ int main(int argc, char* argv[]) {
 
     
     std::vector<float> residuals2 = model->getResiduals2();
-    std::vector<float> weights2 = tfg::getWeights2(residuals2, tau);
+    std::vector<float> weights2 = tfg::getWeights2(residuals2, tau2);
 
     std::vector<float> inlierWeights = tfg::getWeightsFromInliers(inliers, trackTable);
-    // std::vector<float> inlierWeights(trackTable->numberOfTracks(), 0);
-    // for(unsigned int i = 0; i < inliers.size(); i++) {
-    //     inlierWeights[inliers[i]] = 1.0f;
-    // }
-    std::cout << "inlierWeights size: " << inlierWeights.size() << std::endl;
     
-    tfg::IRLS(model, trackTable, weights2, tau);
+    tfg::IRLS(model, trackTable, weights2, tau2);
     // tfg::IRLS(model, trackTable, inlierWeights);
 
 

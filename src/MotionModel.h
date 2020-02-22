@@ -10,7 +10,7 @@ namespace tfg {
     private:
         std::shared_ptr<tfg::TrackTable> trackTable;
         std::vector<float> weights2;
-        float tau;
+        float tau2;
 
         std::vector<cv::Matx33f> homographies;
         std::vector<float> residuals2;
@@ -22,7 +22,7 @@ namespace tfg {
         void computeModelCost();
     
     public:
-        MotionModel(std::shared_ptr<tfg::TrackTable> &trackTable, float tau);
+        MotionModel(std::shared_ptr<tfg::TrackTable> &trackTable, float tau2);
         ~MotionModel();
 
         void fitFromWeights(std::vector<float> &weights2);
