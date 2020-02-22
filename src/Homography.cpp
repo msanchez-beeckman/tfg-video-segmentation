@@ -4,6 +4,8 @@
 #include <random>
 #include <array>
 #include <opencv4/opencv2/core.hpp>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Eigenvalues>
 #include "Homography.h"
 
 namespace tfg {
@@ -129,7 +131,8 @@ namespace tfg {
 
         ////////////////////////// Minimization problem || Ah || /////////////////////////////
 
-        cv::Matx33d Tpl, Timinv;
+        //cv::Matx33d Tpl, Timinv;
+        Eigen::Matrix3d Tpl, Timinv;
 
         // Similarity transformation of the plane
         Tpl(0, 0) = scaleL(0); Tpl(0, 1) = 0.0;       Tpl(0, 2) = -scaleL(0)*centerL(0);
@@ -141,39 +144,65 @@ namespace tfg {
         Timinv(1, 0) = 0.0;           Timinv(1, 1) = 1.0/scaleR(1); Timinv(1, 2) = centerR(1);
         Timinv(2, 0) = 0.0;           Timinv(2, 1) = 0.0;           Timinv(2, 2) = 1.0;
 
-        // Build At*Wt*W*A
-        double AtA[9][9];
-        cv::Mat matAtA(9, 9, CV_64FC1, &AtA[0][0]);
-        matAtA.setTo(0);
-        for(int i = 0; i < n; i++) {
-            float	xpl = pnorm0[i](0), ypl = pnorm0[i](1),
-                    xim = pnorm1[i](0), yim = pnorm1[i](1);
+        // // Build At*Wt*W*A
+        // double AtA[9][9];
+        // cv::Mat matAtA(9, 9, CV_64FC1, &AtA[0][0]);
+        // matAtA.setTo(0);
+        // for(int i = 0; i < n; i++) {
+        //     float	xpl = pnorm0[i](0), ypl = pnorm0[i](1),
+        //             xim = pnorm1[i](0), yim = pnorm1[i](1);
 
-            float row1[] = {0.0f, 0.0f, 0.0f, -xpl, -ypl, -1.0f, yim * xpl, yim * ypl, yim};
-            float row2[] = {xpl, ypl, 1.0f, 0.0f, 0.0f, 0.0f, -xim * xpl, -xim * ypl, -xim};
+        //     float row1[] = {0.0f, 0.0f, 0.0f, -xpl, -ypl, -1.0f, yim * xpl, yim * ypl, yim};
+        //     float row2[] = {xpl, ypl, 1.0f, 0.0f, 0.0f, 0.0f, -xim * xpl, -xim * ypl, -xim};
+        //     float w2 = weights2[trajectories[i]];
+
+        //     // Upper half
+        //     for(int j = 0; j < 9; j++) {
+        //         for(int k = j; k < 9; k++) {
+        //             AtA[j][k] += w2 * row1[j] * row1[k] + w2 * row2[j] * row2[k];
+        //         }
+        //     }
+        // }
+        // // Complete lower half
+        // cv::completeSymm(matAtA);
+
+        // // Compute eigenvalues and eigenvectors
+        // cv::Mat eigvals;
+        // double eigvects[9][9];
+        // cv::Mat matEigvects(9, 9, CV_64FC1, &eigvects[0][0]);
+        // cv::eigen(matAtA, eigvals, matEigvects);
+
+        // // Form a matrix formed by the entries of the eigenvector corresponding to the smallest eigenvalue
+        // cv::Matx33d V(eigvects[8]);
+
+
+        // Build At*Wt*W*A
+        Eigen::Matrix<double, 9, 9> AtA = Eigen::Matrix<double, 9, 9>::Zero();
+        for(int i = 0; i < n; i++) {
+            float xpl = pnorm0[i](0), ypl = pnorm0[i](1),
+                  xim = pnorm1[i](0), yim = pnorm1[i](1);
+                
+            std::array<float, 9> row1 = {0.0f, 0.0f, 0.0f, -xpl, -ypl, -1.0f, yim * xpl, yim * ypl, yim};
+            std::array<float, 9> row2 = {xpl, ypl, 1.0f, 0.0f, 0.0f, 0.0f, -xim * xpl, -xim * ypl, -xim};
             float w2 = weights2[trajectories[i]];
 
-            // Upper half
+            // Lower half only, since SelfAdjointEigenSolver does not use the upper half
             for(int j = 0; j < 9; j++) {
                 for(int k = j; k < 9; k++) {
-                    AtA[j][k] += w2 * row1[j] * row1[k] + w2 * row2[j] * row2[k];
+                    AtA(k, j) += w2 * row1[j] * row1[k] + w2 * row2[j] * row2[k];
                 }
             }
         }
-        // Complete lower half
-        cv::completeSymm(matAtA);
 
-        // Compute eigenvalues and eigenvectors
-        cv::Mat eigvals;
-        double eigvects[9][9];
-        cv::Mat matEigvects(9, 9, CV_64FC1, &eigvects[0][0]);
-        cv::eigen(matAtA, eigvals, matEigvects);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 9, 9>> eigenSolver;
+        eigenSolver.compute(AtA);
+        Eigen::Matrix3d V(eigenSolver.eigenvectors().col(0).data()); V.transposeInPlace();
+        //std::cout << "Eigen: " << V << std::endl << std::endl;
 
-        // Form a matrix formed by the entries of the eigenvector corresponding to the smallest eigenvalue
-        cv::Matx33d V(eigvects[8]);
 
         // Denormalize H = Timinv * V.col(imin)* Tpl;
-        cv::Matx33d Vdenorm = Timinv * (V * Tpl);
+        //cv::Matx33d Vdenorm = Timinv * (V * Tpl);
+        Eigen::Matrix3d Vdenorm = Timinv * (V * Tpl);
 
         // Divide every entry by H(2, 2) so the bottom right entry is 1
         for(int i = 0; i < 3; i++) {

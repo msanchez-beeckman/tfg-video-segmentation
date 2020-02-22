@@ -49,8 +49,6 @@ namespace tfg {
 
                 cv::Vec3f pred = (homographies[trackTable->firstFrameOfTrack(t) + i])*pointL;
                 pred(0) = pred(0)/pred(2); pred(1) = pred(1) / pred(2); pred(2) = 1.0f;
-                // std::cout << homographies[trackTable->firstFrameOfTrack(t) + i] << std::endl << std::endl;
-                //std::cout << pred << std::endl;
                 
                 float reprojectionError2 = cv::norm(pointR - pred, cv::NORM_L2SQR);
                 if(reprojectionError2 > maxReprojectionError2) maxReprojectionError2 = reprojectionError2;

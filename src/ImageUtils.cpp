@@ -57,7 +57,7 @@ namespace tfg {
                 color(1) = weights2[t] < 0.25 ? 255 : 0;
                 // drawPoint(images[initFrame + f], points[f], color);
                 const int remainingFrames = points.size() - f - 1;
-                const int T = std::min(10, remainingFrames);
+                const int T = std::min(5, remainingFrames);
                 if(T != 0) {
                     drawLine(images[initFrame + f], points[f], points[f + 1], color);
                 } else {
