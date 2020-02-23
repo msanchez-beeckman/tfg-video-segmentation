@@ -63,14 +63,12 @@ int main(int argc, char* argv[]) {
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
-    std::vector<cv::Mat> images2;
-    tfg::copyImages(images, images2);
 
     std::string resultsFolder(opt_outmodel.value);
     std::string fileNameModel = "finalModel";
     std::string fileNameInliers = "ransacModel";
     tfg::paintTracks(trackTable, weights2, images, resultsFolder, fileNameModel);
-    tfg::paintTracks(trackTable, inlierWeights, images2, resultsFolder, fileNameInliers);
+    tfg::paintTracks(trackTable, inlierWeights, images, resultsFolder, fileNameInliers);
 
 
     return EXIT_SUCCESS;

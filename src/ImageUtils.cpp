@@ -46,7 +46,7 @@ namespace tfg {
         }
     }
 
-    void paintTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, const std::vector<float> &weights2, std::vector<cv::Mat> &images, const std::string &folder, const std::string &fileName) {
+    void paintTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) {
         for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
             std::vector<cv::Vec2f> points = trackTable->pointsInTrack(t);
             unsigned int initFrame = trackTable->firstFrameOfTrack(t);
@@ -74,7 +74,7 @@ namespace tfg {
         }
     }
 
-    void paintSeededTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<cv::Mat> &images, const std::string &folder, const std::string &fileName) {
+    void paintSeededTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) {
         for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
             const int label = trackTable->labelOfTrack(t);
             std::vector<cv::Vec2f> points = trackTable->pointsInTrack(t);
