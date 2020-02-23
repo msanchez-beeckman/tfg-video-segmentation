@@ -40,9 +40,6 @@ int main(int argc, char* argv[]) {
     std::unordered_map<int, cv::Mat> seedImages;
     tfg::readSeedImages(seedFile, seedImages);
 
-    // trackTable->seed(seedImages);
-    // std::vector<float> probabilities;
-    // trackTable->propagateSeedsRandomWalk(probabilities);
     tfg::RandomWalker walker(trackTable);
     walker.seed(seedImages);
     walker.propagateSeeds();

@@ -69,8 +69,8 @@ namespace tfg {
         for (unsigned int i = 0; i < images.size(); i++) {
             std::stringstream ss;
             ss << folder << fileName << i << ".png";
-            std::string fileName = ss.str();
-            cv::imwrite(fileName, images[i]);
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, images[i]);
         }
     }
 
@@ -103,8 +103,8 @@ namespace tfg {
         for (unsigned int i = 0; i < images.size(); i++) {
             std::stringstream ss;
             ss << folder << fileName << i << ".png";
-            std::string fileName = ss.str();
-            cv::imwrite(fileName, images[i]);
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, images[i]);
         }
     }
 
@@ -157,21 +157,5 @@ namespace tfg {
             pixel[1] = color[1];
             pixel[0] = color[0];
         }
-        // if(std::abs(xDest - xOrig) > std::abs(yDest - yOrig)) {
-        //     const float distance = std::abs(xDest - xOrig);
-        //     const float xStep = (xDest - xOrig) / distance;
-        //     const float yStep = (yDest - yOrig) / distance;
-        //     for(int i = 1; i <= distance; i++) {
-        //         const int xPos = boost::math::iround(xOrig + i * xStep);
-        //         const int yPos = boost::math::iround(yOrig + i * yStep);
-
-        //         cv::Vec3b& pixel = image.at<cv::Vec3b>(yPos, xPos);
-        //         pixel[2] = color[2];
-        //         pixel[1] = color[1];
-        //         pixel[0] = color[0];
-        //     }
-        // } else {
-
-        // }
     }
 }

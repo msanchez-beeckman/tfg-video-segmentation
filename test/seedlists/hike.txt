@@ -1,3 +1,0 @@
-data/hike/seeds/00000.png 0
-data/hike/seeds/00010.png 10
-data/hike/seeds/00020.png 20
