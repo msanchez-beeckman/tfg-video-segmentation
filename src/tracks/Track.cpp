@@ -26,19 +26,21 @@ namespace tfg {
     }
 
     float Track::maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const {
-        const unsigned int MIN_COMMON_FRAMES = 3;
+        const unsigned int MIN_COMMON_FRAMES = 1;
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
         const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
         if(lastCommonFrame - firstCommonFrame + 1 < MIN_COMMON_FRAMES) return std::numeric_limits<float>::infinity();
 
-        float averageSpatialDistance = this->averageSpatialDistance(trackB);
+        // float averageSpatialDistance = this->averageSpatialDistance(trackB);
+        float maximalSpatialDistance = this->maximalSpatialDistance(trackB);
         float maxDistance2 = 0.0f;
         for(unsigned int frame = firstCommonFrame; frame < lastCommonFrame; frame++) {
             cv::Vec2f derivativeA, derivativeB;
             this->deriveForwardDifferences(frame, derivativeA);
             trackB.deriveForwardDifferences(frame, derivativeB);
 
-            float frameDistance2 = averageSpatialDistance * cv::norm(derivativeA - derivativeB, cv::NORM_L2SQR);
+            // float frameDistance2 = averageSpatialDistance * cv::norm(derivativeA - derivativeB, cv::NORM_L2SQR);
+            float frameDistance2 = maximalSpatialDistance * cv::norm(derivativeA - derivativeB, cv::NORM_L2SQR);
             frameDistance2 /= flowVariances[frame];
 
             if(frameDistance2 > maxDistance2) maxDistance2 = frameDistance2;
@@ -67,6 +69,20 @@ namespace tfg {
         }
         float averageDistance = distanceSum / (lastCommonFrame - firstCommonFrame + 1);
         return averageDistance;
+    }
+
+    float Track::maximalSpatialDistance(const Track &trackB) const {
+        const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
+        const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
+        if(firstCommonFrame > lastCommonFrame) return std::numeric_limits<float>::infinity();
+
+        std::vector<cv::Vec2f> trackBcoordinates = trackB.getPoints();
+        float maxDistance = 0.0f;
+        for(unsigned int frame = firstCommonFrame; frame <= lastCommonFrame; frame++) {
+            float distance = cv::norm(this->coordinates[frame - initFrame] - trackBcoordinates[frame - trackB.getInitFrame()]);
+            maxDistance = distance > maxDistance ? distance : maxDistance;
+        }
+        return maxDistance;
     }
 
 

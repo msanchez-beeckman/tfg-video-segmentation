@@ -47,6 +47,7 @@ namespace tfg {
         float maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const;
         void deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const;
         float averageSpatialDistance(const Track &trackB) const;
+        float maximalSpatialDistance(const Track &trackB) const;
     };
 }
 

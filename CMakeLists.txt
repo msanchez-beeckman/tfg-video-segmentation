@@ -7,19 +7,28 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(COMMON_LIBS   
-        ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/CmdParser.cpp
-        ${CMAKE_SOURCE_DIR}/src/Track.cpp
-        ${CMAKE_SOURCE_DIR}/src/Mapping.cpp
-        ${CMAKE_SOURCE_DIR}/src/TrackTable.cpp)
+# set(COMMON_LIBS   
+#         ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
+#         ${CMAKE_SOURCE_DIR}/src/CmdParser.cpp
+#         ${CMAKE_SOURCE_DIR}/src/Track.cpp
+#         ${CMAKE_SOURCE_DIR}/src/Mapping.cpp
+#         ${CMAKE_SOURCE_DIR}/src/TrackTable.cpp)
 
-set(HOMOGRAPHY_LIBS
-        ${CMAKE_SOURCE_DIR}/src/Homography.cpp
-        ${CMAKE_SOURCE_DIR}/src/MotionModel.cpp)
+set(UTIL_LIBS
+        ${CMAKE_SOURCE_DIR}/src/utils/ImageUtils.cpp
+        ${CMAKE_SOURCE_DIR}/src/utils/CmdParser.cpp)
+
+set(TRACK_LIBS
+        ${CMAKE_SOURCE_DIR}/src/tracks/Mapping.cpp
+        ${CMAKE_SOURCE_DIR}/src/tracks/Track.cpp
+        ${CMAKE_SOURCE_DIR}/src/tracks/TrackTable.cpp)
+
+set(BGMM_LIBS
+        ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/Homography.cpp
+        ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/MotionModel.cpp)
 
 set(RANDOMWALKER_LIBS
-        ${CMAKE_SOURCE_DIR}/src/RandomWalker.cpp)
+        ${CMAKE_SOURCE_DIR}/src/randomwalker/RandomWalker.cpp)
 
 # set(EXTERNAL_LIBS
 #         fftw3
@@ -31,22 +40,38 @@ set(RANDOMWALKER_LIBS
 #         blas
 #         )
 
-add_library(common ${COMMON_LIBS})
-target_link_libraries(common ${OpenCV_LIBRARIES})
+add_library(tracks ${TRACK_LIBS})
+target_link_libraries(tracks ${OpenCV_LIBRARIES})
+target_include_directories(tracks
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
+
+add_library(utils ${UTIL_LIBS})
+target_link_libraries(utils
+        tracks)
+target_include_directories(utils
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/utils)
 
 ##### LIBRARIES FOR BACKGROUND MOTION MODELING
-add_library(homography ${HOMOGRAPHY_LIBS})
-target_link_libraries(homography common)
+add_library(bgmm ${BGMM_LIBS})
+target_link_libraries(bgmm
+        tracks)
+target_include_directories(bgmm
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/bgmotionmodel)
 
-add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/src_motion_model.cpp)
-#target_include_directories(motionModel
-#        PUBLIC ${CMAKE_SOURCE_DIR}/library)
-target_link_libraries(motionModel homography)
+add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/src_motion_model.cpp)
+target_link_libraries(motionModel
+        bgmm
+        utils)
 
 
 ##### LIBRARIES FOR RANDOM WALKER
-add_library(walking ${RANDOMWALKER_LIBS})
-target_link_libraries(walking common)
+add_library(rdwalking ${RANDOMWALKER_LIBS})
+target_link_libraries(rdwalking
+        tracks)
+target_include_directories(rdwalking
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/randomwalker)
 
-add_executable(randomWalker ${CMAKE_SOURCE_DIR}/src/src_random_walker.cpp)
-target_link_libraries(randomWalker walking)
+add_executable(randomWalker ${CMAKE_SOURCE_DIR}/src/randomwalker/src_random_walker.cpp)
+target_link_libraries(randomWalker
+        rdwalking
+        utils)
