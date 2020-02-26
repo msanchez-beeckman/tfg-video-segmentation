@@ -34,6 +34,9 @@ namespace tfg {
 
         void printMappings() const;
 
+        void paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
+        void paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
+
         inline unsigned int numberOfFrames() const {
             return mappings.size();
         };

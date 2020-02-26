@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
     std::string resultsFolder(opt_outmodel.value);
 
     std::string fileName = "out";
-    tfg::paintSeededTracks(trackTable, images, resultsFolder, fileName);
+    //tfg::paintSeededTracks(trackTable, images, resultsFolder, fileName);
+    trackTable->paintLabeledTracks(images, resultsFolder, fileName);
 
     std::cout << "Painted tracks according to seeds" << std::endl;
     

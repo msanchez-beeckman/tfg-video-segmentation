@@ -1,6 +1,8 @@
+#include <opencv4/opencv2/imgcodecs.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>
 #include <iostream>
+#include "ImageUtils.h"
 #include "TrackTable.h"
 
 namespace tfg {
@@ -112,6 +114,66 @@ namespace tfg {
                 std::cout << ": Point (" << origin[i](0) << ", " << origin[i](1);
                 std::cout << ") maps to (" << destination[i](0) << ", " << destination[i](1) << ")" << std::endl;
             }
+        }
+    }
+
+    void TrackTable::paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
+        for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
+            std::vector<cv::Vec2f> points = this->pointsInTrack(t);
+            unsigned int initFrame = this->firstFrameOfTrack(t);
+
+            for(unsigned int f = 0; f < points.size(); f++) {
+                cv::Vec3b color;
+                color(2) = weights2[t] < 0.25 ? 0 : 255;
+                color(1) = weights2[t] < 0.25 ? 255 : 0;
+                // drawPoint(images[initFrame + f], points[f], color);
+                const int remainingFrames = points.size() - f - 1;
+                const int T = std::min(5, remainingFrames);
+                if(T != 0) {
+                    tfg::drawLine(images[initFrame + f], points[f], points[f + 1], color);
+                } else {
+                    tfg::drawPoint(images[initFrame + f], points[f], color);
+                }
+            }
+        }
+
+        for (unsigned int i = 0; i < images.size(); i++) {
+            std::stringstream ss;
+            ss << folder << fileName << i << ".png";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, images[i]);
+        }
+    }
+
+    void TrackTable::paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
+        for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
+            const int label = this->labelOfTrack(t);
+            std::vector<cv::Vec2f> points = this->pointsInTrack(t);
+            unsigned int initFrame = this->firstFrameOfTrack(t);
+
+            if(label < 0) continue;
+
+            for(unsigned int f = 0; f < points.size(); f++) {
+                cv::Vec3b color;
+                color(2) = (label + 1) % 2 == 1 ? 255 : 0;
+                color(1) = (label + 1) % 4 >= 2 ? 255 : 0;
+                color(0) = (label + 1) % 8 >= 4 ? 255 : 0;
+                // tfg::drawPoint(images[initFrame + f], points[f], color);
+                const int remainingFrames = points.size() - f - 1;
+                const int T = std::min(10, remainingFrames);
+                if(T != 0) {
+                    tfg::drawLine(images[initFrame + f], points[f], points[f + 1], color);
+                } else {
+                    tfg::drawPoint(images[initFrame + f], points[f], color);
+                }
+            }
+        }
+
+        for (unsigned int i = 0; i < images.size(); i++) {
+            std::stringstream ss;
+            ss << folder << fileName << i << ".png";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, images[i]);
         }
     }
 

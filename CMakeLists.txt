@@ -40,16 +40,17 @@ set(RANDOMWALKER_LIBS
 #         blas
 #         )
 
-add_library(tracks ${TRACK_LIBS})
-target_link_libraries(tracks ${OpenCV_LIBRARIES})
-target_include_directories(tracks
-        PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
-
 add_library(utils ${UTIL_LIBS})
 target_link_libraries(utils
-        tracks)
+        ${OpenCV_LIBRARIES})
 target_include_directories(utils
         PUBLIC ${CMAKE_SOURCE_DIR}/src/utils)
+
+add_library(tracks ${TRACK_LIBS})
+target_link_libraries(tracks
+        utils)
+target_include_directories(tracks
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
 
 ##### LIBRARIES FOR BACKGROUND MOTION MODELING
 add_library(bgmm ${BGMM_LIBS})
@@ -60,8 +61,7 @@ target_include_directories(bgmm
 
 add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/src_motion_model.cpp)
 target_link_libraries(motionModel
-        bgmm
-        utils)
+        bgmm)
 
 
 ##### LIBRARIES FOR RANDOM WALKER
@@ -73,5 +73,9 @@ target_include_directories(rdwalking
 
 add_executable(randomWalker ${CMAKE_SOURCE_DIR}/src/randomwalker/src_random_walker.cpp)
 target_link_libraries(randomWalker
-        rdwalking
+        rdwalking)
+
+##### LIBRARIES FOR CONSENSUS VOTING
+add_executable(consensusVoting ${CMAKE_SOURCE_DIR}/src/consensusvoting/src_consensus_voting.cpp)
+target_link_libraries(consensusVoting
         utils)
