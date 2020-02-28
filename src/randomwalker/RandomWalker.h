@@ -1,3 +1,7 @@
+
+#ifndef TFG_VIDEO_SEGMENTATION_RANDOMWALKER_H
+#define TFG_VIDEO_SEGMENTATION_RANDOMWALKER_H
+
 #include <unordered_map>
 #include "TrackTable.h"
 
@@ -19,3 +23,5 @@ namespace tfg {
             void writeProbabilities(std::ostream &file);
     };
 }
+
+#endif //TFG_VIDEO_SEGMENTATION_RANDOMWALKER_H
