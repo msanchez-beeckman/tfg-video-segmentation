@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
 
     cv::Mat matHOG;
     matHOG = cv::Mat(54, 1, CV_32FC1, &hogDesc[0]);
+    matHOG = matHOG.reshape(0, 1);
     std::cout << matHOG << std::endl;
 
     // float sumaa = 0;
@@ -125,7 +126,6 @@ int main(int argc, char* argv[]) {
     // // cv::Mat responses = cv::Mat::ones(12, 1, CV_32FC1);
     // cv::Mat responses(12, 1, CV_32FC1, indices.data());
 
-    // // cv::KDTree tree(test);
     // cv::Ptr<cv::ml::KNearest> tree = cv::ml::KNearest::create();
     // tree->train(samples, cv::ml::ROW_SAMPLE, responses);
     // std::cout << "Tree trained" << std::endl;

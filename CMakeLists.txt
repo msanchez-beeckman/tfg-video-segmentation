@@ -30,6 +30,10 @@ set(BGMM_LIBS
 set(RANDOMWALKER_LIBS
         ${CMAKE_SOURCE_DIR}/src/randomwalker/RandomWalker.cpp)
 
+set(NLCV_LIBS
+        ${CMAKE_SOURCE_DIR}/src/consensusvoting/Region.cpp
+        ${CMAKE_SOURCE_DIR}/src/consensusvoting/RegionList.cpp)
+
 # set(EXTERNAL_LIBS
 #         fftw3
 #         fftw3f
@@ -76,6 +80,12 @@ target_link_libraries(randomWalker
         rdwalking)
 
 ##### LIBRARIES FOR CONSENSUS VOTING
+add_library(nlcv ${NLCV_LIBS})
+target_link_libraries(nlcv
+        utils)
+target_include_directories(nlcv
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/consensusvoting)
+
 add_executable(consensusVoting ${CMAKE_SOURCE_DIR}/src/consensusvoting/src_consensus_voting.cpp)
 target_link_libraries(consensusVoting
-        utils)
+        nlcv)

@@ -54,27 +54,30 @@ namespace tfg {
         float bgrRange[] = {0, 256};
         const float* ranges[] = {bgrRange};
 
-        cv::calcHist(&imageROI, 1, channelB, maskROI, histB, 1, histSize, ranges);
-        int sumHistB = cv::sum(histB);
-        histB /= sumHistB + (sumHistB == 0);
+        cv::calcHist(&image, 1, channelB, mask, histB, 1, histSize, ranges);
+        cv::Scalar sumHistB = cv::sum(histB);
+        histB /= sumHistB(0) + (sumHistB(0) == 0);
+        histB = histB.reshape(0, 1);
 
-        cv::calcHist(&imageROI, 1, channelG, maskROI, histG, 1, histSize, ranges);
-        int sumHistG = cv::sum(histG);
-        histG /= sumHistG + (sumHistG == 0);
+        cv::calcHist(&image, 1, channelG, mask, histG, 1, histSize, ranges);
+        cv::Scalar sumHistG = cv::sum(histG);
+        histG /= sumHistG(0) + (sumHistG(0) == 0);
+        histG = histG.reshape(0, 1);
 
-        cv::calcHist(&imageROI, 1, channelR, maskROI, histR, 1, histSize, ranges);
-        int sumHistR = cv::sum(histR);
-        histR /= sumHistR + (sumHistR == 0);
+        cv::calcHist(&image, 1, channelR, mask, histR, 1, histSize, ranges);
+        cv::Scalar sumHistR = cv::sum(histR);
+        histR /= sumHistR(0) + (sumHistR(0) == 0);
+        histR = histR.reshape(0, 1);
 
         std::vector<cv::Mat> histVec = {histB, histG, histR};
-        cv::vconcat(histVec, colorHistBGRDescriptor);
+        cv::hconcat(histVec, colorHistBGRDescriptor);
     }
 
     void Region::computeColorHistogramLAB(int nbins) {
         colorHistLABDescriptor.release();
 
         cv::Mat imageLab;
-        cv::cvtColor(imageROI, imageLab, cv::COLOR_BGR2Lab);
+        cv::cvtColor(image, imageLab, cv::COLOR_BGR2Lab);
 
         cv::Mat histL, histA, histB;
         int channelL[] = {0};
@@ -86,20 +89,23 @@ namespace tfg {
         const float* rangesL[] = {lRange};
         const float* rangesAB[] = {abRange};
 
-        cv::calcHist(&imageLab, 1, channelL, maskROI, histL, 1, histSize, rangesL);
-        int sumHistL = cv::sum(histL);
-        histL /= sumHistL + (sumHistL == 0);
+        cv::calcHist(&imageLab, 1, channelL, mask, histL, 1, histSize, rangesL);
+        cv::Scalar sumHistL = cv::sum(histL);
+        histL /= sumHistL(0) + (sumHistL(0) == 0);
+        histL = histL.reshape(0, 1);
 
-        cv::calcHist(&imageLab, 1, channelA, maskROI, histA, 1, histSize, rangesAB);
-        int sumHistA = cv::sum(histA);
-        histA /= sumHistA + (sumHistA == 0);
+        cv::calcHist(&imageLab, 1, channelA, mask, histA, 1, histSize, rangesAB);
+        cv::Scalar sumHistA = cv::sum(histA);
+        histA /= sumHistA(0) + (sumHistA(0) == 0);
+        histA = histA.reshape(0, 1);
 
-        cv::calcHist(&imageLab, 1, channelB, maskROI, histB, 1, histSize, rangesAB);
-        int sumHistB = cv::sum(histB);
-        histB /= sumHistB + (sumHistB == 0);
+        cv::calcHist(&imageLab, 1, channelB, mask, histB, 1, histSize, rangesAB);
+        cv::Scalar sumHistB = cv::sum(histB);
+        histB /= sumHistB(0) + (sumHistB(0) == 0);
+        histB = histB.reshape(0, 1);
 
         std::vector<cv::Mat> histVec = {histL, histA, histB};
-        cv::vconcat(histVec, colorHistLABDescriptor);
+        cv::hconcat(histVec, colorHistLABDescriptor);
     }
 
     void Region::computeHOG(int ncells, int nbins, int patchSize) {
@@ -109,7 +115,7 @@ namespace tfg {
         cv::HOGDescriptor hogd(cv::Size(patchSize, patchSize), cv::Size(patchSize, patchSize), cv::Size(cellSize, cellSize), cv::Size(cellSize, cellSize), nbins);
         hogd.compute(patch, descriptors);
 
-        this->HOGDescriptor = cv::Mat(ncells * nbins, 1, CV_32FC1, &descriptors[0]);
+        this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
     }
 
     cv::Mat Region::computeRegionOfInterest(int patchSize) {
@@ -145,13 +151,13 @@ namespace tfg {
         float relativeCenterY = centerY / image.rows;
 
         std::vector<float> relativePosition = {relativeCenterX, relativeCenterY};
-        this->relativeDistanceDescriptor = cv::Mat(2, 1, CV_32FC1, &relativePosition[0]);
+        this->relativeDistanceDescriptor = cv::Mat(1, 2, CV_32FC1, &relativePosition[0]);
     }
 
     cv::Mat Region::getDescriptor() const {
         std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeDistanceDescriptor};
         cv::Mat descriptorMat;
-        cv::vconcat(descriptorVec, descriptorMat);
+        cv::hconcat(descriptorVec, descriptorMat);
         return descriptorMat;
     }
 }
