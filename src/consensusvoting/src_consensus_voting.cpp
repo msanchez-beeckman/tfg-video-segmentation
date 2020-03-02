@@ -1,98 +1,144 @@
 #include <iostream>
+#include <chrono>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #include <opencv4/opencv2/objdetect/objdetect.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 #include <opencv4/opencv2/ximgproc/slic.hpp>
 #include <opencv4/opencv2/ml/ml.hpp>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+#include "Region.h"
+#include "RegionList.h"
+#include "ImageUtils.h"
+#include "CmdParser.h"
 
 int main(int argc, char* argv[]) {
-    cv::Mat image = cv::imread("/home/marco/CLionProjects/tfg_video_segmentation/data/bear/00000.jpg", cv::IMREAD_COLOR);
-    cv::Mat image32;
-    image.convertTo(image32, CV_32FC3);
-    cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bear/flowu00000.tiff", cv::IMREAD_ANYDEPTH);
-    cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bear/flowv00000.tiff", cv::IMREAD_ANYDEPTH);
+    // cv::Mat image = cv::imread("/home/marco/CLionProjects/tfg_video_segmentation/data/bear/00000.jpg", cv::IMREAD_COLOR);
+    // cv::Mat image32;
+    // image.convertTo(image32, CV_32FC3);
+    // cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bear/flowu00000.tiff", cv::IMREAD_ANYDEPTH);
+    // cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bear/flowv00000.tiff", cv::IMREAD_ANYDEPTH);
 
-    std::cout << "Read images" << std::endl;
+    // auto channels = std::vector<cv::Mat>{image32, flowu, flowv};
+    // cv::Mat fiveChannMatrix;
+    // cv::merge(channels, fiveChannMatrix);
 
-    auto channels = std::vector<cv::Mat>{image32, flowu, flowv};
-    cv::Mat fiveChannMatrix;
-    cv::merge(channels, fiveChannMatrix);
+    // std::cout << "Merged image and flows in a single 5-channel Mat" << std::endl;
 
-    std::cout << "Merged image and flows in a single 5-channel Mat" << std::endl;
+    std::vector<cv::Mat> images;
+    std::string imageListPath = "/home/marco/CLionProjects/tfg_video_segmentation/data/bear/images.txt";
+    std::ifstream imageListFile(imageListPath);
+    tfg::readImages(imageListFile, images);
+    tfg::RegionList regionList(1590, images.size());
 
-    cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(fiveChannMatrix, cv::ximgproc::SLICO, 16);
-    sp->iterate();
+    // /////// Test for frame 0
+    // cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[0], cv::ximgproc::SLICO, 16);
+    // sp->iterate();
+    // int superpixelsInFrame = sp->getNumberOfSuperpixels();
+    // std::cout << "Superpixels in frame 0: " << superpixelsInFrame << std::endl;
+    // cv::Mat pixelLabels0;
+    // sp->getLabels(pixelLabels0);
+    // double min, max;
+    // cv::minMaxLoc(pixelLabels0, &min, &max);
+    // std::cout << "Maximum label in frame 0: " << max << std::endl;
 
-    std::cout << "Determined superpixels" << std::endl;
+    // std::vector<tfg::Region> regionsInFrame0;
+    // for(unsigned int s = 0; s < superpixelsInFrame; s++) {
+    //     tfg::Region region(s, 0, images[0], pixelLabels0);
+    //     regionsInFrame0.push_back(region);
+    // }
+    // regionList.addNewFrame(regionsInFrame0);
 
-    // cv::Mat contourMaskInv;
-    // sp->getLabelContourMask(contourMaskInv);
-    // cv::Mat contourMask(contourMaskInv == 0);
-    // cv::Mat maskedImage;
-    // image.copyTo(maskedImage, contourMask);
 
-    cv::Mat labels;
-    sp->getLabels(labels);
-    // std::cout << sp->getNumberOfSuperpixels() << std::endl;
+    for(unsigned int f = 0; f < images.size(); f++) {
+        std::cout << "Frame " << f << ":" << std::endl;
 
-    cv::Mat labelMask(labels == 1200);
-    cv::Mat maskedImage;
-    image.copyTo(maskedImage, labelMask);
+        std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
+        cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, 16);
+        sp->iterate();
+        std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
 
-    cv::Rect boundaries;
-    int patchSize = 15;
-    int xmax = 0;
-    int xmin = labelMask.cols - 1;
-    int ymax = 0;
-    int ymin = labelMask.rows - 1;
-    for(int x = 0; x < labelMask.cols; x++) {
-        for(int y = 0; y < labelMask.rows; y++) {
-            unsigned char value = labelMask.at<unsigned char>(y, x);
-            if(value == 0) continue;
-            ymin = y < ymin ? y : ymin;
-            ymax = y > ymax ? y : ymax;
-            xmin = x < xmin ? x : xmin;
-            xmax = x > xmax ? x : xmax;
+        std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
+
+        const int SUPERPIXELS_IN_FRAME = sp->getNumberOfSuperpixels();
+        cv::Mat pixelLabels;
+        sp->getLabels(pixelLabels);
+        std::vector<tfg::Region> regionsInFrame;
+        regionsInFrame.reserve(SUPERPIXELS_IN_FRAME);
+        for(int s = 0; s < SUPERPIXELS_IN_FRAME; s++) {
+            tfg::Region region(s, f, images[f], pixelLabels);
+            regionsInFrame.push_back(region);
         }
+        regionList.addNewFrame(regionsInFrame);
+        std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
+        std::cout << "Regions added to RegionList in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag3-flag2).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << std::endl;
     }
 
-    boundaries.x = xmin;
-    boundaries.y = ymin;
-    boundaries.width = xmax - xmin + 1;
-    boundaries.height = ymax - ymin + 1;
+    std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
+    regionList.computeDescriptors();
+    std::chrono::steady_clock::time_point flag5 = std::chrono::steady_clock::now();
+    std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
 
-    // After delimiting the superpixel, extract a patch around its center
-    // Make sure that the patch is inside the image
-    xmin = static_cast<int>(boundaries.x + (boundaries.width - patchSize)/2);
-    xmin = xmin < 0 ? 0 : xmin;
-    xmax = static_cast<int>(boundaries.x + (boundaries.width + patchSize)/2 + 1);
-    xmax = xmax > labelMask.cols ? labelMask.cols : xmax;
+    Eigen::SparseMatrix<float> transM = regionList.transitionMatrix(15, 4, 0.1);
+    std::chrono::steady_clock::time_point flag6 = std::chrono::steady_clock::now();
+    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
 
-    ymin = static_cast<int>(boundaries.y + (boundaries.height - patchSize)/2);
-    ymin = ymin < 0 ? 0 : ymin;
-    ymax = static_cast<int>(boundaries.y + (boundaries.height + patchSize)/2 + 1);
-    ymax = ymax > labelMask.rows ? labelMask.rows : ymax;
 
-    boundaries.x = xmin;
-    boundaries.y = ymin;
-    boundaries.width = xmax - xmin;
-    boundaries.height = ymax - ymin;
+    // cv::Rect boundaries;
+    // int patchSize = 15;
+    // int xmax = 0;
+    // int xmin = labelMask.cols - 1;
+    // int ymax = 0;
+    // int ymin = labelMask.rows - 1;
+    // for(int x = 0; x < labelMask.cols; x++) {
+    //     for(int y = 0; y < labelMask.rows; y++) {
+    //         unsigned char value = labelMask.at<unsigned char>(y, x);
+    //         if(value == 0) continue;
+    //         ymin = y < ymin ? y : ymin;
+    //         ymax = y > ymax ? y : ymax;
+    //         xmin = x < xmin ? x : xmin;
+    //         xmax = x > xmax ? x : xmax;
+    //     }
+    // }
 
-    cv::Mat patch(image, boundaries);
+    // boundaries.x = xmin;
+    // boundaries.y = ymin;
+    // boundaries.width = xmax - xmin + 1;
+    // boundaries.height = ymax - ymin + 1;
 
-    // cv::imshow("Patch", patch);
-    // cv::imshow("Masked image", maskedImage);
-    // cv::waitKey(0);
+    // // After delimiting the superpixel, extract a patch around its center
+    // // Make sure that the patch is inside the image
+    // xmin = static_cast<int>(boundaries.x + (boundaries.width - patchSize)/2);
+    // xmin = xmin < 0 ? 0 : xmin;
+    // xmax = static_cast<int>(boundaries.x + (boundaries.width + patchSize)/2 + 1);
+    // xmax = xmax > labelMask.cols ? labelMask.cols : xmax;
 
-    std::vector<float> hogDesc;
-    cv::HOGDescriptor hogd(cv::Size(15, 15), cv::Size(15, 15), cv::Size(5, 5), cv::Size(5, 5), 6);
-    hogd.compute(patch, hogDesc);
+    // ymin = static_cast<int>(boundaries.y + (boundaries.height - patchSize)/2);
+    // ymin = ymin < 0 ? 0 : ymin;
+    // ymax = static_cast<int>(boundaries.y + (boundaries.height + patchSize)/2 + 1);
+    // ymax = ymax > labelMask.rows ? labelMask.rows : ymax;
 
-    cv::Mat matHOG;
-    matHOG = cv::Mat(54, 1, CV_32FC1, &hogDesc[0]);
-    matHOG = matHOG.reshape(0, 1);
-    std::cout << matHOG << std::endl;
+    // boundaries.x = xmin;
+    // boundaries.y = ymin;
+    // boundaries.width = xmax - xmin;
+    // boundaries.height = ymax - ymin;
+
+    // cv::Mat patch(image, boundaries);
+
+    // // cv::imshow("Patch", patch);
+    // // cv::imshow("Masked image", maskedImage);
+    // // cv::waitKey(0);
+
+    // std::vector<float> hogDesc;
+    // cv::HOGDescriptor hogd(cv::Size(15, 15), cv::Size(15, 15), cv::Size(5, 5), cv::Size(5, 5), 6);
+    // hogd.compute(patch, hogDesc);
+
+    // cv::Mat matHOG;
+    // matHOG = cv::Mat(54, 1, CV_32FC1, &hogDesc[0]);
+    // matHOG = matHOG.reshape(0, 1);
+    // std::cout << matHOG << std::endl;
 
     // float sumaa = 0;
     // for(unsigned int i = 0; i < hogDesc.size(); i++) {
@@ -148,5 +194,5 @@ int main(int argc, char* argv[]) {
     // std::cout << "Distances:" << std::endl;
     // std::cout << distances << std::endl;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

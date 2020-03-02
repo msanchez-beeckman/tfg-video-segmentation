@@ -11,7 +11,7 @@ namespace tfg {
     class RegionList {
         private:
             std::vector<tfg::Region> superpixels;
-            std::vector<unsigned int> frameBeginningIndex;
+            std::vector<int> frameBeginningIndex;
 
             cv::Mat descriptors;
 
@@ -19,7 +19,7 @@ namespace tfg {
 
         public:
             RegionList();
-            RegionList(unsigned int estimateSpPerFrame, unsigned int numberOfFrames);
+            RegionList(int estimateSpPerFrame, int numberOfFrames);
             ~RegionList();
 
             void addNewFrame(std::vector<tfg::Region> &spInFrame);

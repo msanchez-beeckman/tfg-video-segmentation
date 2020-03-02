@@ -7,10 +7,10 @@
 namespace tfg {
     class Region {
         private:
-            unsigned int number;
-            unsigned int frame;
+            int number;
+            int frame;
             cv::Mat image;
-            cv::Mat mask;
+            cv::Mat frameSuperpixelLabels;
             cv::Rect boundaries;
 
             cv::Mat colorHistBGRDescriptor;
@@ -27,12 +27,12 @@ namespace tfg {
 
         public:
             Region();
-            Region(unsigned int number, unsigned int frame, const cv::Mat &image, const cv::Mat &mask);
+            Region(int number, int frame, const cv::Mat &image, const cv::Mat &frameSuperpixelLabels);
             ~Region();
 
             cv::Mat getDescriptor() const;
 
-            inline unsigned int getNumber() const {
+            inline int getNumber() const {
                 return number;
             };
 

@@ -1,3 +1,5 @@
+#include <iostream>
+#include <chrono>
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #include <opencv4/opencv2/objdetect/objdetect.hpp>
 #include <cmath>
@@ -8,29 +10,32 @@ namespace tfg {
     Region::Region() {}
     Region::~Region() {}
 
-    Region::Region(unsigned int number, unsigned int frame, const cv::Mat &image, const cv::Mat &mask) {
+    Region::Region(int number, int frame, const cv::Mat &image, const cv::Mat &frameSuperpixelLabels) {
         this->number = number;
         this->frame = frame;
         this->image = image;
-        this->mask = mask;
+        this->frameSuperpixelLabels = frameSuperpixelLabels;
 
+        // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         computeSuperpixelBoundaries();
 
         computeColorHistogramBGR(20);
         computeColorHistogramLAB(20);
         computeHOG(9, 6, 15);
         computeRelativeDistance();
+        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
     }
 
     void Region::computeSuperpixelBoundaries() {
         int xmax = 0;
-        int xmin = mask.cols - 1;
+        int xmin = frameSuperpixelLabels.cols - 1;
         int ymax = 0;
-        int ymin = mask.rows - 1;
-        for(int x = 0; x < mask.cols; x++) {
-            for(int y = 0; y < mask.rows; y++) {
-                unsigned char value = mask.at<unsigned char>(y, x);
-                if(value == 0) continue;
+        int ymin = frameSuperpixelLabels.rows - 1;
+        for(int x = 0; x < frameSuperpixelLabels.cols; x++) {
+            for(int y = 0; y < frameSuperpixelLabels.rows; y++) {
+                int value = frameSuperpixelLabels.at<int>(y, x);
+                if(value != this->number) continue;
                 ymin = y < ymin ? y : ymin;
                 ymax = y > ymax ? y : ymax;
                 xmin = x < xmin ? x : xmin;
@@ -45,6 +50,8 @@ namespace tfg {
 
     void Region::computeColorHistogramBGR(int nbins) {
         colorHistBGRDescriptor.release();
+
+        cv::Mat mask(frameSuperpixelLabels == number);
 
         cv::Mat histB, histG, histR;
         int channelB[] = {0};
@@ -78,6 +85,7 @@ namespace tfg {
 
         cv::Mat imageLab;
         cv::cvtColor(image, imageLab, cv::COLOR_BGR2Lab);
+        cv::Mat mask(frameSuperpixelLabels == number);
 
         cv::Mat histL, histA, histB;
         int channelL[] = {0};
@@ -115,27 +123,41 @@ namespace tfg {
         cv::HOGDescriptor hogd(cv::Size(patchSize, patchSize), cv::Size(patchSize, patchSize), cv::Size(cellSize, cellSize), cv::Size(cellSize, cellSize), nbins);
         hogd.compute(patch, descriptors);
 
+        // std::cout << "Cell size: " << cellSize << std::endl;
+        // std::cout << "Patch size: " << patch.rows << " x " << patch.cols << std::endl;
+        // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << std::endl << std::endl;
+
         this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
     }
 
     cv::Mat Region::computeRegionOfInterest(int patchSize) {
         // After delimiting the superpixel, extract a patch around its center
-        // Make sure that the patch is inside the image
+        // If the patch is not inside the image, displace the rectangle so it fits in it
+        // even if it's not around the center of the superpixel anymore (HOG needs the size
+        // to be fixed)
         int xmin = static_cast<int>(boundaries.x + (boundaries.width - patchSize)/2);
         xmin = xmin < 0 ? 0 : xmin;
-        int xmax = static_cast<int>(boundaries.x + (boundaries.width + patchSize)/2 + 1);
-        xmax = xmax > mask.cols ? mask.cols : xmax;
+        // int xmax = static_cast<int>(boundaries.x + (boundaries.width + patchSize)/2 + 1);
+        // xmax = xmax > frameSuperpixelLabels.cols ? frameSuperpixelLabels.cols : xmax;
+        if(xmin + patchSize > frameSuperpixelLabels.cols) {
+            xmin = frameSuperpixelLabels.cols - patchSize;
+        }
 
         int ymin = static_cast<int>(boundaries.y + (boundaries.height - patchSize)/2);
         ymin = ymin < 0 ? 0 : ymin;
-        int ymax = static_cast<int>(boundaries.y + (boundaries.height + patchSize)/2 + 1);
-        ymax = ymax > mask.rows ? mask.rows : ymax;
+        // int ymax = static_cast<int>(boundaries.y + (boundaries.height + patchSize)/2 + 1);
+        // ymax = ymax > frameSuperpixelLabels.rows ? frameSuperpixelLabels.rows : ymax;
+        if(ymin + patchSize > frameSuperpixelLabels.rows) {
+            ymin = frameSuperpixelLabels.rows - patchSize;
+        }
 
         cv::Rect patchDelimiter;
         patchDelimiter.x = xmin;
         patchDelimiter.y = ymin;
-        patchDelimiter.width = xmax - xmin;
-        patchDelimiter.height = ymax - ymin;
+        // patchDelimiter.width = xmax - xmin;
+        // patchDelimiter.height = ymax - ymin;
+        patchDelimiter.width = patchSize;
+        patchDelimiter.height = patchSize;
 
         cv::Mat patch(image, patchDelimiter);
         return patch;
