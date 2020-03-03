@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     ParStruct par_tracks = {"tracks", nullptr, "Text file containing codified tracks"}; parameters.push_back(&par_tracks);
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images whose tracks are being segmented"}; parameters.push_back(&par_images);
 
-    if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
+    if (!parsecmdline("bgmm", "Segmenting tracks", argc, argv, options, parameters))
         return EXIT_FAILURE;
 
     

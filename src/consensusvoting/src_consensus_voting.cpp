@@ -1,11 +1,10 @@
 #include <iostream>
+#include <algorithm>
 #include <chrono>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
-#include <opencv4/opencv2/objdetect/objdetect.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 #include <opencv4/opencv2/ximgproc/slic.hpp>
-#include <opencv4/opencv2/ml/ml.hpp>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include "Region.h"
@@ -14,6 +13,17 @@
 #include "CmdParser.h"
 
 int main(int argc, char* argv[]) {
+
+    // Parse command line arguments
+    std::vector<OptStruct *> options;
+    OptStruct opt_outmodel = {"o:", 0, "./results/nlcsegmentation/", nullptr, "Folder where the results of the segmentation should be stored"}; options.push_back(&opt_outmodel);
+
+    std::vector<ParStruct *> parameters;
+    ParStruct par_images = {"images", nullptr, "Text file containing the path to the images to be segmented"}; parameters.push_back(&par_images);
+
+    if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
+        return EXIT_FAILURE;
+
     // cv::Mat image = cv::imread("/home/marco/CLionProjects/tfg_video_segmentation/data/bear/00000.jpg", cv::IMREAD_COLOR);
     // cv::Mat image32;
     // image.convertTo(image32, CV_32FC3);
@@ -27,29 +37,9 @@ int main(int argc, char* argv[]) {
     // std::cout << "Merged image and flows in a single 5-channel Mat" << std::endl;
 
     std::vector<cv::Mat> images;
-    std::string imageListPath = "/home/marco/CLionProjects/tfg_video_segmentation/data/bear/images.txt";
-    std::ifstream imageListFile(imageListPath);
+    std::ifstream imageListFile(par_images.value);
     tfg::readImages(imageListFile, images);
     tfg::RegionList regionList(1590, images.size());
-
-    // /////// Test for frame 0
-    // cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[0], cv::ximgproc::SLICO, 16);
-    // sp->iterate();
-    // int superpixelsInFrame = sp->getNumberOfSuperpixels();
-    // std::cout << "Superpixels in frame 0: " << superpixelsInFrame << std::endl;
-    // cv::Mat pixelLabels0;
-    // sp->getLabels(pixelLabels0);
-    // double min, max;
-    // cv::minMaxLoc(pixelLabels0, &min, &max);
-    // std::cout << "Maximum label in frame 0: " << max << std::endl;
-
-    // std::vector<tfg::Region> regionsInFrame0;
-    // for(unsigned int s = 0; s < superpixelsInFrame; s++) {
-    //     tfg::Region region(s, 0, images[0], pixelLabels0);
-    //     regionsInFrame0.push_back(region);
-    // }
-    // regionList.addNewFrame(regionsInFrame0);
-
 
     for(unsigned int f = 0; f < images.size(); f++) {
         std::cout << "Frame " << f << ":" << std::endl;
@@ -86,113 +76,21 @@ int main(int argc, char* argv[]) {
     std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
 
 
-    // cv::Rect boundaries;
-    // int patchSize = 15;
-    // int xmax = 0;
-    // int xmin = labelMask.cols - 1;
-    // int ymax = 0;
-    // int ymin = labelMask.rows - 1;
-    // for(int x = 0; x < labelMask.cols; x++) {
-    //     for(int y = 0; y < labelMask.rows; y++) {
-    //         unsigned char value = labelMask.at<unsigned char>(y, x);
-    //         if(value == 0) continue;
-    //         ymin = y < ymin ? y : ymin;
-    //         ymax = y > ymax ? y : ymax;
-    //         xmin = x < xmin ? x : xmin;
-    //         xmax = x > xmax ? x : xmax;
-    //     }
-    // }
-
-    // boundaries.x = xmin;
-    // boundaries.y = ymin;
-    // boundaries.width = xmax - xmin + 1;
-    // boundaries.height = ymax - ymin + 1;
-
-    // // After delimiting the superpixel, extract a patch around its center
-    // // Make sure that the patch is inside the image
-    // xmin = static_cast<int>(boundaries.x + (boundaries.width - patchSize)/2);
-    // xmin = xmin < 0 ? 0 : xmin;
-    // xmax = static_cast<int>(boundaries.x + (boundaries.width + patchSize)/2 + 1);
-    // xmax = xmax > labelMask.cols ? labelMask.cols : xmax;
-
-    // ymin = static_cast<int>(boundaries.y + (boundaries.height - patchSize)/2);
-    // ymin = ymin < 0 ? 0 : ymin;
-    // ymax = static_cast<int>(boundaries.y + (boundaries.height + patchSize)/2 + 1);
-    // ymax = ymax > labelMask.rows ? labelMask.rows : ymax;
-
-    // boundaries.x = xmin;
-    // boundaries.y = ymin;
-    // boundaries.width = xmax - xmin;
-    // boundaries.height = ymax - ymin;
-
-    // cv::Mat patch(image, boundaries);
-
-    // // cv::imshow("Patch", patch);
-    // // cv::imshow("Masked image", maskedImage);
-    // // cv::waitKey(0);
-
-    // std::vector<float> hogDesc;
-    // cv::HOGDescriptor hogd(cv::Size(15, 15), cv::Size(15, 15), cv::Size(5, 5), cv::Size(5, 5), 6);
-    // hogd.compute(patch, hogDesc);
-
-    // cv::Mat matHOG;
-    // matHOG = cv::Mat(54, 1, CV_32FC1, &hogDesc[0]);
-    // matHOG = matHOG.reshape(0, 1);
-    // std::cout << matHOG << std::endl;
-
-    // float sumaa = 0;
-    // for(unsigned int i = 0; i < hogDesc.size(); i++) {
-    //     std::cout << hogDesc[i] << std::endl;
-    //     sumaa += hogDesc[i];
-    // }
-    // std::cout << std::endl << sumaa << std::endl;
 
 
 
-    // cv::imshow("Test image", maskedImage);
-    // cv::waitKey(0);
+    // cv::Mat shrunk_flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/u.i0.tiff", cv::IMREAD_ANYDEPTH);
+    // cv::Mat shrunk_flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/v.i0.tiff", cv::IMREAD_ANYDEPTH);
+    // auto channels = std::vector<cv::Mat>{shrunk_flowu, shrunk_flowv};
+    // cv::Mat shrunk_flow;
+    // cv::merge(channels, shrunk_flow);
 
-
-    //////////// KDTree
-
-    // std::vector<float> test = {0, 1.5f, 0,
-    //                            1, 2.1f, 3.0f,
-    //                            1, 2, 1.5f,
-    //                            2, 0, 0,
-    //                            2, 1, 1,
-    //                            1, 1.5f, 1,
-    //                            0, 2.2f, 1,
-    //                            0.5f, 0, 1,
-    //                            2, 2, 2,
-    //                            1, 1.5f, 2,
-    //                            0, 1.9f, 0,
-    //                            2, 2, 1.5f};
-    // cv::Mat samples(12, 3, CV_32FC1, test.data());
-    // std::vector<float> indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    // // cv::Mat responses = cv::Mat::ones(12, 1, CV_32FC1);
-    // cv::Mat responses(12, 1, CV_32FC1, indices.data());
-
-    // cv::Ptr<cv::ml::KNearest> tree = cv::ml::KNearest::create();
-    // tree->train(samples, cv::ml::ROW_SAMPLE, responses);
-    // std::cout << "Tree trained" << std::endl;
-
-    // std::vector<float> newPointVec = {0, 0, 0};
-    // cv::Mat newPoint(1, 3, CV_32FC1, newPointVec.data());
-    // cv::Mat result;
-    // cv::Mat neighbourResponses;
-    // cv::Mat distances;
-
-    // // Distance is L2 squared
-    // tree->findNearest(samples, 3, result, neighbourResponses, distances);
-
-    // std::cout << "NeighbourResponses:" << std::endl;
-    // std::cout << neighbourResponses << std::endl << std::endl;
-
-    // std::cout << "Result:" << std::endl;
-    // std::cout << result << std::endl << std::endl;
-
-    // std::cout << "Distances:" << std::endl;
-    // std::cout << distances << std::endl;
+    // cv::Mat restored_flow;
+    // cv::resize(shrunk_flow, restored_flow, cv::Size(854, 480));
+    // std::vector<cv::Mat> split_flow;
+    // cv::split(restored_flow, split_flow);
+    // cv::imwrite("/home/marco/Projects/TFG/testing/pointtracking/restored_u.i0.tiff", split_flow[0]);
+    // cv::imwrite("/home/marco/Projects/TFG/testing/pointtracking/restored_v.i0.tiff", split_flow[1]);
 
     return EXIT_SUCCESS;
 }

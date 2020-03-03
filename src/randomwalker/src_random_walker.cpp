@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     ParStruct par_seeds = {"seeds", nullptr, "Text file containing the path and frame number of the seeds for the random walker"}; parameters.push_back(&par_seeds);
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images whose tracks are being segmented"}; parameters.push_back(&par_images);
 
-    if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
+    if (!parsecmdline("rWalker", "Segmenting tracks", argc, argv, options, parameters))
         return EXIT_FAILURE;
 
 
