@@ -15,8 +15,6 @@ namespace tfg {
 
             cv::Mat descriptors;
 
-            // void computeNearestNeighbours(int F = 15, int L = 4);
-
         public:
             RegionList();
             RegionList(int estimateSpPerFrame, int numberOfFrames);

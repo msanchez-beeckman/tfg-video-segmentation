@@ -92,8 +92,12 @@ namespace tfg {
         int channelA[] = {1};
         int channelB[] = {2};
         int histSize[] = {nbins};
-        float lRange[] = {0, 101};
-        float abRange[] = {-128, 128};
+
+        // OpenCV converts the Lab values to range [0..255] in 8 bit images
+        // float lRange[] = {0, 101};
+        float lRange[] = {0, 256};
+        float abRange[] = {0, 256};
+        // float abRange[] = {-128, 128};
         const float* rangesL[] = {lRange};
         const float* rangesAB[] = {abRange};
 
