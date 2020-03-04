@@ -32,7 +32,8 @@ set(RANDOMWALKER_LIBS
 
 set(NLCV_LIBS
         ${CMAKE_SOURCE_DIR}/src/consensusvoting/Region.cpp
-        ${CMAKE_SOURCE_DIR}/src/consensusvoting/RegionList.cpp)
+        ${CMAKE_SOURCE_DIR}/src/consensusvoting/RegionList.cpp
+        ${CMAKE_SOURCE_DIR}/src/consensusvoting/ConsensusVoter.cpp)
 
 # set(EXTERNAL_LIBS
 #         fftw3
