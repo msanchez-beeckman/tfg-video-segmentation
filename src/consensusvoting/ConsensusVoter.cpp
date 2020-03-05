@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/Dense>
 #include "ConsensusVoter.h"
 
 namespace tfg {
@@ -157,5 +159,21 @@ namespace tfg {
             float vote = regionMeanVote(0);
             this->votes.push_back(vote);
         }
+    }
+
+    std::vector<float> ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations) {
+        Eigen::Map<Eigen::VectorXf> updatedVotes(votes.data(), votes.size());
+
+        for(int t = 0; t < iterations; t++) {
+            updatedVotes = transitionMatrix * updatedVotes;
+
+            for(unsigned int f = 0; f < frameBeginningIndices.size(); f++) {
+                int superpixelsInFrame = (f == (frameBeginningIndices.size() - 1)) ? (votes.size() - frameBeginningIndices[f]) : (frameBeginningIndices[f + 1] - frameBeginningIndices[f]);
+                float maxVoteInFrame = updatedVotes.segment(frameBeginningIndices[f], superpixelsInFrame).maxCoeff();
+                updatedVotes.segment(frameBeginningIndices[f], superpixelsInFrame) /= maxVoteInFrame + (maxVoteInFrame <= 0);
+            }
+        }
+
+        return votes;
     }
 }

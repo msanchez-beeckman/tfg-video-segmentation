@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <opencv4/opencv2/core.hpp>
+#include <eigen3/Eigen/Sparse>
 
 namespace tfg {
 
@@ -23,6 +24,8 @@ namespace tfg {
             bool initializeMotionSaliencyScores(std::istream &flowFile, float minimumPercentageValidity);
 
             void initializeVotesFromSaliencyInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels);
+
+            std::vector<float> reachConsensus(const Eigen::SparseMatrix<float> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations);
     };
 }
 

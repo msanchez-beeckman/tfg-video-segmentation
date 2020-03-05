@@ -24,6 +24,10 @@ namespace tfg {
 
             void computeDescriptors();
             Eigen::SparseMatrix<float> transitionMatrix(int F, int L, float sigma2);
+
+            inline std::vector<int> getFrameBeginningIndices() {
+                return frameBeginningIndex;
+            };
     };
 }
 

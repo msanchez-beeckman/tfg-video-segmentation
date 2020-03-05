@@ -76,62 +76,62 @@ int main(int argc, char* argv[]) {
     // std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
 
 
-    // cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/u.i0.tiff", cv::IMREAD_ANYDEPTH);
-    // cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/v.i0.tiff", cv::IMREAD_ANYDEPTH);
-    cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bmx_flowu0.tiff", cv::IMREAD_ANYDEPTH);
-    cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bmx_flowv0.tiff", cv::IMREAD_ANYDEPTH);
+    // // cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/u.i0.tiff", cv::IMREAD_ANYDEPTH);
+    // // cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/v.i0.tiff", cv::IMREAD_ANYDEPTH);
+    // cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bmx_flowu0.tiff", cv::IMREAD_ANYDEPTH);
+    // cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/bmx_flowv0.tiff", cv::IMREAD_ANYDEPTH);
 
-    cv::Mat magnitude;
-    cv::Mat orientation;
-    cv::cartToPolar(flowu, flowv, magnitude, orientation);
-    magnitude = magnitude.reshape(0, 1);
-    std::vector<float> magnitudeData;
-    magnitude.row(0).copyTo(magnitudeData);
+    // cv::Mat magnitude;
+    // cv::Mat orientation;
+    // cv::cartToPolar(flowu, flowv, magnitude, orientation);
+    // magnitude = magnitude.reshape(0, 1);
+    // std::vector<float> magnitudeData;
+    // magnitude.row(0).copyTo(magnitudeData);
 
-    // Compute the median of the magnitude of the flow
-    std::nth_element(magnitudeData.begin(), magnitudeData.begin() + magnitudeData.size()/2, magnitudeData.end());
-    float median;
-    if(magnitudeData.size()%2 == 1) {
-        median = magnitudeData[magnitudeData.size()/2];
-    } else {
-        auto it = std::max_element(magnitudeData.begin(), magnitudeData.begin() + magnitudeData.size()/2);
-        median = (*it + magnitudeData[magnitudeData.size()/2])/2.0f;
-    }
+    // // Compute the median of the magnitude of the flow
+    // std::nth_element(magnitudeData.begin(), magnitudeData.begin() + magnitudeData.size()/2, magnitudeData.end());
+    // float median;
+    // if(magnitudeData.size()%2 == 1) {
+    //     median = magnitudeData[magnitudeData.size()/2];
+    // } else {
+    //     auto it = std::max_element(magnitudeData.begin(), magnitudeData.begin() + magnitudeData.size()/2);
+    //     median = (*it + magnitudeData[magnitudeData.size()/2])/2.0f;
+    // }
 
-    std::cout << "Median: " << median << std::endl;
+    // std::cout << "Median: " << median << std::endl;
 
-    // cv::Mat saliency;
-    // cv::Mat kernel = cv::Mat::ones(5, 5, CV_32FC1) / (5 * 5);
-    // cv::filter2D(magnitude.mul(magnitude), saliency, -1, kernel);
+    // // cv::Mat saliency;
+    // // cv::Mat kernel = cv::Mat::ones(5, 5, CV_32FC1) / (5 * 5);
+    // // cv::filter2D(magnitude.mul(magnitude), saliency, -1, kernel);
 
-    // std::cout << saliency - magnitude.mul(magnitude) << std::endl;
+    // // std::cout << saliency - magnitude.mul(magnitude) << std::endl;
 
-    int onlyChannel[] = {0};
-    int histSize[] = {10};
-    float orientationRange[] = {0, 2*CV_PI};
-    const float* ranges[] = {orientationRange};
-    cv::Mat orientationHistogram;
+    // int onlyChannel[] = {0};
+    // int histSize[] = {10};
+    // float orientationRange[] = {0, 2*CV_PI};
+    // const float* ranges[] = {orientationRange};
+    // cv::Mat orientationHistogram;
 
-    cv::calcHist(&orientation, 1, onlyChannel, cv::Mat(), orientationHistogram, 1, histSize, ranges);
-    cv::Scalar sumHist = cv::sum(orientationHistogram);
-    orientationHistogram /= sumHist(0) + (sumHist(0) == 0);
+    // cv::calcHist(&orientation, 1, onlyChannel, cv::Mat(), orientationHistogram, 1, histSize, ranges);
+    // cv::Scalar sumHist = cv::sum(orientationHistogram);
+    // orientationHistogram /= sumHist(0) + (sumHist(0) == 0);
 
-    std::cout << orientationHistogram << std::endl;
-    double minVal, maxVal;
-    int minPos[2], maxPos[2];
-    cv::minMaxIdx(orientationHistogram, &minVal, &maxVal, &minPos[0], &maxPos[0]);
-    std::cout << "Minimum at (" << minPos[0] << ", " << minPos[1] << ") with value " << minVal << std::endl;
-    std::cout << "Maximum at (" << maxPos[0] << ", " << maxPos[1] << ") with value " << maxVal << std::endl;
+    // std::cout << orientationHistogram << std::endl;
+    // double minVal, maxVal;
+    // int minPos[2], maxPos[2];
+    // cv::minMaxIdx(orientationHistogram, &minVal, &maxVal, &minPos[0], &maxPos[0]);
+    // std::cout << "Minimum at (" << minPos[0] << ", " << minPos[1] << ") with value " << minVal << std::endl;
+    // std::cout << "Maximum at (" << maxPos[0] << ", " << maxPos[1] << ") with value " << maxVal << std::endl;
 
-    float classMark = (2*maxPos[0] + 1)*2*CV_PI / (2 * 10);
-    std::cout << "Class mark: " << classMark << std::endl;
+    // float classMark = (2*maxPos[0] + 1)*2*CV_PI / (2 * 10);
+    // std::cout << "Class mark: " << classMark << std::endl;
 
-    cv::Mat angleDeviation = (orientation - classMark).mul(orientation - classMark);
-    std::cout << "Mean angle deviation 1: " << cv::mean(angleDeviation) << std::endl;
-    cv::min(angleDeviation, (orientation - classMark + 2 * CV_PI).mul(orientation - classMark + 2 * CV_PI), angleDeviation);
-    std::cout << "Mean angle deviation 2: " << cv::mean(angleDeviation) << std::endl;
-    cv::min(angleDeviation, (orientation - classMark - 2 * CV_PI).mul(orientation - classMark - 2 * CV_PI), angleDeviation);
-    std::cout << "Mean angle deviation 3: " << cv::mean(angleDeviation) << std::endl;
+    // cv::Mat angleDeviation = (orientation - classMark).mul(orientation - classMark);
+    // std::cout << "Mean angle deviation 1: " << cv::mean(angleDeviation) << std::endl;
+    // cv::min(angleDeviation, (orientation - classMark + 2 * CV_PI).mul(orientation - classMark + 2 * CV_PI), angleDeviation);
+    // std::cout << "Mean angle deviation 2: " << cv::mean(angleDeviation) << std::endl;
+    // cv::min(angleDeviation, (orientation - classMark - 2 * CV_PI).mul(orientation - classMark - 2 * CV_PI), angleDeviation);
+    // std::cout << "Mean angle deviation 3: " << cv::mean(angleDeviation) << std::endl;
 
     return EXIT_SUCCESS;
 }
