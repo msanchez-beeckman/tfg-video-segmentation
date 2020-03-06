@@ -23,11 +23,15 @@ namespace tfg {
             void addNewFrame(std::vector<tfg::Region> &spInFrame);
 
             void computeDescriptors();
-            Eigen::SparseMatrix<float> transitionMatrix(int F, int L, float sigma2);
+            void transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float> &normalizedTransM);
 
-            inline std::vector<int> getFrameBeginningIndices() {
+            inline std::vector<int> getFrameBeginningIndices() const {
                 return frameBeginningIndex;
             };
+
+            inline cv::Mat getLabelsOfFrame(int frame) const {
+                return superpixels[frameBeginningIndex[frame]].getFrameLabels();
+            }
     };
 }
 

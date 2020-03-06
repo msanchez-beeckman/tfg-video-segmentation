@@ -39,6 +39,10 @@ namespace tfg {
             inline unsigned int getFrame() const {
                 return frame;
             };
+
+            inline cv::Mat getFrameLabels() const {
+                return frameSuperpixelLabels;
+            }
     };
 }
 

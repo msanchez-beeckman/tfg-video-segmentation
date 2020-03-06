@@ -9,6 +9,7 @@
 #include <eigen3/Eigen/Sparse>
 #include "Region.h"
 #include "RegionList.h"
+#include "ConsensusVoter.h"
 #include "ImageUtils.h"
 #include "CmdParser.h"
 
@@ -20,6 +21,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<ParStruct *> parameters;
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images to be segmented"}; parameters.push_back(&par_images);
+    ParStruct par_flows = {"flows", nullptr, "Text file containing the path to the computed flows for each frame"}; parameters.push_back(&par_flows);
 
     if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
         return EXIT_FAILURE;
@@ -36,45 +38,73 @@ int main(int argc, char* argv[]) {
 
     // std::cout << "Merged image and flows in a single 5-channel Mat" << std::endl;
 
-    // std::vector<cv::Mat> images;
-    // std::ifstream imageListFile(par_images.value);
-    // tfg::readImages(imageListFile, images);
-    // tfg::RegionList regionList(1590, images.size());
+    std::vector<cv::Mat> images;
+    std::ifstream imageListFile(par_images.value);
+    tfg::readImages(imageListFile, images);
 
-    // for(unsigned int f = 0; f < images.size(); f++) {
-    //     std::cout << "Frame " << f << ":" << std::endl;
+    tfg::RegionList regionList(1590, images.size());
+    tfg::ConsensusVoter consensusVoter(1590, images.size());
 
-    //     std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
-    //     cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, 16);
-    //     sp->iterate();
-    //     std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
+    std::ifstream flowListFile(par_flows.value);
 
-    //     std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
+    std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
+    if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, 0.5f)) {
+        std::cout << "No dominant motion has been found in the video" << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
+    std::cout << "Motion saliency scores computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
 
-    //     const int SUPERPIXELS_IN_FRAME = sp->getNumberOfSuperpixels();
-    //     cv::Mat pixelLabels;
-    //     sp->getLabels(pixelLabels);
-    //     std::vector<tfg::Region> regionsInFrame;
-    //     regionsInFrame.reserve(SUPERPIXELS_IN_FRAME);
-    //     for(int s = 0; s < SUPERPIXELS_IN_FRAME; s++) {
-    //         tfg::Region region(s, f, images[f], pixelLabels);
-    //         regionsInFrame.push_back(region);
-    //     }
-    //     regionList.addNewFrame(regionsInFrame);
-    //     std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
-    //     std::cout << "Regions added to RegionList in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag3-flag2).count())/1000000.0 << " seconds." << std::endl;
-    //     std::cout << std::endl;
-    // }
+    for(unsigned int f = 0; f < images.size(); f++) {
 
-    // std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
-    // regionList.computeDescriptors();
-    // std::chrono::steady_clock::time_point flag5 = std::chrono::steady_clock::now();
-    // std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
+        std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
+        std::cout << "Frame " << f << ":" << std::endl;
+        cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, 16);
+        sp->iterate();
+        std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
 
-    // Eigen::SparseMatrix<float> transM = regionList.transitionMatrix(15, 4, 0.1);
-    // std::chrono::steady_clock::time_point flag6 = std::chrono::steady_clock::now();
-    // std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag4-flag3).count())/1000000.0 << " seconds." << std::endl;
 
+        const int SUPERPIXELS_IN_FRAME = sp->getNumberOfSuperpixels();
+        cv::Mat pixelLabels;
+        sp->getLabels(pixelLabels);
+        std::vector<tfg::Region> regionsInFrame;
+        regionsInFrame.reserve(SUPERPIXELS_IN_FRAME);
+        for(int s = 0; s < SUPERPIXELS_IN_FRAME; s++) {
+            tfg::Region region(s, f, images[f], pixelLabels);
+            regionsInFrame.push_back(region);
+        }
+        regionList.addNewFrame(regionsInFrame);
+        std::chrono::steady_clock::time_point flag5 = std::chrono::steady_clock::now();
+        std::cout << "Regions added to RegionList in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
+
+        consensusVoter.initializeVotesFromSaliencyInFrame(f, pixelLabels, SUPERPIXELS_IN_FRAME);
+        std::chrono::steady_clock::time_point flag6 = std::chrono::steady_clock::now();
+        std::cout << "Initial region votes established in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << std::endl;
+    }
+
+    std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
+    regionList.computeDescriptors();
+    std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
+    std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
+
+    Eigen::SparseMatrix<float> transM;
+    regionList.transitionMatrix(15, 4, 1, transM);
+    std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
+    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
+
+    std::vector<float> finalVotes;
+    std::vector<int> frameBeginningIndices = regionList.getFrameBeginningIndices();
+    consensusVoter.reachConsensus(transM, frameBeginningIndices, 10, finalVotes);
+    std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
+    std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
+
+    for(unsigned int i = 0; i < finalVotes.size(); i++) {
+        if(finalVotes[i] != 0) {
+            std::cout << finalVotes[i] << std::endl;
+        }
+    }
 
     // // cv::Mat flowu = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/u.i0.tiff", cv::IMREAD_ANYDEPTH);
     // // cv::Mat flowv = cv::imread("/home/marco/Projects/TFG/testing/pointtracking/v.i0.tiff", cv::IMREAD_ANYDEPTH);

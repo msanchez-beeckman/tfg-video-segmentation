@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include <algorithm>
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
@@ -66,9 +67,10 @@ namespace tfg {
         // Compute the magnitude and angle of the flow
         cv::Mat magnitude;
         cv::magnitude(flowu, flowv, magnitude);
-        magnitude = magnitude.reshape(0, 1);
+        // magnitude = magnitude.reshape(0, 1);
         std::vector<float> magnitudeData;
-        magnitude.row(0).copyTo(magnitudeData);
+        //magnitude.row(0).copyTo(magnitudeData);
+        magnitude.reshape(0, 1).row(0).copyTo(magnitudeData);
 
         // Compute the median of the magnitude of the flow
         std::nth_element(magnitudeData.begin(), magnitudeData.begin() + magnitudeData.size()/2, magnitudeData.end());
@@ -129,8 +131,10 @@ namespace tfg {
         const unsigned int VECTOR_SIZE = src.size();
         dst = cv::Mat::zeros(src[0].size(), CV_32FC1);
         for(unsigned int i = 0; i < VECTOR_SIZE; i++) {
+            std::cout << src[i].size() << std::endl;
             dst += src[i];
         }
+        std::cout << "Before division" << std::endl;
         dst = dst / VECTOR_SIZE;
     }
 
@@ -161,7 +165,7 @@ namespace tfg {
         }
     }
 
-    std::vector<float> ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations) {
+    void ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations, std::vector<float> &finalVotes) {
         Eigen::Map<Eigen::VectorXf> updatedVotes(votes.data(), votes.size());
 
         for(int t = 0; t < iterations; t++) {
@@ -174,6 +178,6 @@ namespace tfg {
             }
         }
 
-        return votes;
+        finalVotes = votes;
     }
 }

@@ -36,7 +36,7 @@ namespace tfg {
         cv::vconcat(descriptorsVector, descriptors);
     }
 
-    Eigen::SparseMatrix<float> RegionList::transitionMatrix(int F, int L, float sigma2) {
+    void RegionList::transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float> &normalizedTransM) {
         const unsigned int NUMBER_OF_REGIONS = superpixels.size();
         const int M = L*(2*F + 1);
         Eigen::SparseMatrix<float> transM(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
@@ -142,8 +142,7 @@ namespace tfg {
 
         // TODO: measure efficiency difference between computing normalization matrix and multiplying transM by it (as it is now),
         // and looping through transM a second time and directly modifying the value through it.valueRef()
-        Eigen::SparseMatrix<float> normalizedTransM = normalizationMatrix * transM;
-        return normalizedTransM;
+        normalizedTransM = normalizationMatrix * transM;
 
     }
 }
