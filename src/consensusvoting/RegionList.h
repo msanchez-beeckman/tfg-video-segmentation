@@ -25,13 +25,15 @@ namespace tfg {
             void computeDescriptors();
             void transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float> &normalizedTransM);
 
+            void masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshhold);
+
             inline std::vector<int> getFrameBeginningIndices() const {
                 return frameBeginningIndex;
             };
 
-            inline cv::Mat getLabelsOfFrame(int frame) const {
-                return superpixels[frameBeginningIndex[frame]].getFrameLabels();
-            }
+            // inline cv::Mat getLabelsOfFrame(int frame) const {
+            //     return superpixels[frameBeginningIndex[frame]].getFrameLabels();
+            // }
     };
 }
 

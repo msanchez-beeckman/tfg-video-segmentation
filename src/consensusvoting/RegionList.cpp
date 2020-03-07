@@ -145,4 +145,22 @@ namespace tfg {
         normalizedTransM = normalizationMatrix * transM;
 
     }
+
+    void RegionList::masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshhold) {
+        const unsigned int NUMBER_OF_FRAMES = frameBeginningIndex.size();
+        masks.clear();
+        masks.reserve(NUMBER_OF_FRAMES);
+        for(unsigned int f = 0; f < NUMBER_OF_FRAMES; f++) {
+            const int spBegin = frameBeginningIndex[f];
+            const int spEnd = (f == (NUMBER_OF_FRAMES - 1)) ? (superpixels.size() - 1) : (frameBeginningIndex[f + 1] - 1);
+            cv::Mat framePixelLabels = superpixels[spBegin].getFrameLabels();
+            cv::Mat mask(framePixelLabels.size(), CV_8UC1);
+            for(int sp = spBegin; sp <= spEnd; sp++) {
+                const int spLabelInFrame = sp - spBegin;
+                cv::Mat spLocation(framePixelLabels == spLabelInFrame);
+                mask.setTo(votes[sp] > threshhold, spLocation);
+            }
+            masks.push_back(mask);
+        }
+    }
 }

@@ -46,68 +46,6 @@ namespace tfg {
         }
     }
 
-    // void paintTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) {
-    //     for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
-    //         std::vector<cv::Vec2f> points = trackTable->pointsInTrack(t);
-    //         unsigned int initFrame = trackTable->firstFrameOfTrack(t);
-
-    //         for(unsigned int f = 0; f < points.size(); f++) {
-    //             cv::Vec3b color;
-    //             color(2) = weights2[t] < 0.25 ? 0 : 255;
-    //             color(1) = weights2[t] < 0.25 ? 255 : 0;
-    //             // drawPoint(images[initFrame + f], points[f], color);
-    //             const int remainingFrames = points.size() - f - 1;
-    //             const int T = std::min(5, remainingFrames);
-    //             if(T != 0) {
-    //                 drawLine(images[initFrame + f], points[f], points[f + 1], color);
-    //             } else {
-    //                 drawPoint(images[initFrame + f], points[f], color);
-    //             }
-    //         }
-    //     }
-
-    //     for (unsigned int i = 0; i < images.size(); i++) {
-    //         std::stringstream ss;
-    //         ss << folder << fileName << i << ".png";
-    //         std::string saveAs = ss.str();
-    //         cv::imwrite(saveAs, images[i]);
-    //     }
-    // }
-
-    // void paintSeededTracks(const std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) {
-    //     for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
-    //         const int label = trackTable->labelOfTrack(t);
-    //         std::vector<cv::Vec2f> points = trackTable->pointsInTrack(t);
-    //         unsigned int initFrame = trackTable->firstFrameOfTrack(t);
-
-    //         if(label < 0) continue;
-
-    //         // std::cout << "Correctly labeled image" << std::endl;
-
-    //         for(unsigned int f = 0; f < points.size(); f++) {
-    //             cv::Vec3b color;
-    //             color(2) = (label + 1) % 2 == 1 ? 255 : 0;
-    //             color(1) = (label + 1) % 4 >= 2 ? 255 : 0;
-    //             color(0) = (label + 1) % 8 >= 4 ? 255 : 0;
-    //             // drawPoint(images[initFrame + f], points[f], color);
-    //             const int remainingFrames = points.size() - f - 1;
-    //             const int T = std::min(10, remainingFrames);
-    //             if(T != 0) {
-    //                 drawLine(images[initFrame + f], points[f], points[f + 1], color);
-    //             } else {
-    //                 drawPoint(images[initFrame + f], points[f], color);
-    //             }
-    //         }
-    //     }
-
-    //     for (unsigned int i = 0; i < images.size(); i++) {
-    //         std::stringstream ss;
-    //         ss << folder << fileName << i << ".png";
-    //         std::string saveAs = ss.str();
-    //         cv::imwrite(saveAs, images[i]);
-    //     }
-    // }
-
     void drawPoint(cv::Mat &image, const cv::Vec2f &position, const cv::Vec3b &color) {
         const int x = static_cast<int>(position(0));
         const int y = static_cast<int>(position(1));
@@ -156,6 +94,18 @@ namespace tfg {
             pixel[2] = color[2];
             pixel[1] = color[1];
             pixel[0] = color[0];
+        }
+    }
+
+    void saveMaskedImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName) {
+        for(unsigned int i = 0; i < images.size(); i++) {
+            cv::Mat maskedImage;
+            images[i].copyTo(maskedImage, masks[i]);
+
+            std::stringstream ss;
+            ss << folder << fileName << i << ".png";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, maskedImage);
         }
     }
 }
