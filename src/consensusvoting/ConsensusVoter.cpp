@@ -39,7 +39,7 @@ namespace tfg {
                 cv::Mat flowv = cv::imread(line, cv::IMREAD_ANYDEPTH);
 
                 cv::Mat saliency;
-                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.75f, 10);
+                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 0.5f, 0.75f, 10);
                 if(existsDominantMotion) {
                     motionSaliencies.push_back(saliency);
                 }
@@ -67,9 +67,7 @@ namespace tfg {
         // Compute the magnitude and angle of the flow
         cv::Mat magnitude;
         cv::magnitude(flowu, flowv, magnitude);
-        // magnitude = magnitude.reshape(0, 1);
         std::vector<float> magnitudeData;
-        //magnitude.row(0).copyTo(magnitudeData);
         magnitude.reshape(0, 1).row(0).copyTo(magnitudeData);
 
         // Compute the median of the magnitude of the flow
@@ -84,8 +82,10 @@ namespace tfg {
 
         // If the background is static, the saliency score is 
         if(median < staticTh) {
+            std::cout << "Static" << std::endl;
+            cv::Mat magnitudeDeviation = magnitude.mul(magnitude);
             cv::Mat kernel = cv::Mat::ones(patchSize, patchSize, CV_32FC1) / (patchSize * patchSize);
-            cv::filter2D(magnitude.mul(magnitude), saliency, -1, kernel);
+            cv::filter2D(magnitudeDeviation, saliency, -1, kernel);
             return true;
         }
 
@@ -109,6 +109,7 @@ namespace tfg {
 
         // If the percentage of the largest bin is greater than a threshhold, we consider that the frame has dominant translational motion
         if(maxVal > transTh) {
+            std::cout << "Dominant translational motion" << std::endl;
             // Compute the deviation of the angles with respect to the class mark of the bin with the hightest value
             // Since an angle does not change by adding or substracting 2pi to it, the desired deviation is the elementwise minimum of
             // the deviations adding -2pi, 0, and 2pi.
@@ -131,10 +132,8 @@ namespace tfg {
         const unsigned int VECTOR_SIZE = src.size();
         dst = cv::Mat::zeros(src[0].size(), CV_32FC1);
         for(unsigned int i = 0; i < VECTOR_SIZE; i++) {
-            std::cout << src[i].size() << std::endl;
             dst += src[i];
         }
-        std::cout << "Before division" << std::endl;
         dst = dst / VECTOR_SIZE;
     }
 
