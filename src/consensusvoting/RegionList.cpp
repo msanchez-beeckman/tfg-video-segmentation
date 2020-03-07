@@ -36,10 +36,10 @@ namespace tfg {
         cv::vconcat(descriptorsVector, descriptors);
     }
 
-    void RegionList::transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float> &normalizedTransM) {
+    void RegionList::transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float, Eigen::RowMajor> &normalizedTransM) {
         const unsigned int NUMBER_OF_REGIONS = superpixels.size();
         const int M = L*(2*F + 1);
-        Eigen::SparseMatrix<float> transM(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
+        Eigen::SparseMatrix<float, Eigen::RowMajor> transM(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
         std::vector<Eigen::Triplet<float>> transMEntries;
         transMEntries.reserve(M * NUMBER_OF_REGIONS);
 
@@ -84,6 +84,7 @@ namespace tfg {
             // Put them in a Mat object so the KDTree returns the indices of the nearest neighbours
             std::vector<float> neighbourIndices(searchWindow.height);
             std::iota(neighbourIndices.begin(), neighbourIndices.end(), searchWindow.y);
+            std::cout << "Frame " << f << " iota: from " << neighbourIndices[0] << " to " << neighbourIndices.back() << std::endl;
             cv::Mat regionIndices(neighbourIndices.size(), 1, CV_32FC1, neighbourIndices.data());
 
             std::cout << "Created matrix with neighbour indices" << std::endl;
@@ -118,6 +119,7 @@ namespace tfg {
                         weight = exp(-neighbourDistance2 / sigma2);
                     }
                     transMEntries.push_back(Eigen::Triplet<float>(ownIndex, neighbourIndex, weight));
+                    // transMEntries.push_back(Eigen::Triplet<float>(neighbourIndex, ownIndex, weight));
                 }
             }
         }
@@ -126,12 +128,12 @@ namespace tfg {
         std::cout << "Created sparse transition matrix" << std::endl;
 
         // Upon computing the transition matrix, normalize it by dividing each row by the sum of its elements
-        Eigen::SparseMatrix<float> normalizationMatrix(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
+        Eigen::SparseMatrix<float, Eigen::RowMajor> normalizationMatrix(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
         std::vector<Eigen::Triplet<float>> normalizationMatrixEntries;
         normalizationMatrixEntries.reserve(NUMBER_OF_REGIONS);
         for(int k = 0; k < transM.outerSize(); ++k) {
             float degree = 0.0f;
-            for(Eigen::SparseMatrix<float>::InnerIterator it(transM, k); it; ++it) {
+            for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(transM, k); it; ++it) {
                 degree += it.value();
             }
             normalizationMatrixEntries.push_back(Eigen::Triplet<float>(k, k, 1 / degree));

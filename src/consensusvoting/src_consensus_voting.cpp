@@ -89,19 +89,19 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
     std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
 
-    Eigen::SparseMatrix<float> transM;
-    regionList.transitionMatrix(3, 1, 1, transM);
+    Eigen::SparseMatrix<float, Eigen::RowMajor> transM;
+    regionList.transitionMatrix(1, 4, 1, transM);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 
     std::vector<float> finalVotes;
     std::vector<int> frameBeginningIndices = regionList.getFrameBeginningIndices();
-    consensusVoter.reachConsensus(transM, frameBeginningIndices, 0, finalVotes);
+    consensusVoter.reachConsensus(transM, frameBeginningIndices, 200, finalVotes);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 
     std::vector<cv::Mat> finalMasks;
-    regionList.masksFromVotes(finalVotes, finalMasks, 0.1f);
+    regionList.masksFromVotes(finalVotes, finalMasks, 0.0001f);
     std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
     std::cout << "Created masks from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
 

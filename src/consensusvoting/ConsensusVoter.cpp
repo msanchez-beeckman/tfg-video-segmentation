@@ -39,7 +39,7 @@ namespace tfg {
                 cv::Mat flowv = cv::imread(line, cv::IMREAD_ANYDEPTH);
 
                 cv::Mat saliency;
-                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 0.5f, 0.75f, 10);
+                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.75f, 10);
                 if(existsDominantMotion) {
                     motionSaliencies.push_back(saliency);
                 }
@@ -164,7 +164,7 @@ namespace tfg {
         }
     }
 
-    void ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations, std::vector<float> &finalVotes) {
+    void ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations, std::vector<float> &finalVotes) {
         Eigen::Map<Eigen::VectorXf> updatedVotes(votes.data(), votes.size());
 
         for(int t = 0; t < iterations; t++) {
