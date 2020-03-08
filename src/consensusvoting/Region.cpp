@@ -187,7 +187,7 @@ namespace tfg {
 
     cv::Mat Region::getDescriptor() const {
         std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeDistanceDescriptor};
-        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor};
+        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, relativeDistanceDescriptor};
         cv::Mat descriptorMat;
         cv::hconcat(descriptorVec, descriptorMat);
         return descriptorMat;

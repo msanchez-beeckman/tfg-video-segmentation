@@ -39,8 +39,9 @@ namespace tfg {
                 cv::Mat flowv = cv::imread(line, cv::IMREAD_ANYDEPTH);
 
                 cv::Mat saliency;
-                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.75f, 10);
+                bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.55f, 10);
                 if(existsDominantMotion) {
+                    std::cout << " in flow " << i << " of frame " << f << std::endl;
                     motionSaliencies.push_back(saliency);
                 }
             }
@@ -49,6 +50,8 @@ namespace tfg {
             if(motionSaliencies.size() > 0) {
                 elementwiseMean(motionSaliencies, frameScore);
                 framesWithDominantMotion += 1;
+            } else {
+                std::cout << "No dominant motion in frame " << f << ": saliency initialized to 0" << std::endl;
             }
 
             this->saliencyScores.push_back(frameScore);
@@ -82,7 +85,7 @@ namespace tfg {
 
         // If the background is static, the saliency score is 
         if(median < staticTh) {
-            std::cout << "Static" << std::endl;
+            std::cout << "Static motion";
             cv::Mat magnitudeDeviation = magnitude.mul(magnitude);
             cv::Mat kernel = cv::Mat::ones(patchSize, patchSize, CV_32FC1) / (patchSize * patchSize);
             cv::filter2D(magnitudeDeviation, saliency, -1, kernel);
@@ -109,7 +112,7 @@ namespace tfg {
 
         // If the percentage of the largest bin is greater than a threshhold, we consider that the frame has dominant translational motion
         if(maxVal > transTh) {
-            std::cout << "Dominant translational motion" << std::endl;
+            std::cout << "Translational motion";
             // Compute the deviation of the angles with respect to the class mark of the bin with the hightest value
             // Since an angle does not change by adding or substracting 2pi to it, the desired deviation is the elementwise minimum of
             // the deviations adding -2pi, 0, and 2pi.
@@ -164,19 +167,19 @@ namespace tfg {
         }
     }
 
-    void ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations, std::vector<float> &finalVotes) {
+    void ConsensusVoter::reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations) {
         Eigen::Map<Eigen::VectorXf> updatedVotes(votes.data(), votes.size());
+
+        // std::cout << transitionMatrix.bottomRows(1) << std::endl;
 
         for(int t = 0; t < iterations; t++) {
             updatedVotes = transitionMatrix * updatedVotes;
 
             for(unsigned int f = 0; f < frameBeginningIndices.size(); f++) {
-                int superpixelsInFrame = (f == (frameBeginningIndices.size() - 1)) ? (votes.size() - frameBeginningIndices[f]) : (frameBeginningIndices[f + 1] - frameBeginningIndices[f]);
-                float maxVoteInFrame = updatedVotes.segment(frameBeginningIndices[f], superpixelsInFrame).maxCoeff();
+                const int superpixelsInFrame = (f == (frameBeginningIndices.size() - 1)) ? (votes.size() - frameBeginningIndices[f]) : (frameBeginningIndices[f + 1] - frameBeginningIndices[f]);
+                const float maxVoteInFrame = updatedVotes.segment(frameBeginningIndices[f], superpixelsInFrame).maxCoeff();
                 updatedVotes.segment(frameBeginningIndices[f], superpixelsInFrame) /= maxVoteInFrame + (maxVoteInFrame <= 0);
             }
         }
-
-        finalVotes = votes;
     }
 }

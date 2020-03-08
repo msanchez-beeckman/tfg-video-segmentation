@@ -1,7 +1,6 @@
 
 #include <algorithm>
 #include <numeric>
-#include <cmath>
 #include <opencv4/opencv2/ml/ml.hpp>
 #include <eigen3/Eigen/Dense>
 #include "RegionList.h"
@@ -61,19 +60,13 @@ namespace tfg {
             // to only search forward (F + 1 frames, making yMinWindow = f), and limit the number of nearest neighbours to L*(searchWindow.height)
 
             cv::Rect searchWindow;
-            // const int yMinWindow = f - F < 0 ? 0 : f - F;
-            // const int yMaxWindow = f + F > frameBeginningIndex.size() - 1 ? frameBeginningIndex.size() - 1 : f + F;
-            const int yMinWindow = std::max(0, f - F);
-            const int LAST_FRAME = frameBeginningIndex.size() - 1;
-            // const int yMaxWindow = std::min(frameBeginningIndex.size() - 1, f + F);
-            const int yMaxWindow = std::min(LAST_FRAME, f + F);
-            std::cout << "yMinWindow: " << yMinWindow << std::endl;
-            std::cout << "yMaxWindow: " << yMaxWindow << std::endl;
-            std::cout << "frameBeginningIndex: " << frameBeginningIndex[yMinWindow] << std::endl;
+            const int yMinWindow = ((f - F) < 0) ? 0 : (f - F);
+            const int yMaxWindow = ((f + F) > (frameBeginningIndex.size() - 1)) ? (frameBeginningIndex.size() - 1) : (f + F);
+            // const int yMinWindow = std::max(0, f - F);
+            // const int LAST_FRAME = frameBeginningIndex.size() - 1;
+            // const int yMaxWindow = std::min(LAST_FRAME, f + F);
             searchWindow.y = frameBeginningIndex[yMinWindow];
             searchWindow.height = (yMaxWindow == (frameBeginningIndex.size() - 1)) ? (superpixels.size() - frameBeginningIndex[yMinWindow]) : (frameBeginningIndex[yMaxWindow + 1] - frameBeginningIndex[yMinWindow]);
-            std::cout << "y: " << searchWindow.y << std::endl;
-            std::cout << "height: " << searchWindow.height << std::endl;
             searchWindow.x = 0;
             searchWindow.width = descriptors.cols;
             cv::Mat descriptorsInNeighbouringFrames(descriptors, searchWindow);
@@ -104,13 +97,12 @@ namespace tfg {
             cv::Mat NNDistances2;
             tree->findNearest(descriptorsInFrame, M, result, NNIndices, NNDistances2);
 
-            std::cout << "Found nearest neighbours of superpixels in frame " << f << std::endl;
+            std::cout << "Found nearest neighbours of superpixels in frame " << f << '\n' << std::endl;
 
             // Knowing who the nearest neighbours are and the distance to them, define a weight based on
             // the distance, and create a random walk transition matrix (which is sparse)
             for(int y = 0; y < currentFrameDelimiter.height; y++) {
-                // int ownIndex = static_cast<int>(NNIndices.at<float>(y, 0));
-                const int ownIndex = static_cast<int>(regionIndices.at<float>(0, y));
+                const int ownIndex = currentFrameDelimiter.y + y;
                 for(int x = 0; x < M; x++) {
                     const int neighbourIndex = static_cast<int>(NNIndices.at<float>(y, x));
                     float weight = 1.0f;
@@ -119,11 +111,11 @@ namespace tfg {
                         weight = exp(-neighbourDistance2 / sigma2);
                     }
                     transMEntries.push_back(Eigen::Triplet<float>(ownIndex, neighbourIndex, weight));
-                    // transMEntries.push_back(Eigen::Triplet<float>(neighbourIndex, ownIndex, weight));
                 }
             }
         }
         transM.setFromTriplets(transMEntries.begin(), transMEntries.end());
+        // std::cout << transM.bottomRows(1) << std::endl;
 
         std::cout << "Created sparse transition matrix" << std::endl;
 

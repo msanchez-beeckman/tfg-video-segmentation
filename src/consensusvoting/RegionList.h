@@ -27,7 +27,7 @@ namespace tfg {
 
             void masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshhold);
 
-            inline std::vector<int> getFrameBeginningIndices() const {
+            inline std::vector<int> const &getFrameBeginningIndices() const {
                 return frameBeginningIndex;
             };
 

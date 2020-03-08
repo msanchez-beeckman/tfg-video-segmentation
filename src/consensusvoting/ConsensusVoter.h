@@ -25,7 +25,11 @@ namespace tfg {
 
             void initializeVotesFromSaliencyInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels);
 
-            void reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations, std::vector<float> &finalVotes);
+            void reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations);
+
+            inline std::vector<float> const &getCurrentVotes() const {
+                return votes;
+            };
     };
 }
 
