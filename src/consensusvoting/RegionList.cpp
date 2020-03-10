@@ -4,6 +4,7 @@
 #include <opencv4/opencv2/ml/ml.hpp>
 #include <eigen3/Eigen/Dense>
 #include "RegionList.h"
+#include "ImageUtils.h"
 
 namespace tfg {
 
@@ -29,7 +30,6 @@ namespace tfg {
         descriptorsVector.reserve(superpixels.size());
         for(unsigned int r = 0; r < superpixels.size(); r++) {
             cv::Mat singleRegionDescriptor = superpixels[r].getDescriptor();
-            // cv::vconcat(descriptors, singleRegionDescriptor, descriptors);
             descriptorsVector.push_back(singleRegionDescriptor);
         }
         cv::vconcat(descriptorsVector, descriptors);
@@ -140,7 +140,7 @@ namespace tfg {
 
     }
 
-    void RegionList::masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshhold) {
+    void RegionList::masksFromVotes(std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshold) {
         const unsigned int NUMBER_OF_FRAMES = frameBeginningIndex.size();
         masks.clear();
         masks.reserve(NUMBER_OF_FRAMES);
@@ -148,12 +148,17 @@ namespace tfg {
             const int spBegin = frameBeginningIndex[f];
             const int spEnd = (f == (NUMBER_OF_FRAMES - 1)) ? (superpixels.size() - 1) : (frameBeginningIndex[f + 1] - 1);
             cv::Mat framePixelLabels = superpixels[spBegin].getFrameLabels();
-            cv::Mat mask(framePixelLabels.size(), CV_8UC1);
+
+            cv::Mat maskNotThresholded(framePixelLabels.size(), CV_32FC1);
             for(int sp = spBegin; sp <= spEnd; sp++) {
                 const int spLabelInFrame = sp - spBegin;
                 cv::Mat spLocation(framePixelLabels == spLabelInFrame);
-                mask.setTo(votes[sp] > threshhold, spLocation);
+                float& vote = votes[sp];
+                // mask.setTo(vote > threshold, spLocation);
+                maskNotThresholded.setTo(vote, spLocation);
             }
+            tfg::removeSmallBlobs(maskNotThresholded, threshold, 0.4);
+            cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }
     }
