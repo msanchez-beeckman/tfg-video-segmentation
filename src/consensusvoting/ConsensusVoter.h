@@ -27,9 +27,12 @@ namespace tfg {
 
             void reachConsensus(const Eigen::SparseMatrix<float, Eigen::RowMajor> &transitionMatrix, const std::vector<int> &frameBeginningIndices, int iterations);
 
+            void saveSaliencies(const std::string &folder, const std::string &fileName);
+
             inline std::vector<float> const &getCurrentVotes() const {
                 return votes;
             };
+
     };
 }
 

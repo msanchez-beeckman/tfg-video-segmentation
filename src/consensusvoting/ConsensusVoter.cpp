@@ -155,6 +155,18 @@ namespace tfg {
         }
     }
 
+    void ConsensusVoter::saveSaliencies(const std::string &folder, const std::string &fileName) {
+
+        for(unsigned int f = 0; f < this->saliencyScores.size(); f++) {
+            cv::Mat imageToBeSaved;
+            this->saliencyScores[f].convertTo(imageToBeSaved, CV_8UC1, 255);
+            std::stringstream ss;
+            ss << folder << fileName << f << ".jpg";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, imageToBeSaved);
+        }
+    }
+
     void ConsensusVoter::initializeVotesFromSaliencyInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels) {
         cv::Mat saliencyOfFrame;
         cv::resize(this->saliencyScores[frame], saliencyOfFrame, pixelLabels.size());
