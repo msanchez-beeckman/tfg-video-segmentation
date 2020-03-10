@@ -12,7 +12,7 @@ outputFile = sys.argv[4]
 appendFrameNumber = sys.argv[5] == 'True'
 
 with open(outputFile, 'w') as outfile:
-    for i in range(frameLimit + 1):
+    for i in range(frameLimit):
         if not os.path.exists(os.path.join(imageDirectory, '{:05d}.{}'.format(i, imageFormat))): continue
         line = imageDirectory + '{:05d}.{}'.format(i, imageFormat)
         if appendFrameNumber: line = line + ' ' + str(i)

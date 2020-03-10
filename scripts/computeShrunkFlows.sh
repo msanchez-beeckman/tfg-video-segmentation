@@ -10,7 +10,7 @@ SURROUNDFRAMES=$3
 
 # The following variables should be adjusted to the absolute path of the project's directory,
 # and to the directory containing the data, respectively.
-TFGLOCATION="/home/marco/CLionProjects/tfg_video_segmentation"
+TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 
 FLOWFOLDER="${TFGLOCATION}/results/flows/${DATASETNAME}"
@@ -19,7 +19,7 @@ echo "${FRAMELIMIT}" > ${FLOWFOLDER}/flows.txt
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do
     IMAGE=$(printf "%05d" $i)
-    convert ${DATALOCATION}/${DATASETNAME}/${IMAGE}.jpg -resize 160x90\> ${FLOWFOLDER}/shrink_${IMAGE}.jpg
+    convert ${DATALOCATION}/${DATASETNAME}/${IMAGE}.jpg -resize 854x480\> ${FLOWFOLDER}/shrink_${IMAGE}.jpg
 done
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do

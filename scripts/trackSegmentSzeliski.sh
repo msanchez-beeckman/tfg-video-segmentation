@@ -23,7 +23,7 @@ FRAMELIMIT=$2
 
 # The following variables should be adjusted to the absolute path of the project's directory,
 # and to the directory containing the data, respectively.
-TFGLOCATION="/home/marco/CLionProjects/tfg_video_segmentation"
+TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 
 python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
