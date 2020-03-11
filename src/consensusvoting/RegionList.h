@@ -25,7 +25,7 @@ namespace tfg {
             void computeDescriptors();
             void transitionMatrix(int F, int L, float sigma2, Eigen::SparseMatrix<float, Eigen::RowMajor> &normalizedTransM);
 
-            void masksFromVotes(std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshold);
+            void masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshold);
 
             inline std::vector<int> const &getFrameBeginningIndices() const {
                 return frameBeginningIndex;

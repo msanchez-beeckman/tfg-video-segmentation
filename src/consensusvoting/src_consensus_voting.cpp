@@ -27,24 +27,31 @@ int main(int argc, char* argv[]) {
     if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
         return EXIT_FAILURE;
 
-    // std::vector<float> testValues = {1, 1, 0, 1, 1,
-    //                                  1, 1, 0, 1, 0,
-    //                                  0, 0, 0, 0, 0,
-    //                                  1, 1, 1, 1, 1,
-    //                                  0, 0, 0, 0, 1};
-    // cv::Mat testMatrix(5, 5, CV_32FC1, &testValues[0]);
-    // cv::Mat testMask(testMatrix > 0);
-    // cv::Mat labels;
-    // cv::Mat stats;
-    // cv::Mat centroids;
-    // int number = cv::connectedComponentsWithStats(testMask, labels, stats, centroids, 8, CV_16U, cv::CCL_DEFAULT);
-    // std::cout << testMask << std::endl;
-    // std::cout << labels << std::endl;
+    // std::vector<float> testSaliency = {1, 2};
+    // std::vector<float> testMask1 = {1, 1, 0,
+    //                                 1, 1, 0,
+    //                                 0, 0, 0};
+    // cv::Mat preMask1(3, 3, CV_32FC1, &testMask1[0]);
+    // cv::Mat mask1(preMask1 > 0);
+    // std::vector<float> testMask2 = {0, 0, 1,
+    //                                 0, 0, 1,
+    //                                 1, 1, 1};
+    // cv::Mat preMask2(3, 3, CV_32FC1, &testMask2[0]);
+    // cv::Mat mask2(preMask2 > 0);
+    // cv::Mat testMatrix = cv::Mat::zeros(3, 3, CV_32FC1);
+    // float &value1 = testSaliency[0];
+    // float &value2 = testSaliency[1];
+    // testMatrix.setTo(value1, mask1);
+    // testMatrix.setTo(value2, mask2);
 
+    // std::cout << mask1 << std::endl;
+    // std::cout << mask2 << std::endl;
+    // std::cout << testMatrix << std::endl;
 
-    // double min, max;
-    // cv::minMaxIdx(stats.col(cv::CC_STAT_AREA).rowRange(1, stats.rows), &min, &max);
-    // std::cout << max << std::endl;
+    // testMatrix /= 2;
+    // std::cout << testMatrix << std::endl;
+    // std::cout << testSaliency[1] << std::endl;
+
     // return EXIT_SUCCESS;
 
     std::vector<cv::Mat> images;
@@ -114,18 +121,18 @@ int main(int argc, char* argv[]) {
     std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 
     Eigen::SparseMatrix<float, Eigen::RowMajor> transM;
-    regionList.transitionMatrix(15, 4, 0.2, transM);
+    regionList.transitionMatrix(15, 4, 0.1, transM);
     std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
     std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
 
     const std::vector<int> frameBeginningIndices = regionList.getFrameBeginningIndices();
-    consensusVoter.reachConsensus(transM, frameBeginningIndices, 100);
-    std::vector<float> finalVotes = consensusVoter.getCurrentVotes();
+    consensusVoter.reachConsensus(transM, frameBeginningIndices, 2);
+    const std::vector<float> finalVotes = consensusVoter.getCurrentVotes();
     std::chrono::steady_clock::time_point flag12 = std::chrono::steady_clock::now();
     std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag12-flag11).count())/1000000.0 << " seconds." << std::endl;
 
     std::vector<cv::Mat> finalMasks;
-    regionList.masksFromVotes(finalVotes, finalMasks, 0.2f);
+    regionList.masksFromVotes(finalVotes, finalMasks, 0.1f);
     std::chrono::steady_clock::time_point flag13 = std::chrono::steady_clock::now();
     std::cout << "Created masks from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag13-flag12).count())/1000000.0 << " seconds." << std::endl;
 

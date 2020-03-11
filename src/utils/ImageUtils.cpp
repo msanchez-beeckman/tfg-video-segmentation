@@ -122,7 +122,7 @@ namespace tfg {
         cv::minMaxIdx(stats.col(cv::CC_STAT_AREA).rowRange(1, stats.rows), &minArea, &maxArea);
         for(int i = 1; i < numberOfCC; i++) {
             int area = stats.at<int>(i, cv::CC_STAT_AREA);
-            if(area > maxArea * relativeSize || area > 700) continue;
+            if(area > maxArea * relativeSize) continue;
 
             cv::Mat labelMask(labels == i);
             matrix.setTo(threshold - 0.00001, labelMask);

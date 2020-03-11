@@ -132,11 +132,11 @@ namespace tfg {
         // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << std::endl << std::endl;
 
         // Make bins sum 1
-        cv::Mat unnormalizedDescriptor(1, ncells * nbins, CV_32FC1, &descriptors[0]);
-        cv::Scalar sumDesc = cv::sum(unnormalizedDescriptor);
-        this->HOGDescriptor = unnormalizedDescriptor / (sumDesc(0) + (sumDesc(0) == 0));
+        // cv::Mat unnormalizedDescriptor(1, ncells * nbins, CV_32FC1, &descriptors[0]);
+        // cv::Scalar sumDesc = cv::sum(unnormalizedDescriptor);
+        // this->HOGDescriptor = unnormalizedDescriptor / (sumDesc(0) + (sumDesc(0) == 0));
         
-        // this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
+        this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
     }
 
     cv::Mat Region::computeRegionOfInterest(int patchSize) {

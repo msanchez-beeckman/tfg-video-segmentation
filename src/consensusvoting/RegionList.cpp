@@ -140,7 +140,7 @@ namespace tfg {
 
     }
 
-    void RegionList::masksFromVotes(std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshold) {
+    void RegionList::masksFromVotes(const std::vector<float> &votes, std::vector<cv::Mat> &masks, float threshold) {
         const unsigned int NUMBER_OF_FRAMES = frameBeginningIndex.size();
         masks.clear();
         masks.reserve(NUMBER_OF_FRAMES);
@@ -153,11 +153,9 @@ namespace tfg {
             for(int sp = spBegin; sp <= spEnd; sp++) {
                 const int spLabelInFrame = sp - spBegin;
                 cv::Mat spLocation(framePixelLabels == spLabelInFrame);
-                float& vote = votes[sp];
-                // mask.setTo(vote > threshold, spLocation);
-                maskNotThresholded.setTo(vote, spLocation);
+                maskNotThresholded.setTo(votes[sp], spLocation);
             }
-            tfg::removeSmallBlobs(maskNotThresholded, threshold, 0.4);
+            tfg::removeSmallBlobs(maskNotThresholded, threshold, 0.35);
             cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }

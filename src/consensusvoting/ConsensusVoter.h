@@ -29,7 +29,7 @@ namespace tfg {
 
             void saveSaliencies(const std::string &folder, const std::string &fileName);
 
-            inline std::vector<float> &getCurrentVotes() {
+            inline std::vector<float> const &getCurrentVotes() const {
                 return votes;
             };
 
