@@ -110,23 +110,4 @@ namespace tfg {
             cv::imwrite(saveAs, maskedImage);
         }
     }
-
-    void removeSmallBlobs(cv::Mat &matrix, float threshold, float relativeSize) {
-        cv::Mat mask(matrix > threshold);
-        cv::Mat labels;
-        cv::Mat stats;
-        cv::Mat centroids;
-        int numberOfCC = cv::connectedComponentsWithStats(mask, labels, stats, centroids, 8, CV_16U, cv::CCL_DEFAULT);
-
-        double minArea, maxArea;
-        cv::minMaxIdx(stats.col(cv::CC_STAT_AREA).rowRange(1, stats.rows), &minArea, &maxArea);
-        for(int i = 1; i < numberOfCC; i++) {
-            int area = stats.at<int>(i, cv::CC_STAT_AREA);
-            if(area > maxArea * relativeSize) continue;
-
-            cv::Mat labelMask(labels == i);
-            matrix.setTo(threshold - 0.00001, labelMask);
-        }
-
-    }
 }

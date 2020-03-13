@@ -2,13 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/imgproc/imgproc.hpp>
-#include <opencv4/opencv2/highgui/highgui.hpp>
 #include <opencv4/opencv2/ximgproc/slic.hpp>
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
 #include "Region.h"
-#include "RegionList.h"
 #include "ConsensusVoter.h"
 #include "ImageUtils.h"
 #include "CmdParser.h"
@@ -59,7 +54,6 @@ int main(int argc, char* argv[]) {
     tfg::readImages(imageListFile, images);
 
     const int SUPERPIXEL_SIZE = std::stoi(opt_spsize.value);
-    tfg::RegionList regionList((images[0].cols * images[1].rows)/(SUPERPIXEL_SIZE * SUPERPIXEL_SIZE), images.size());
     tfg::ConsensusVoter consensusVoter((images[0].cols * images[1].rows)/(SUPERPIXEL_SIZE * SUPERPIXEL_SIZE), images.size());
 
     std::ifstream flowListFile(par_flows.value);
@@ -94,52 +88,44 @@ int main(int argc, char* argv[]) {
             tfg::Region region(s, f, images[f], pixelLabels);
             regionsInFrame.push_back(region);
         }
-        regionList.addNewFrame(regionsInFrame);
+        consensusVoter.addRegionsByFrame(regionsInFrame);
         std::chrono::steady_clock::time_point flag5 = std::chrono::steady_clock::now();
-        std::cout << "Regions added to RegionList in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << "Region descriptors computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
 
-        consensusVoter.initializeVotesFromSaliencyInFrame(f, pixelLabels, SUPERPIXELS_IN_FRAME);
+        consensusVoter.initializeVotesInFrame(f, pixelLabels, SUPERPIXELS_IN_FRAME);
         std::chrono::steady_clock::time_point flag6 = std::chrono::steady_clock::now();
         std::cout << "Initial region votes established in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
         std::cout << std::endl;
     }
 
-    // std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
-    // std::vector<float> initialVotes = consensusVoter.getCurrentVotes();
-    // std::vector<cv::Mat> initialMasks;
-    // regionList.masksFromVotes(initialVotes, initialMasks, 0.4f);
-    // std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
-    // std::cout << "Created masks for initial votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
+    std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
+    consensusVoter.computeTransitionMatrix(15, 4, 0.1);
+    std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
+    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
 
-    // std::string fileNameSaliency = "saliencyVotes";
-    // tfg::saveMaskedImages(images, initialMasks, resultsFolder, fileNameSaliency);
+    consensusVoter.reachConsensus(50);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
-    // std::cout << "Saved initial results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
-
-    regionList.computeDescriptors();
-    std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
-    std::cout << "Grouped descriptors in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
-
-    Eigen::SparseMatrix<float, Eigen::RowMajor> transM;
-    regionList.transitionMatrix(15, 4, 0.1, transM);
-    std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
-    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
-
-    const std::vector<int> frameBeginningIndices = regionList.getFrameBeginningIndices();
-    consensusVoter.reachConsensus(transM, frameBeginningIndices, 2);
-    const std::vector<float> finalVotes = consensusVoter.getCurrentVotes();
-    std::chrono::steady_clock::time_point flag12 = std::chrono::steady_clock::now();
-    std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag12-flag11).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 
     std::vector<cv::Mat> finalMasks;
-    regionList.masksFromVotes(finalVotes, finalMasks, 0.1f);
-    std::chrono::steady_clock::time_point flag13 = std::chrono::steady_clock::now();
-    std::cout << "Created masks from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag13-flag12).count())/1000000.0 << " seconds." << std::endl;
+    consensusVoter.getSegmentation(finalMasks, 0.2f);
+    std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
+    std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
+    
+
+    // std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
+    // std::vector<cv::Mat> finalMasks;
+    // for(unsigned int i = 0; i < 5; i++) {
+    //     consensusVoter.reachConsensus(50);
+    //     consensusVoter.getSegmentation(finalMasks, 0.2f);
+    // }
+    // std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
+    // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 
     std::string fileNameSegmentation = "result";
     tfg::saveMaskedImages(images, finalMasks, resultsFolder, fileNameSegmentation);
-    std::chrono::steady_clock::time_point flag14 = std::chrono::steady_clock::now();
-    std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag14-flag13).count())/1000000.0 << " seconds." << std::endl;
+    std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
+    std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
 
     return EXIT_SUCCESS;
 }
