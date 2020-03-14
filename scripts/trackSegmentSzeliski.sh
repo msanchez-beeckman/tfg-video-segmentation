@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# The following variables should be adjusted to the absolute path of the project's directory,
+# and to the directory containing the data, respectively.
+TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
+DATALOCATION="${TFGLOCATION}/data"
+
 usage () { echo "Usage: $0 [-b] datasetName frameLimit"; }
 
 BROXFLAG=""
@@ -19,12 +24,6 @@ shift $(( OPTIND - 1 ))
 
 DATASETNAME=$1
 FRAMELIMIT=$2
-
-
-# The following variables should be adjusted to the absolute path of the project's directory,
-# and to the directory containing the data, respectively.
-TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
-DATALOCATION="${TFGLOCATION}/data"
 
 python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/model/${DATASETNAME}
