@@ -5,7 +5,7 @@
 TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 
-usage () { echo "Usage: $0 datasetName frameLimit surroundFrames"; }
+usage () { echo "Usage: $0 [-b] [-r WIDTHxHEIGHT] datasetName frameLimit surroundFrames"; }
 
 LDOF=0
 IMAGEFORMAT="jpg"

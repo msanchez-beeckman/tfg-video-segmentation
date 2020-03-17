@@ -163,8 +163,6 @@ namespace tfg {
         cv::Rect patchDelimiter;
         patchDelimiter.x = xmin;
         patchDelimiter.y = ymin;
-        // patchDelimiter.width = xmax - xmin;
-        // patchDelimiter.height = ymax - ymin;
         patchDelimiter.width = patchSize;
         patchDelimiter.height = patchSize;
 

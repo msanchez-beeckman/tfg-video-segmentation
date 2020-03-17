@@ -14,6 +14,11 @@ int main(int argc, char* argv[]) {
     std::vector<OptStruct *> options;
     OptStruct opt_outmodel = {"o:", 0, "./results/nlcsegmentation/", nullptr, "Folder where the results of the segmentation should be stored"}; options.push_back(&opt_outmodel);
     OptStruct opt_spsize = {"s:", 0, "16", nullptr, "Superpixel size"}; options.push_back(&opt_spsize);
+    OptStruct opt_F = {"F:", 0, "15", nullptr, "Number of frames for KDTree's window"}; options.push_back(&opt_F);
+    OptStruct opt_L = {"L:", 0, "4", nullptr, "Number of nearest neighbours for each frame in KDTree's window"}; options.push_back(&opt_L);
+    OptStruct opt_sigma2 = {"S:", 0, "0.1", nullptr, "Value used for the denominator when computing costs between nearest neighbours"}; options.push_back(&opt_sigma2);
+    OptStruct opt_T = {"T:", 0, "50", nullptr, "Number of iterations to reach consensus"}; options.push_back(&opt_T);
+    OptStruct opt_threshold = {"t:", 0, "0.3", nullptr, "Minimum value of a vote for a superpixel to be considered foreground"}; options.push_back(&opt_threshold);
 
     std::vector<ParStruct *> parameters;
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images to be segmented"}; parameters.push_back(&par_images);
@@ -99,16 +104,21 @@ int main(int argc, char* argv[]) {
     }
 
     std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
-    consensusVoter.computeTransitionMatrix(15, 4, 0.1);
+    const int F = std::stoi(opt_F.value);
+    const int L = std::stoi(opt_L.value);
+    const float sigma2 = std::stof(opt_sigma2.value);
+    consensusVoter.computeTransitionMatrix(F, L, sigma2);
     std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
     std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
 
-    consensusVoter.reachConsensus(50);
+    const int T = std::stoi(opt_T.value);
+    consensusVoter.reachConsensus(T);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 
     std::vector<cv::Mat> finalMasks;
-    consensusVoter.getSegmentation(finalMasks, 0.2f);
+    const float THRESHOLD = std::stof(opt_threshold.value);
+    consensusVoter.getSegmentation(finalMasks, THRESHOLD);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
     
@@ -116,8 +126,8 @@ int main(int argc, char* argv[]) {
     // std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     // std::vector<cv::Mat> finalMasks;
     // for(unsigned int i = 0; i < 5; i++) {
-    //     consensusVoter.reachConsensus(50);
-    //     consensusVoter.getSegmentation(finalMasks, 0.2f);
+    //     consensusVoter.reachConsensus(10);
+    //     consensusVoter.getSegmentation(finalMasks, THRESHOLD);
     // }
     // std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;

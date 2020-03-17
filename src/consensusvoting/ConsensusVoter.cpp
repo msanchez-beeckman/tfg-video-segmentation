@@ -61,8 +61,8 @@ namespace tfg {
             this->saliencyScores.push_back(frameScore);
         }
 
-        // Not sure about this.
-        // The saliency score must be a number between 0 and 1, so dividing by the maximum value seems to be
+
+        // The saliency score must be a number between 0 and 1, so dividing by the maximum value is
         // the most straightforward way to normalize the sequence of images.
         normalizeByMaxOfSequence(this->saliencyScores);
         
@@ -194,10 +194,10 @@ namespace tfg {
 
         const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
         const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
-        // const int M = L*(2*F + 1);
+        const int M = L*(2*F + 1);
         Eigen::SparseMatrix<float, Eigen::RowMajor> transM(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
         std::vector<Eigen::Triplet<float>> transMEntries;
-        // transMEntries.reserve(M * NUMBER_OF_REGIONS);
+        transMEntries.reserve(M * NUMBER_OF_REGIONS);
         transMEntries.reserve(L*(2*F + 1) * NUMBER_OF_REGIONS);
 
         for(int f = 0; f < NUMBER_OF_FRAMES; f++) {
@@ -247,7 +247,7 @@ namespace tfg {
             // Search for the nearest M neighbours inside of the samples.
             // Since there can be more than one good match per frame, we search up to 4 regions per frame
             // for a total of M = L*(2*F + 1) nearest neighbours
-            const int M = L*(yMaxWindow - yMinWindow + 1);
+            // const int M = L*(yMaxWindow - yMinWindow + 1);
             cv::Mat NNIndices;
             cv::Mat result; // unused for our purposes, but required for the function findNearest
             cv::Mat NNDistances2;
