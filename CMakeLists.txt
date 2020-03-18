@@ -7,13 +7,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-# set(COMMON_LIBS   
-#         ${CMAKE_SOURCE_DIR}/src/ImageUtils.cpp
-#         ${CMAKE_SOURCE_DIR}/src/CmdParser.cpp
-#         ${CMAKE_SOURCE_DIR}/src/Track.cpp
-#         ${CMAKE_SOURCE_DIR}/src/Mapping.cpp
-#         ${CMAKE_SOURCE_DIR}/src/TrackTable.cpp)
-
 set(UTIL_LIBS
         ${CMAKE_SOURCE_DIR}/src/utils/ImageUtils.cpp
         ${CMAKE_SOURCE_DIR}/src/utils/CmdParser.cpp)
@@ -34,16 +27,7 @@ set(NLCV_LIBS
         ${CMAKE_SOURCE_DIR}/src/consensusvoting/Region.cpp
         ${CMAKE_SOURCE_DIR}/src/consensusvoting/ConsensusVoter.cpp)
 
-# set(EXTERNAL_LIBS
-#         fftw3
-#         fftw3f
-#         jpeg
-#         png
-#         tiff
-#         lapack
-#         blas
-#         )
-
+##### LIBRARIES THAT ARE COMM0N FOR TWO OR MORE VIDEO SEGMENTATION STRATEGIES
 add_library(utils ${UTIL_LIBS})
 target_link_libraries(utils
         ${OpenCV_LIBRARIES})
@@ -56,7 +40,7 @@ target_link_libraries(tracks
 target_include_directories(tracks
         PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
 
-##### LIBRARIES FOR BACKGROUND MOTION MODELING
+##### LIBRARIES FOR BACKGROUND MOTION MODELING (Szeliski)
 add_library(bgmm ${BGMM_LIBS})
 target_link_libraries(bgmm
         tracks)
@@ -68,7 +52,7 @@ target_link_libraries(motionModel
         bgmm)
 
 
-##### LIBRARIES FOR RANDOM WALKER
+##### LIBRARIES FOR RANDOM WALKER (Naveen)
 add_library(rdwalking ${RANDOMWALKER_LIBS})
 target_link_libraries(rdwalking
         tracks)
@@ -79,7 +63,7 @@ add_executable(randomWalker ${CMAKE_SOURCE_DIR}/src/randomwalker/src_random_walk
 target_link_libraries(randomWalker
         rdwalking)
 
-##### LIBRARIES FOR CONSENSUS VOTING
+##### LIBRARIES FOR CONSENSUS VOTING (Faktor)
 add_library(nlcv ${NLCV_LIBS})
 target_link_libraries(nlcv
         utils)

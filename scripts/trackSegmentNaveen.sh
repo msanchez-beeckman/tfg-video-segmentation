@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 # The following variables should be adjusted to the absolute path of the project's directory,
-# and to the directory containing the data, respectively.
+# to the directory containing the data, and to the directory containing the tracks file, respectively.
 TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
+TRACKLOCATION="${TFGLOCATION}/test/tracks"
 
 usage () { echo "Usage: $0 [-b] datasetName frameLimit"; }
 
@@ -33,4 +34,4 @@ python ${TFGLOCATION}/scripts/list_images.py ${SEEDLOCATION}/ png ${FRAMELIMIT} 
 mkdir -p ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/walkerprobs/
 rm ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/*
-${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${TFGLOCATION}/test/tracks/${DATASETNAME}${TRACKSUFFIX} ${SEEDLOCATION}/seeds.txt ${DATALOCATION}/${DATASETNAME}/images.txt -w ${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt -o ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/
+${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${TRACKLOCATION}/${DATASETNAME}${TRACKSUFFIX} ${SEEDLOCATION}/seeds.txt ${DATALOCATION}/${DATASETNAME}/images.txt -w ${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt -o ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/
