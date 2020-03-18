@@ -64,7 +64,7 @@ A second format for the track file is accepted, consisting in the output .dat fi
 
    The executable can be found in https://lmb.informatik.uni-freiburg.de/resources/software.php
 
-Moreover, the video segmentation defined by [2] is semi-supervised, so seeds are needed for it to work. Those should be placed in **data/<datasetname>/seeds/**, with each seed named after the image the seed is for (e.g. *data/bear/seeds/00000.png*).
+Moreover, the video segmentation defined by [2] is semi-supervised, so seeds are needed for it to work. Those should be placed in **data/&lt;datasetname&gt;/seeds/**, with each seed named after the image the seed is for (e.g. *data/bear/seeds/00000.png*).
 
 Within the project folders there are some datasets included for testing, located inside **data/**. Every frame from each dataset is named with a five digit number, starting with 00000, and this convention should be used for other video sequences, since the scripts that come with the project rely on it.
 
@@ -98,7 +98,7 @@ The project includes the following scripts to automate the segmentation process:
   Creates a text file that lists the absolute path to every image in a dataset, so it can be used as input for the C++ executables. This script requires the images' names to consist of five digits, ordered by frame and starting with 00000. There should be no reason to use this script in a standalone way, since it is basically a helper called by the other scripts.
 * computeShrunkFlows.sh  
   Shrinks the images of a dataset (by default to 854x480, modifiable using a -r flag), computes flows around each one of the frames (backwards and forwards), and lists the resulting files in a file called flows.txt.  
-  By default both the flows and the text file are stored in **results/flows/<datasetname>/**.  
+  By default both the flows and the text file are stored in **results/flows/&lt;datasetname&gt;/**.  
   Three parameters are required: the name of the dataset, the number of frames for which the flows should be computed, and the number of surrounding frames to be used as destination for the flow.  
   The default flow used is TV_L1, but LDOF can be used adding a -b flag.  
   Example usage:  
@@ -107,7 +107,7 @@ The project includes the following scripts to automate the segmentation process:
     ```
 * segmentFaktor.sh  
   Segments a video sequence using [1]. It calls list_images.py, then creates the results directories if needed, and performs the segmentation proposed by Faktor and Irani. This script assumes that the flows have been already computed and there exists a file flows.txt listing them, so computeShrunkFlows.sh should be called at least once before calling this script.  
-  Results are stored in **results/nlcsegmentation/<datasetname>/**.  
+  Results are stored in **results/nlcsegmentation/&lt;datasetname&gt;/**.  
   Two parameters are required: the name of the dataset, and the number of frames to be segmented.  
   Optional flags can be set to modify default parameters of the implementation. Calling the script without arguments gives more information about them.  
   Example usage:  
@@ -116,23 +116,25 @@ The project includes the following scripts to automate the segmentation process:
     ```
 * trackSegmentNaveen.sh  
   Segments tracks of a video sequence using [2]. It calls list_images.py for both the data and the seeds, creates the result directories if necessary, and performs the track segmentation. To use this script, there must exist a text file in **test/tracks/** containing previously computed tracks, named after the dataset.  
-  The label probabilities are stored in **results/walkerprobs/**, while the painted thresholded tracks can be found in **results/walkedseeds/<datasetname>**.  
+  The label probabilities are stored in **results/walkerprobs/**, while the painted thresholded tracks can be found in **results/walkedseeds/&lt;datasetname&gt;/**.  
   Two parameters are required: the name of the dataset, and the number of frames to segment.  
-  An optional flag -b can be set to parse the track file using Brox's format.  
+  An optional flag -b can be set to parse a track file that uses Brox's format.  
   Example usage:  
     ```console
     bash scripts/trackSegmentNaveen.sh bear 31
     ```
 * trackSegmentSzeliski.sh  
   Segments tracks of a video sequence using [3]. To use this script, there must exist a text file in **test/tracks/** containing previously computed tracks, named after the dataset.  
-  The background weights are stored in **results/weights/**, while the painted thresholded tracks can be found in **results/model/<datasetname>**.  
+  The background weights are stored in **results/weights/**, while the painted thresholded tracks can be found in **results/model/&lt;datasetname&gt;/**.  
   Two parameters are required: the name of the dataset, and the number of frames to segment.  
-  An optional flag -b can be set to parse the track file using Brox's format.  
+  An optional flag -b can be set to parse a track file that uses Brox's format.  
   Example usage:  
     ```console
     bash scripts/trackSegmentSzeliski.sh bear 31
     ```
 
-The shell scripts rely on knowing the absolute path to the root directory of the project. At the beginning of each of them there is a definition for a variable named TFGLOCATION that must be modified to the path of the project in the local machine for the scripts to work correctly.
+### Important
+
+The shell scripts rely on knowing the absolute path to the root directory of the project. At the beginning of each of them there is a definition for a variable named **TFGLOCATION** that **must be modified to the path of the project in the local machine for the scripts to work correctly**.
 The location where to find the data can also be modified, in addition to some other locations such as the directory where to find the tracks for the track segmentation scripts, and where to find the seeds for trackSegmentNaveen.sh.
 
