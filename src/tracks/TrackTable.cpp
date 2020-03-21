@@ -16,6 +16,11 @@ namespace tfg {
         computeFlowStatistics();
     }
 
+    /**
+     * Read tracks from a file, using a format where each line represents a track, the first number of a line corresponds to its initial frame,
+     * and the next numbers alternate between the x-axis value and the y-axis value of the points in the following frames.
+     * @param file The file where the track information is stored.
+     */
     void TrackTable::readTracks(std::istream &file) {
         tracks.clear();
         unsigned int trackNumber = 0;
@@ -39,6 +44,10 @@ namespace tfg {
         }
     }
 
+    /**
+     * Get origin-destination pairs for points in tracks for each frame of a video. This is basically formatting the sequence of tracks
+     * in an alternative way to make it easier to manipulate the points that are in a frame.
+     */
     void TrackTable::getMappingsFromTracks() {
         mappings.clear();
         tfg::Mapping firstMapping;
@@ -66,6 +75,11 @@ namespace tfg {
         computeFlowStatistics();
     }
 
+    /**
+     * Read tracks from a file that uses Brox's codification to store the tracks. The first line of the file stores the number of frames,
+     * the second stores the number of tracks, and then follows a sequence for each track: its length, and the positions of the points with their corresponding frame.
+     * @param file The file where the track information is stored.
+     */
     void TrackTable::readTracksBrox(std::istream &file) {
         tracks.clear();
         unsigned int trackNumber = 0;
@@ -103,6 +117,9 @@ namespace tfg {
         }
     }
 
+    /**
+     * Print all the origin-destination correspondences.
+     */
     void TrackTable::printMappings() const {
         for(unsigned int f = 0; f < mappings.size(); f++) {
             std::vector<cv::Vec2f> origin = mappings[f].getOrigin();
@@ -117,6 +134,13 @@ namespace tfg {
         }
     }
 
+    /**
+     * Paint the tracks over a sequence of images, coloring them according to some weights (red if their weight is > 0.5, red, green otherwise).
+     * @param weights2 The squared weights attributed to each track.
+     * @param images A sequence of images over which the tracks are going to be painted.
+     * @param folder The folder where the output file will be placed.
+     * @param fileName The name of the output image.
+     */
     void TrackTable::paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
         for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
             std::vector<cv::Vec2f> points = this->pointsInTrack(t);
@@ -145,6 +169,12 @@ namespace tfg {
         }
     }
 
+    /**
+     * Paint the tracks over a sequence of images, coloring them according to their labels.
+     * @param images A sequence of images over which the tracks are going to be painted.
+     * @param folder The folder where the output file will be placed.
+     * @param fileName The name of the output image.
+     */
     void TrackTable::paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
         for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
             const int label = this->labelOfTrack(t);
@@ -177,6 +207,9 @@ namespace tfg {
         }
     }
 
+    /**
+     * Compute mean and variance of the optical flow.
+     */
     void TrackTable::computeFlowStatistics() {
         flowMeans.clear();
         flowVariances.clear();

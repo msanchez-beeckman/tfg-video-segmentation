@@ -25,15 +25,30 @@ namespace tfg {
         this->label = label;
     }
 
+    /**
+     * Compute squared maximal motion distance between two tracks, defined in eqs. 1 and 4 of the paper:
+     * 
+     * P. Ochs, J. Malik, and T. Brox.
+     * Segmentation of moving objects by long term video analysis.
+     * IEEE Transactions on Pattern Analysis and Machine Intelligence, 36(6): 1187-1200, Jun 2014.
+     * DOI: 10.1109/TPAMI.2013.242
+     * 
+     * @param trackB A second track.
+     * @param flowVariances The variances of the flow in each frame, to scale the distances (a movement has more significance if the rest of the frame is not moving so much).
+     */
     float Track::maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const {
+        // The distance is computed using only the common frames between the tracks
         const unsigned int MIN_COMMON_FRAMES = 1;
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
         const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
-        if(lastCommonFrame - firstCommonFrame + 1 < MIN_COMMON_FRAMES) return std::numeric_limits<float>::infinity();
+        if(lastCommonFrame - firstCommonFrame + 1 < MIN_COMMON_FRAMES) return std::numeric_limits<float>::infinity(); // If not enough common frames, consider an infinite distance
 
         // float averageSpatialDistance = this->averageSpatialDistance(trackB);
         float maximalSpatialDistance = this->maximalSpatialDistance(trackB);
         float maxDistance2 = 0.0f;
+        // The motion distance in frame is defined multiplying a spatial distance by the difference of derivatives (in that frame) of the curves formed by the trajectories, scaled
+        // by a variance parameter (normally, the variance of the flow in the frame).
+        // The maximal motion distance is the highest value obtained for all common frames
         for(unsigned int frame = firstCommonFrame; frame < lastCommonFrame; frame++) {
             cv::Vec2f derivativeA, derivativeB;
             this->deriveForwardDifferences(frame, derivativeA);
@@ -49,6 +64,11 @@ namespace tfg {
         return maxDistance2;
     }
 
+    /**
+     * Approximate derivative in a frame using forward differences.
+     * @param frame The frame where the derivative should be calculated.
+     * @param derivative An output vector containing the derivative.
+     */
     void Track::deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const {
         assert(frame >= initFrame && frame < initFrame + duration - 1);
 
@@ -57,6 +77,11 @@ namespace tfg {
         derivative = (coordinates[frame - initFrame + step] - coordinates[frame - initFrame])/step;
     }
 
+    /**
+     * Compute the average spatial distance between two tracks.
+     * This is done calculating the euclidean distance between the points in the tracks for their common frames, and then averaging them.
+     * @param trackB Another track.
+     */
     float Track::averageSpatialDistance(const Track &trackB) const {
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
         const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
@@ -71,6 +96,11 @@ namespace tfg {
         return averageDistance;
     }
 
+    /**
+     * Compute the maximal spatial distance between two tracks.
+     * This is done calculating the euclidean distance between the points in the tracks for their common frames, and then keeping the biggest number.
+     * @param trackB Another track.
+     */
     float Track::maximalSpatialDistance(const Track &trackB) const {
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
         const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);

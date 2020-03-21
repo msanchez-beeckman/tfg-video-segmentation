@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
     }
     trackFile.close();
 
+    // Initialize model from RANSAC
     std::shared_ptr<tfg::MotionModel> model = std::make_shared<tfg::MotionModel>(trackTable, tau2);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::vector<std::vector<int>> inliers;
@@ -44,22 +45,22 @@ int main(int argc, char* argv[]) {
     std::cout << "(0) Cost: " << model->getCost() << std::endl;
     std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
 
-    
+    // Get residuals and weights from initial model
     std::vector<float> residuals2 = model->getResiduals2();
     std::vector<float> weights2 = tfg::getWeights2(residuals2, tau2);
-
     std::vector<float> inlierWeights = tfg::getWeightsFromInliers(inliers, trackTable);
     
+    // Refine the model
     tfg::IRLS(model, trackTable, weights2, tau2);
-    // tfg::IRLS(model, trackTable, inlierWeights);
 
 
+    // Write the weights of each track to a file, to use it in the dense segmentation 
     std::ofstream weightsFile(opt_outweights.value);
     tfg::writeWeights(weightsFile, weights2);
     // tfg::writeWeights(weightsFile, inlierWeights);
 
 
-
+    // Read images, then paint the tracks over them using green for foreground and red for background
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
@@ -67,8 +68,6 @@ int main(int argc, char* argv[]) {
     std::string resultsFolder(opt_outmodel.value);
     std::string fileNameModel = "finalModel";
     std::string fileNameInliers = "ransacModel";
-    // tfg::paintTracks(trackTable, weights2, images, resultsFolder, fileNameModel);
-    // tfg::paintTracks(trackTable, inlierWeights, images, resultsFolder, fileNameInliers);
     trackTable->paintWeightedTracks(weights2, images, resultsFolder, fileNameModel);
     trackTable->paintWeightedTracks(inlierWeights, images, resultsFolder, fileNameInliers);
 

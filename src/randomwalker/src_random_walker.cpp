@@ -26,7 +26,6 @@ int main(int argc, char* argv[]) {
 
     // Read tracks from text file
     std::ifstream trackFile(par_tracks.value);
-    // std::unique_ptr<tfg::TrackTable> trackTable = std::make_unique<tfg::TrackTable>();
     std::shared_ptr<tfg::TrackTable> trackTable = std::make_shared<tfg::TrackTable>();
     if(opt_brox.flag) {
         trackTable->buildFromBroxFile(trackFile);
@@ -40,20 +39,22 @@ int main(int argc, char* argv[]) {
     std::unordered_map<int, cv::Mat> seedImages;
     tfg::readSeedImages(seedFile, seedImages);
 
+    // Create the random walker than propagate the seeds to each track
     tfg::RandomWalker walker(trackTable);
     walker.seed(seedImages);
     walker.propagateSeeds();
+
+    // Write the results in a file
     std::ofstream weightsFile(opt_outweights.value);
     std::cout << "Writing in a file the probabilities of each label for each track" << std::endl;
     walker.writeProbabilities(weightsFile);
 
+    // Paint the tracks according to their most likely label (using the same color as the seeds for the label)
     std::ifstream imageNamesFile(par_images.value);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
     std::string resultsFolder(opt_outmodel.value);
-
     std::string fileName = "out";
-    //tfg::paintSeededTracks(trackTable, images, resultsFolder, fileName);
     trackTable->paintLabeledTracks(images, resultsFolder, fileName);
 
     std::cout << "Painted tracks according to seeds" << std::endl;
