@@ -103,7 +103,7 @@ The project includes the following scripts to automate the segmentation process:
   The default flow used is TV_L1, but LDOF can be used adding a -b flag.  
   Example usage:  
     ```console
-    bash scripts/computeShrunkFlows.sh bear 31 3
+    [user@pc tfg_video_segmentation]$ bash scripts/computeShrunkFlows.sh bear 31 3
     ```
 * segmentFaktor.sh  
   Segments a video sequence using [1]. It calls list_images.py, then creates the results directories if needed, and performs the segmentation proposed by Faktor and Irani. This script assumes that the flows have been already computed and there exists a file flows.txt listing them, so computeShrunkFlows.sh should be called at least once before calling this script.  
@@ -112,7 +112,7 @@ The project includes the following scripts to automate the segmentation process:
   Optional flags can be set to modify default parameters of the implementation. Calling the script without arguments gives more information about them.  
   Example usage:  
     ```console
-    bash scripts/segmentFaktor.sh bear 31
+    [user@pc tfg_video_segmentation]$ bash scripts/segmentFaktor.sh bear 31
     ```
 * trackSegmentNaveen.sh  
   Segments tracks of a video sequence using [2]. It calls list_images.py for both the data and the seeds, creates the result directories if necessary, and performs the track segmentation. To use this script, there must exist a text file in **test/tracks/** containing previously computed tracks, named after the dataset.  
@@ -121,7 +121,7 @@ The project includes the following scripts to automate the segmentation process:
   An optional flag -b can be set to parse a track file that uses Brox's format.  
   Example usage:  
     ```console
-    bash scripts/trackSegmentNaveen.sh bear 31
+    [user@pc tfg_video_segmentation]$ bash scripts/trackSegmentNaveen.sh bear 31
     ```
 * trackSegmentSzeliski.sh  
   Segments tracks of a video sequence using [3]. To use this script, there must exist a text file in **test/tracks/** containing previously computed tracks, named after the dataset.  
@@ -130,7 +130,7 @@ The project includes the following scripts to automate the segmentation process:
   An optional flag -b can be set to parse a track file that uses Brox's format.  
   Example usage:  
     ```console
-    bash scripts/trackSegmentSzeliski.sh bear 31
+    [user@pc tfg_video_segmentation]$ bash scripts/trackSegmentSzeliski.sh bear 31
     ```
 
 ### Important
