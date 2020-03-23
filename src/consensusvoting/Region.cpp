@@ -10,6 +10,15 @@ namespace tfg {
     Region::Region() {}
     Region::~Region() {}
 
+    /**
+     * Construct a Region object and attribute it a frame, a number inside the frame, the original full image, and the
+     * superpixel labeling of it (so that the created Region is the one with the label equal to "number").
+     * Then, compute its descriptors.
+     * @param number The label of the superpixel inside the full image.
+     * @param frame The frame number.
+     * @param image The original image.
+     * @param frameSuperpixelLabels The superpixel labeling of the full image.
+     */
     Region::Region(int number, int frame, const cv::Mat &image, const cv::Mat &frameSuperpixelLabels) {
         this->number = number;
         this->frame = frame;
@@ -27,6 +36,9 @@ namespace tfg {
         // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
     }
 
+    /**
+     * Compute the rectangle with minimal area such that all the region's pixels are inside it.
+     */
     void Region::computeSuperpixelBoundaries() {
         int xmax = 0;
         int xmin = frameSuperpixelLabels.cols - 1;
@@ -48,6 +60,10 @@ namespace tfg {
         boundaries.height = ymax - ymin + 1;
     }
 
+    /**
+     * Compute a color histogram using BGR as the color space.
+     * @param nbins Number of bins of the histogram.
+     */
     void Region::computeColorHistogramBGR(int nbins) {
         colorHistBGRDescriptor.release();
 
@@ -80,6 +96,10 @@ namespace tfg {
         cv::hconcat(histVec, colorHistBGRDescriptor);
     }
 
+    /**
+     * Compute a color histogram using L*a*b* as the color space.
+     * @param nbins Number of bins of the histogram.
+     */
     void Region::computeColorHistogramLAB(int nbins) {
         colorHistLABDescriptor.release();
 
@@ -120,6 +140,12 @@ namespace tfg {
         cv::hconcat(histVec, colorHistLABDescriptor);
     }
 
+    /**
+     * Compute histogram of oriented gradients around a region of interest.
+     * @param ncells The number of cells for the HOG.
+     * @param nbins The number of bins for the HOG.
+     * @param patchSize The size of the patch where to compute the HOG (the region of interest).
+     */
     void Region::computeHOG(int ncells, int nbins, int patchSize) {
         cv::Mat patch = computeRegionOfInterest(patchSize);
         std::vector<float> descriptors;
@@ -139,6 +165,12 @@ namespace tfg {
         this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
     }
 
+    /**
+     * Get a portion of matrix corresponding to a patch with certain size around the region.
+     * This method tries for the patch to be around the center of the superpixel, but prioritizes
+     * keeping the size of the patch the same, so sometimes (i. e. near the edges of the image) 
+     * the region of interest is slightly displaced to preserve the patch size.
+     */
     cv::Mat Region::computeRegionOfInterest(int patchSize) {
         // After delimiting the superpixel, extract a patch around its center
         // If the patch is not inside the image, displace the rectangle so it fits in it
@@ -170,6 +202,11 @@ namespace tfg {
         return patch;
     }
 
+    /**
+     * Get the relative spatial coordinates of the region, calculated using its center.
+     * The relative coordinates take values between 0 and 1, such that the center of the image
+     * is at (0.5, 0.5).
+     */
     void Region::computeRelativeDistance() {
         float centerX = (boundaries.x + boundaries.width)/2;
         float centerY = (boundaries.y + boundaries.height)/2;
@@ -183,6 +220,9 @@ namespace tfg {
         this->relativeDistanceDescriptor = cv::Mat(1, 2, CV_32FC1, &relativePosition[0]);
     }
 
+    /**
+     * Concatenate the descriptors of the region into a single vector.
+     */
     cv::Mat Region::getDescriptor() const {
         std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeDistanceDescriptor};
         // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, relativeDistanceDescriptor};

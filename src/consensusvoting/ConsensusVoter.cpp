@@ -21,20 +21,32 @@ namespace tfg {
     }
     ConsensusVoter::~ConsensusVoter() {}
 
+    /**
+     * Initialize motion saliency scores for each image, using precomputed optical flows.
+     * The scores are stored in OpenCV's Mat objects, and are the same size as the read flows.
+     * As such, the saliency scores need not be the same size as the original images, and are resized
+     * to the correct values when initializing the votes. This is done this way in case the flows are computed
+     * on scaled down images to diminish the execution time.
+     * @param flowFile A .txt file containing the absolute path to each image's optical flow .tiff files.
+     * @param minimumPercentageValidity Minimum percentage of frames with dominant motion that should exist for the computation to be considered successful.
+     * @return True if the majority (at least minimumPercentageValidity) of frames have a dominant motion, false otherwise.
+     */
     bool ConsensusVoter::initializeMotionSaliencyScores(std::istream &flowFile, float minimumPercentageValidity) {
         this->saliencyScores.clear();
         std::string line;
 
         std::getline(flowFile, line);
-        const unsigned int NUMBER_OF_FRAMES = std::stoi(line);
+        const unsigned int NUMBER_OF_FRAMES = std::stoi(line); // The first line of the file tells the number of frames
         this->saliencyScores.reserve(NUMBER_OF_FRAMES);
         int framesWithDominantMotion = 0;
 
+        // Each frame has a certain number of optical flows attributed to it, typically both forward and backward
         for(unsigned int f = 0; f < NUMBER_OF_FRAMES; f++) {
             std::getline(flowFile, line);
-            const unsigned int NUMBER_OF_FLOWS = std::stoi(line);
+            const unsigned int NUMBER_OF_FLOWS = std::stoi(line); // The first line of a particular frame tells the number of flows
 
             std::vector<cv::Mat> motionSaliencies;
+            // For each flow which the frame is the origin of, compute a motion saliency score
             for(unsigned int i = 0; i < NUMBER_OF_FLOWS; i++) {
                 std::getline(flowFile, line);
                 cv::Mat flowu = cv::imread(line, cv::IMREAD_ANYDEPTH);
@@ -43,13 +55,16 @@ namespace tfg {
                 cv::Mat flowv = cv::imread(line, cv::IMREAD_ANYDEPTH);
 
                 cv::Mat saliency;
+                // Call an auxiliary method to compute motion saliency scores from an optical flow
                 bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.55f, 10);
+                // If a dominant motion exists, store temporarily the corresponding saliencies
                 if(existsDominantMotion) {
                     std::cout << " in flow " << i << " of frame " << f << std::endl;
                     motionSaliencies.push_back(saliency);
                 }
             }
 
+            // Extract the mean of the motion saliencies associated to the frame, and attribute it to it
             cv::Mat frameScore = cv::Mat::zeros(1, 1, CV_32FC1);
             if(motionSaliencies.size() > 0) {
                 elementwiseMean(motionSaliencies, frameScore);
@@ -62,16 +77,34 @@ namespace tfg {
         }
 
 
-        // The saliency score must be a number between 0 and 1, so dividing by the maximum value is
+        // The saliency score must be a number between 0 and 1, so dividing by the maximum value of the sequence (not per frame) is
         // the most straightforward way to normalize the sequence of images.
         normalizeByMaxOfSequence(this->saliencyScores);
         
+        // If not enough frames have a dominant motion, consider the process a failure
+        // In that case, visual saliency is the way to go
         return (framesWithDominantMotion > NUMBER_OF_FRAMES * minimumPercentageValidity);
     }
 
+    /**
+     * Compute motion saliency from two floating point matrices of optical flows (horizontal and vertical).
+     * This method looks for two different kinds of motion: first, it tries to tell if the frame is static by comparing the median of the magnitude of the 
+     * flow and comparing to a low value; then, if the frame is not static, it searches for a dominant translational motion by computing a histogram of the phases
+     * of the flow, and looking at the height of the largest bin.
+     * The saliency is defined as the square of the deviation of the pixel value (magnitude of the flow in the static case, angle in the translational case) from the
+     * dominant value (0 in the static case, the class mark of the largest bin in the translational case).
+     * @param flowu A floating point matrix containing the horizontal optical flow.
+     * @param flowv A floating point matrix containing the vertical optical flow.
+     * @param saliency Output matrix containing the saliency scores for each pixel.
+     * @param patchSize The patch size to smooth the saliencies.
+     * @param staticTh The threshold value to compare with the median of the flow magnitude to tell if a frame is static or not.
+     * @param transTh The threshold percentage to compare with the height of the largest bin to tell if a frame has a dominant translational motion.
+     * @param orientationBins The number of bins for the histogram of flow angles.
+     * @return True if the flow has either static or translational dominant motion, false otherwise.
+     */
     bool ConsensusVoter::computeMotionSaliency(const cv::Mat &flowu, const cv::Mat &flowv, cv::Mat &saliency, int patchSize, float staticTh, float transTh, int orientationBins) {
 
-        // Compute the magnitude and angle of the flow
+        // Compute the magnitude of the flow
         cv::Mat magnitude;
         cv::magnitude(flowu, flowv, magnitude);
         std::vector<float> magnitudeData;
@@ -87,7 +120,8 @@ namespace tfg {
             median = (*it + magnitudeData[magnitudeData.size()/2])/2.0f;
         }
 
-        // If the background is static, the saliency score is 
+        // If the median is low enough, the background is static
+        // In that case, the saliency score is the square of each pixel's magnitude
         if(median < staticTh) {
             std::cout << "Static motion";
             cv::Mat magnitudeDeviation = magnitude.mul(magnitude);
@@ -133,6 +167,11 @@ namespace tfg {
         return false;
     }
 
+    /**
+     * Compute the elementwise mean of a vector of matrices.
+     * @param src A collection of OpenCV matrices.
+     * @param dst An output matrix where each element contains the mean of the values in that position.
+     */
     void ConsensusVoter::elementwiseMean(const std::vector<cv::Mat> &src, cv::Mat &dst) {
         dst.release();
 
@@ -144,6 +183,11 @@ namespace tfg {
         dst /= VECTOR_SIZE;
     }
 
+    /**
+     * Normalize a sequence of matrices so all the elements take values in the range [0, 1]
+     * by dividing all the entries by the maximum of the whole sequence.
+     * @param sequence A sequence of matrices.
+     */
     void ConsensusVoter::normalizeByMaxOfSequence(std::vector<cv::Mat> &sequence) {
         float max = 0;
         for(unsigned int i = 0; i < sequence.size(); i++) {
@@ -159,6 +203,11 @@ namespace tfg {
         }
     }
 
+    /**
+     * Save saliency scores to a sequence of grayscale images.
+     * @param folder The folder where the new files will be stored.
+     * @param fileName A prefix for the name of the new files.
+     */
     void ConsensusVoter::saveSaliencies(const std::string &folder, const std::string &fileName) {
 
         for(unsigned int f = 0; f < this->saliencyScores.size(); f++) {
@@ -171,12 +220,22 @@ namespace tfg {
         }
     }
 
+    /**
+     * Add a group of regions belonging to a single frame to the list of superpixels.
+     * @param spInFrame A vector of Region objects containing information of superpixels in a frame.
+     */
     void ConsensusVoter::addRegionsByFrame(std::vector<tfg::Region> &spInFrame) {
         const int nextFrameIndex = this->frameBeginningIndex.size() == 0 ? 0 : this->frameBeginningIndex.back() + spInFrame.size();
         this->frameBeginningIndex.push_back(nextFrameIndex);
         std::move(spInFrame.begin(), spInFrame.end(), std::back_inserter(this->superpixels));
     }
 
+    /**
+     * Initialize votes from previously computed saliency scores, by attributing to each region the mean of the scores
+     * of the pixels contained inside it.
+     * This is done per-frame, and the saliency matrix of the frame is resized to be the same as the image in case the flows
+     * were computed on a shrunken image. If the sizes do not match, a bilineal interpolation is performed on the saliencies.
+     */
     void ConsensusVoter::initializeVotesInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels) {
         cv::Mat saliencyOfFrame;
         cv::resize(this->saliencyScores[frame], saliencyOfFrame, pixelLabels.size());
@@ -189,6 +248,16 @@ namespace tfg {
         }
     }
 
+    /**
+     * Compute a random walk transition matrix. This is a sparse matrix that stores costs
+     * between neighbouring regions, and is multiplied by a vector of region votes for them to
+     * "reach consensus" (update the region votes with a weighted average of their neighbours').
+     * The neighbours are computed using a KDTree-search, and a cost is attributed between two neighbours
+     * based on the distance between their region descriptors.
+     * @param F The number of surrounding frames forwards and backwards to search for nearest neighbours.
+     * @param L A multiplier that indicates the number of possible good matches per frame to find nearest neighbours.
+     * @param sigma2 The variance of the exponential variable, higher is less restrictive.
+     */
     void ConsensusVoter::computeTransitionMatrix(int F, int L, float sigma2) {
         computeDescriptors();
 
@@ -212,11 +281,6 @@ namespace tfg {
             std::cout << "Extracted descriptors of superpixels in frame " << f << std::endl;
 
             // Extract the submatrix corresponding to the descriptors of all the regions in the neighbouring frames
-            // TODO: right now the window is smaller for the frames at the beginning and at the end, but we still ask
-            // for the M nearest neighbours: for this reason, the transition matrix is not symmetrical. As a way to
-            // correct this and improve the efficiency of the function, it's interesting to try to limit the window
-            // to only search forward (F + 1 frames, making yMinWindow = f), and limit the number of nearest neighbours to L*(searchWindow.height)
-
             cv::Rect searchWindow;
             const int yMinWindow = ((f - F) < 0) ? 0 : (f - F);
             const int yMaxWindow = ((f + F) > (NUMBER_OF_FRAMES - 1)) ? (NUMBER_OF_FRAMES - 1) : (f + F);
@@ -245,7 +309,7 @@ namespace tfg {
             std::cout << "Created and trained KDTree " << f << std::endl;
 
             // Search for the nearest M neighbours inside of the samples.
-            // Since there can be more than one good match per frame, we search up to 4 regions per frame
+            // Since there can be more than one good match per frame, we search up to L regions per frame
             // for a total of M = L*(2*F + 1) nearest neighbours
             // const int M = L*(yMaxWindow - yMinWindow + 1);
             cv::Mat NNIndices;
@@ -296,6 +360,10 @@ namespace tfg {
 
     }
 
+    /**
+     * Get matrix of descriptors. This basically concatenates the already computed descriptors of each region into a single matrix to be used for
+     * the nearest neighbour search.
+     */
     void ConsensusVoter::computeDescriptors() {
         this->descriptors.release();
 
@@ -308,6 +376,10 @@ namespace tfg {
         cv::vconcat(descriptorsVector, this->descriptors);
     }
 
+    /**
+     * Update the votes by multiplying them by the transition matrix.
+     * @param iterations The number of times the votes are to be multiplied by the matrix.
+     */
     void ConsensusVoter::reachConsensus(int iterations) {
         Eigen::Map<Eigen::VectorXf> updatedVotes(this->votes.data(), this->votes.size());
 
@@ -324,6 +396,11 @@ namespace tfg {
         }
     }
 
+    /**
+     * Threshold the existing votes and get a sequence of masks from them.
+     * @param masks The output vector of masks.
+     * @param threshold The threshold value.
+     */
     void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold) {
         const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
         const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
@@ -334,18 +411,34 @@ namespace tfg {
             const int spEnd = (f == (NUMBER_OF_FRAMES - 1)) ? (NUMBER_OF_REGIONS - 1) : (this->frameBeginningIndex[f + 1] - 1);
             cv::Mat framePixelLabels = this->superpixels[spBegin].getFrameLabels();
 
+            // Set the values of the mask (before thresholding) by superpixel: each pixel of a superpixel is attributed the same
+            // value as the vote for the region
             cv::Mat maskNotThresholded(framePixelLabels.size(), CV_32FC1);
             for(int sp = spBegin; sp <= spEnd; sp++) {
                 const int spLabelInFrame = sp - spBegin;
                 cv::Mat spLocation(framePixelLabels == spLabelInFrame);
                 maskNotThresholded.setTo(this->votes[sp], spLocation);
             }
+
+            // The segmented images tend to have small non-connected blobs that are similar in color to the foreground,
+            // but that are really background. This function eliminates the blobs that are much smaller than the biggest object
+            // (that is assumed to be the real foreground)
             correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
             cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }
     }
 
+    /**
+     * Eliminate connected components of a mask whose size with respect to the biggest connected component is much smaller.
+     * Then, correct the votes for the involved superpixels by setting them below the threshold.
+     * @param matrix A non-thresholded mask whose pixels contain values between 0 and 1.
+     * @param spBegin The index of the first superpixel of the frame the matrix corresponds to.
+     * @param spEnd The index of the last superpixel of the frame the matrix corresponds to.
+     * @param regionLabels A labeling of the image that separates the different superpixels in the frame.
+     * @param threshold A threshold to separate background from foreground.
+     * @param relativeSize The minimum relative size the blobs should at least have with respect to the biggest object in order no to be removed.
+     */
     void ConsensusVoter::correctVotesForSmallBlobs(cv::Mat &matrix, int spBegin, int spEnd, const cv::Mat &regionLabels, float threshold, float relativeSize) {
         cv::Mat mask(matrix > threshold);
         cv::Mat labels;

@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
 
     // return EXIT_SUCCESS;
 
+
+    // Read the images and create a ConsensusVoter object
     std::vector<cv::Mat> images;
     std::ifstream imageListFile(par_images.value);
     tfg::readImages(imageListFile, images);
@@ -61,8 +63,8 @@ int main(int argc, char* argv[]) {
     const int SUPERPIXEL_SIZE = std::stoi(opt_spsize.value);
     tfg::ConsensusVoter consensusVoter((images[0].cols * images[1].rows)/(SUPERPIXEL_SIZE * SUPERPIXEL_SIZE), images.size());
 
+    // Initialize the votes using motion saliency. If motion saliency does not work, visual saliency is needed.
     std::ifstream flowListFile(par_flows.value);
-
     std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
     if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, 0.5f)) {
         std::cout << "No dominant motion has been found in the video" << std::endl;
@@ -74,6 +76,7 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
     std::cout << "Motion saliency scores computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
 
+    // Extract superpixels for each frame, compute their descriptors, and initialize their votes from the saliency scores
     for(unsigned int f = 0; f < images.size(); f++) {
 
         std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
@@ -103,6 +106,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
+    // Compute the transition matrix, and reach consensus iteratively multiplying the votes by it
     std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
     const int F = std::stoi(opt_F.value);
     const int L = std::stoi(opt_L.value);
@@ -116,13 +120,14 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 
+    // Get final segmentation from the final votes
     std::vector<cv::Mat> finalMasks;
     const float THRESHOLD = std::stof(opt_threshold.value);
     consensusVoter.getSegmentation(finalMasks, THRESHOLD);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
-    
 
+    // TEST: reach consensus by batches, so that votes of small blobs are corrected before continuing with the iterations
     // std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     // std::vector<cv::Mat> finalMasks;
     // for(unsigned int i = 0; i < 5; i++) {
@@ -132,6 +137,7 @@ int main(int argc, char* argv[]) {
     // std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 
+    // Save results
     std::string fileNameSegmentation = "result";
     tfg::saveMaskedImages(images, finalMasks, resultsFolder, fileNameSegmentation);
     std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
