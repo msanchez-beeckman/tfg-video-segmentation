@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
     OptStruct opt_sigma2 = {"S:", 0, "0.1", nullptr, "Value used for the denominator when computing costs between nearest neighbours"}; options.push_back(&opt_sigma2);
     OptStruct opt_T = {"T:", 0, "50", nullptr, "Number of iterations to reach consensus"}; options.push_back(&opt_T);
     OptStruct opt_threshold = {"t:", 0, "0.3", nullptr, "Minimum value of a vote for a superpixel to be considered foreground"}; options.push_back(&opt_threshold);
+    OptStruct opt_rmblobs = {"r", 0, nullptr, nullptr, "Remove small non-connected blobs after segmentation"}; options.push_back(&opt_rmblobs);
 
     std::vector<ParStruct *> parameters;
     ParStruct par_images = {"images", nullptr, "Text file containing the path to the images to be segmented"}; parameters.push_back(&par_images);
@@ -26,34 +27,6 @@ int main(int argc, char* argv[]) {
 
     if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
         return EXIT_FAILURE;
-
-    // std::vector<float> testSaliency = {1, 2};
-    // std::vector<float> testMask1 = {1, 1, 0,
-    //                                 1, 1, 0,
-    //                                 0, 0, 0};
-    // cv::Mat preMask1(3, 3, CV_32FC1, &testMask1[0]);
-    // cv::Mat mask1(preMask1 > 0);
-    // std::vector<float> testMask2 = {0, 0, 1,
-    //                                 0, 0, 1,
-    //                                 1, 1, 1};
-    // cv::Mat preMask2(3, 3, CV_32FC1, &testMask2[0]);
-    // cv::Mat mask2(preMask2 > 0);
-    // cv::Mat testMatrix = cv::Mat::zeros(3, 3, CV_32FC1);
-    // float &value1 = testSaliency[0];
-    // float &value2 = testSaliency[1];
-    // testMatrix.setTo(value1, mask1);
-    // testMatrix.setTo(value2, mask2);
-
-    // std::cout << mask1 << std::endl;
-    // std::cout << mask2 << std::endl;
-    // std::cout << testMatrix << std::endl;
-
-    // testMatrix /= 2;
-    // std::cout << testMatrix << std::endl;
-    // std::cout << testSaliency[1] << std::endl;
-
-    // return EXIT_SUCCESS;
-
 
     // Read the images and create a ConsensusVoter object
     std::vector<cv::Mat> images;
@@ -123,7 +96,8 @@ int main(int argc, char* argv[]) {
     // Get final segmentation from the final votes
     std::vector<cv::Mat> finalMasks;
     const float THRESHOLD = std::stof(opt_threshold.value);
-    consensusVoter.getSegmentation(finalMasks, THRESHOLD);
+    const bool REMOVE_BLOBS = opt_rmblobs.flag != 0;
+    consensusVoter.getSegmentation(finalMasks, THRESHOLD, REMOVE_BLOBS);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 

@@ -40,7 +40,7 @@ namespace tfg {
             void initializeVotesInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels);
             void computeTransitionMatrix(int F, int L, float sigma2);
             void reachConsensus(int iterations);
-            void getSegmentation(std::vector<cv::Mat> &masks, float threshold);
+            void getSegmentation(std::vector<cv::Mat> &masks, float threshold, bool removeSmallBlobs);
 
     };
 }

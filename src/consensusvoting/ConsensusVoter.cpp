@@ -400,8 +400,9 @@ namespace tfg {
      * Threshold the existing votes and get a sequence of masks from them.
      * @param masks The output vector of masks.
      * @param threshold The threshold value.
+     * @param removeSmallBlobs True if small non-connected blobs should be removed, false otherwise.
      */
-    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold) {
+    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold, bool removeSmallBlobs) {
         const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
         const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
         masks.clear();
@@ -423,7 +424,7 @@ namespace tfg {
             // The segmented images tend to have small non-connected blobs that are similar in color to the foreground,
             // but that are really background. This function eliminates the blobs that are much smaller than the biggest object
             // (that is assumed to be the real foreground)
-            correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
+            if(removeSmallBlobs) correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
             cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }

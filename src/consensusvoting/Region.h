@@ -16,14 +16,14 @@ namespace tfg {
             cv::Mat colorHistBGRDescriptor;
             cv::Mat colorHistLABDescriptor;
             cv::Mat HOGDescriptor;
-            cv::Mat relativeDistanceDescriptor;
+            cv::Mat relativeCoordinatesDescriptor;
 
             void computeSuperpixelBoundaries();
             void computeColorHistogramBGR(int nbins);
             void computeColorHistogramLAB(int nbins);
             void computeHOG(int ncells, int nbins, int patchSize);
             cv::Mat computeRegionOfInterest(int patchSize);
-            void computeRelativeDistance();
+            void computeRelativeCoordinates();
 
         public:
             Region();

@@ -6,7 +6,7 @@ TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 FLOWLOCATION="${TFGLOCATION}/results/flows"
 
-usage () { echo "Usage: $0 [-s spSize] [-F windowRadius] [-L NNperFrame] [-S sigma2] [-T iterations] [-t threshold] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-s spSize] [-F windowRadius] [-L NNperFrame] [-S sigma2] [-T iterations] [-t threshold] [-r removeBlobs] datasetName frameLimit"; }
 
 sFLAG=""
 FFLAG=""
@@ -14,15 +14,17 @@ LFLAG=""
 SFLAG=""
 TFLAG=""
 tFLAG=""
+rFLAG=""
 
-while getopts :s:F:L:S:T:t: opt; do
+while getopts :s:F:L:S:T:t:r opt; do
     case $opt in
         s) sFLAG="-s $OPTARG";;
         F) FFLAG="-F $OPTARG";;
-        F) LFLAG="-L $OPTARG";;
-        F) SFLAG="-S $OPTARG";;
-        F) TFLAG="-T $OPTARG";;
-        F) tFLAG="-t $OPTARG";;
+        L) LFLAG="-L $OPTARG";;
+        S) SFLAG="-S $OPTARG";;
+        T) TFLAG="-T $OPTARG";;
+        t) tFLAG="-t $OPTARG";;
+        r) rFLAG="-r";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -38,4 +40,4 @@ FRAMELIMIT=$2
 python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}
 rm ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/consensusVoting ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${sFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} -o ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/
+${TFGLOCATION}/bin/consensusVoting ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${sFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} ${rFLAG} -o ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/
