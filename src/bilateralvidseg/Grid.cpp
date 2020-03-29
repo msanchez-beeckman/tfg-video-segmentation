@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <opencv4/opencv2/imgproc.hpp>
+#include "maxflow-v3.01/graph.h"
 #include "Grid.h"
 
 namespace tfg {
@@ -43,7 +44,7 @@ namespace tfg {
         }
     }
 
-    void Grid::splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights2, int texturelessRadius, float bgBias) {
+    void Grid::splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights, int texturelessRadius, float bgBias) {
         std::vector<cv::Mat> texturelessIndicators;
         texturelessIndicators.reserve(images.size());
         // Initialize textureless indicator matrices: a value of 0 indicates that the pixel has a track located
@@ -69,7 +70,7 @@ namespace tfg {
             const unsigned int FIRST_FRAME = trackTable.firstFrameOfTrack(t);
             const unsigned int DURATION = trackTable.durationOfTrack(t);
             const std::vector<cv::Vec2f> points = trackTable.pointsInTrack(t);
-            const float weight = std::sqrt(weights2[t]);
+            const float weight = weights[t];
             for(unsigned int i = 0; i < DURATION; i++) {
                 const int COL = std::round(points[FIRST_FRAME + i](0));
                 const int ROW = std::round(points[FIRST_FRAME + i](1));
@@ -106,6 +107,27 @@ namespace tfg {
 
         for(unsigned int n = 0; n < neighbours.size(); n++) {
             data.ref<Value>(neighbours[n].data()) += weights[n] * value;
+        }
+    }
+
+    void Grid::slice(std::vector<cv::Mat> &masks, float threshold) {
+        masks.clear();
+        masks.reserve(images.size());
+        for(unsigned int f = 0; f < images.size(); f++) {
+            cv::Mat slicedFrame(images[f].size(), CV_32FC1);
+            for(int r = 0; r < images[f].rows; r++) {
+                const cv::Vec3b* frameRowPtr = images[f].ptr<cv::Vec3b>(r);
+                float* slicedFrameRowPtr = slicedFrame.ptr<float>(r);
+                for(int c = 0; c < images[f].cols; c++) {
+                    const Index index = {static_cast<int>(f), c, r, frameRowPtr[c](0), frameRowPtr[c](1), frameRowPtr[c](2)};
+                    Value slicedValue;
+                    sliceIndex(index, slicedValue);
+                    slicedFrameRowPtr[c] = slicedValue(3); // The fourth component of a Value is its fg/bg label after the graph cut
+                }
+            }
+            cv::medianBlur(slicedFrame, slicedFrame, 3);
+            cv::Mat mask(slicedFrame > threshold);
+            masks.push_back(mask);
         }
     }
 
