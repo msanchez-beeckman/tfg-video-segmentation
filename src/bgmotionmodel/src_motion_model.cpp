@@ -1,6 +1,8 @@
 #include <iostream>
 #include <opencv4/opencv2/core.hpp>
 #include <chrono>
+#include <cmath>
+#include <algorithm>
 #include "TrackTable.h"
 #include "Homography.h"
 #include "ImageUtils.h"
@@ -56,7 +58,9 @@ int main(int argc, char* argv[]) {
 
     // Write the weights of each track to a file, to use it in the dense segmentation 
     std::ofstream weightsFile(opt_outweights.value);
-    tfg::writeWeights(weightsFile, weights2);
+    std::vector<float> weightsNotSqr; weightsNotSqr.reserve(weights2.size());
+    std::transform(weights2.begin(), weights2.end(), std::back_inserter(weightsNotSqr), [](float weight2) -> float { return std::sqrt(weight2); });
+    tfg::writeWeights(weightsFile, weightsNotSqr);
     // tfg::writeWeights(weightsFile, inlierWeights);
 
 

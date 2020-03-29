@@ -306,8 +306,8 @@ namespace tfg {
     }
 
 
-    void writeWeights(std::ostream &file, std::vector<float> &weights) {
-        for(float weight : weights) {
+    void writeWeights(std::ostream &file, const std::vector<float> &weights) {
+        for(const float weight : weights) {
             file << weight << std::endl;
         }
     }
