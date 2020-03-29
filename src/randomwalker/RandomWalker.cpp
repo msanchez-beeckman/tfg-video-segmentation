@@ -104,7 +104,7 @@ namespace tfg {
                 // IEEE Transactions on Pattern Analysis and Machine Intelligence, 36(6): 1187-1200, Jun 2014.
                 // DOI: 10.1109/TPAMI.2013.242
                 const float trackDistance2 = trackTable->distance2BetweenTracks(tA, tB);
-                const float weightAB = exp(-lambda * trackDistance2);
+                const float weightAB = std::exp(-lambda * trackDistance2);
 
                 // If the weight between tracks is almost 0, consider it 0 and do not store it explicitly in the sparse matrix
                 if(weightAB < 1e-8) continue;

@@ -2,6 +2,7 @@
 #ifndef TFG_VIDEO_SEGMENTATION_GRID_H
 #define TFG_VIDEO_SEGMENTATION_GRID_H
 
+#include <array>
 #include <opencv4/opencv2/core.hpp>
 #include "TrackTable.h"
 
@@ -10,29 +11,30 @@ namespace tfg {
 
     class Grid {
         private:
-            using Index = std::vector<int>;
+            using Index = std::array<int, 6>;
             using Value = cv::Vec4f;
 
-            const int DIMENSIONS;
-            const std::vector<float> SCALES;
+            const int DIMENSIONS = 6;
+            std::array<float, 6> scales;
 
+            std::vector<cv::Mat> images;
             cv::SparseMat data;
 
             void splatValue(const Index &index, const Value &value);
             void sliceIndex(const Index &index, Value &value);
 
             void getNeighbours(const Index &index, std::vector<Index> &neighbours, std::vector<float> &weights) const;
-            void scaleIndex(const Index &index, std::vector<float> &scaledIndex) const;
-            float getNeighbourWeight(const std::vector<float> &scaledIndex, const Index &neighbourIndex) const;
+            void scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) const;
+            float getNeighbourWeight(const std::array<float, 6> &scaledIndex, const Index &neighbourIndex) const;
 
         public:
             Grid();
-            Grid(int dims, const std::vector<float> &scales) : DIMENSIONS(dims), SCALES(scales);
+            Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images);
             ~Grid();
 
-            void splatMass(const std::vector<cv::Mat> &images);
-            void splatTrackWeights(const std::vector<cv::Mat> &images, const tfg::TrackTable &trackTable, const std::vector<float> &weights);
-            void slice(const std::vector<cv::Mat> &images, std::vector<cv::Mat> &masks);
+            void splatMass();
+            void splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights2, int texturelessRadius, float bgBias);
+            void slice(std::vector<cv::Mat> &masks, float threshold);
 
 
     };

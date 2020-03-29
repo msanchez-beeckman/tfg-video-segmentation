@@ -20,6 +20,9 @@ set(BGMM_LIBS
         ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/Homography.cpp
         ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/MotionModel.cpp)
 
+set(BVS_LIBS
+        ${CMAKE_SOURCE_DIR}/src/bilateralvidseg/Grid.cpp)
+
 set(RANDOMWALKER_LIBS
         ${CMAKE_SOURCE_DIR}/src/randomwalker/RandomWalker.cpp)
 
@@ -51,6 +54,16 @@ add_executable(motionModel ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/src_motion_mode
 target_link_libraries(motionModel
         bgmm)
 
+##### LIBRARIES FOR BILATERAL VIDEO SEGMENTATION (Märki, used by Szeliski)
+add_library(bvs ${BVS_LIBS})
+target_link_libraries(bvs
+        tracks)
+target_include_directories(bvs
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/bilateralvidseg)
+
+add_executable(bilateralVidSeg ${CMAKE_SOURCE_DIR}/src/bilateralvidseg/src_bilateral_vidseg.cpp)
+target_link_libraries(bilateralVidSeg
+        bvs)
 
 ##### LIBRARIES FOR RANDOM WALKER (Naveen)
 add_library(rdwalking ${RANDOMWALKER_LIBS})

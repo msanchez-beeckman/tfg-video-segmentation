@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <cmath>
 #include <opencv4/opencv2/ml/ml.hpp>
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
@@ -328,7 +329,7 @@ namespace tfg {
                     float weight = 1.0f;
                     if(ownIndex != neighbourIndex) {
                         const float neighbourDistance2 = NNDistances2.at<float>(y, x);
-                        weight = exp(-neighbourDistance2 / sigma2);
+                        weight = std::exp(-neighbourDistance2 / sigma2);
                     }
                     transMEntries.push_back(Eigen::Triplet<float>(ownIndex, neighbourIndex, weight));
                 }
