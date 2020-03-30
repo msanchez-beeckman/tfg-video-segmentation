@@ -48,6 +48,26 @@ namespace tfg {
         }
     }
 
+    void bgr2luv(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2) {
+        images2.clear();
+        images2.reserve(images1.size());
+        for(unsigned int i = 0; i < images1.size(); i++) {
+            cv::Mat otherImage;
+            cv::cvtColor(images1[i], otherImage, cv::COLOR_BGR2Luv);
+            images2.push_back(otherImage);
+        }
+    }
+
+    void luv2bgr(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2) {
+        images2.clear();
+        images2.reserve(images1.size());
+        for(unsigned int i = 0; i < images1.size(); i++) {
+            cv::Mat otherImage;
+            cv::cvtColor(images1[i], otherImage, cv::COLOR_Luv2BGR);
+            images2.push_back(otherImage);
+        }
+    }
+
     void drawPoint(cv::Mat &image, const cv::Vec2f &position, const cv::Vec3b &color) {
         const int x = static_cast<int>(position(0));
         const int y = static_cast<int>(position(1));

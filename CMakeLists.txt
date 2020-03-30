@@ -24,8 +24,8 @@ set(BVS_LIBS
         ${CMAKE_SOURCE_DIR}/src/bilateralvidseg/Grid.cpp)
 
 set(MAXFLOW_LIBS
-        ${CMAKE_SOURCE_DIR}/external/lib/maxflow-v3.01/graph.cpp
-        ${CMAKE_SOURCE_DIR}/external/lib/maxflow-v3.01/maxflow.cpp)
+        ${CMAKE_SOURCE_DIR}/external/lib/maxflow-v3.04/graph.cpp
+        ${CMAKE_SOURCE_DIR}/external/lib/maxflow-v3.04/maxflow.cpp)
 
 set(RANDOMWALKER_LIBS
         ${CMAKE_SOURCE_DIR}/src/randomwalker/RandomWalker.cpp)
@@ -65,7 +65,6 @@ target_link_libraries(bvs
         tracks
         maxflow)
 target_include_directories(maxflow
-        PRIVATE ${CMAKE_SOURCE_DIR}/external/lib/maxflow-v3.01
         PUBLIC ${CMAKE_SOURCE_DIR}/external/lib)
 target_include_directories(bvs
         PUBLIC ${CMAKE_SOURCE_DIR}/src/bilateralvidseg)

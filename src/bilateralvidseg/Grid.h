@@ -34,7 +34,7 @@ namespace tfg {
 
             void splatMass();
             void splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights, int texturelessRadius, float bgBias);
-            void graphCut(float lambda_u, float lambda_s, std::array<float, 6> &W);
+            void graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W);
             void slice(std::vector<cv::Mat> &masks, float threshold);
 
 

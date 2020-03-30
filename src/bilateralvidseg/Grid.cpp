@@ -1,7 +1,8 @@
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include <opencv4/opencv2/imgproc.hpp>
-#include "maxflow-v3.01/graph.h"
+#include "maxflow-v3.04/graph.h"
 #include "Grid.h"
 
 namespace tfg {
@@ -51,14 +52,14 @@ namespace tfg {
         // at a distance of at most texturelessRadius pixels. Otherwise, the region is considered textureless.
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat texture(images[f].rows, images[f].cols, CV_8UC1);
-            texture.setTo(255);
-            // texture.setTo(0);
-            // for(int r = 0; r < images[f]; r += 8) {
-            //     const cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
-            //     for(int c = 0; c < images[f].cols; c += 8) {
-            //         rowPtr[c] = 255;
-            //     }
-            // }
+            // texture.setTo(255);
+            texture.setTo(0);
+            for(int r = 0; r < images[f].rows; r += 8) {
+                cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
+                for(int c = 0; c < images[f].cols; c += 8) {
+                    rowPtr[c] = 255;
+                }
+            }
             texturelessIndicators.push_back(texture);
         }
 
@@ -72,8 +73,8 @@ namespace tfg {
             const std::vector<cv::Vec2f> points = trackTable.pointsInTrack(t);
             const float weight = weights[t];
             for(unsigned int i = 0; i < DURATION; i++) {
-                const int COL = std::round(points[FIRST_FRAME + i](0));
-                const int ROW = std::round(points[FIRST_FRAME + i](1));
+                const int COL = std::round(points[i](0));
+                const int ROW = std::round(points[i](1));
                 const cv::Vec3b& color = images[FIRST_FRAME + i].at<cv::Vec3b>(ROW, COL);
 
                 cv::circle(texturelessIndicators[FIRST_FRAME + i], cv::Point2i(COL, ROW), texturelessRadius, cv::Scalar(0), -1);
@@ -122,6 +123,7 @@ namespace tfg {
                     const Index index = {static_cast<int>(f), c, r, frameRowPtr[c](0), frameRowPtr[c](1), frameRowPtr[c](2)};
                     Value slicedValue;
                     sliceIndex(index, slicedValue);
+                    // std::cout << "Frame " << f << ", pos (" << r << ", " << c << ") --> " << slicedValue << std::endl;
                     slicedFrameRowPtr[c] = slicedValue(3); // The fourth component of a Value is its fg/bg label after the graph cut
                 }
             }
@@ -138,7 +140,7 @@ namespace tfg {
 
         value(0) = 0; value(1) = 0; value(2) = 0; value(3) = 0;
         for(unsigned int n = 0; n < neighbours.size(); n++) {
-            const Value neighbourValue = data.ref<Value>(neighbours[n].data());
+            const Value& neighbourValue = data.ref<Value>(neighbours[n].data());
             value += weights[n] * neighbourValue;
         }
     }
@@ -189,8 +191,9 @@ namespace tfg {
 
     void Grid::scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) const {
         for(int d = 0; d < DIMENSIONS; d++) {
-            const float scaledComponent = index[d] * this->scales[d];
-            // scaledComponent += 0.0001;
+            // const float scaledComponent = index[d] * this->scales[d];
+            float scaledComponent = index[d] * this->scales[d];
+            scaledComponent += 0.0001;
             scaledIndex[d] = scaledComponent;
         }
     }
@@ -201,5 +204,68 @@ namespace tfg {
             weight *= 1 - std::abs(scaledIndex[d] - neighbourIndex[d]);
         }
         return weight;
+    }
+
+    void Grid::graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W) {
+        cv::SparseMat graphNodes(DIMENSIONS, data.size(), CV_32SC1);
+        int n = 0;
+
+        std::cout << "Creating correspondences between Grid indexes and Graph nodes" << std::endl;
+        for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it, n++) {
+            const cv::SparseMat::Node* node = it.node();
+            graphNodes.ref<int>(node->idx) = n;
+        }
+
+        const int NUMBER_OF_NODES = data.nzcount();
+        Graph<float, float, float> graph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
+        graph.add_node(NUMBER_OF_NODES);
+        std::cout << "Building graph with " << graph.get_node_num() << " nodes" << std::endl;
+        for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it) {
+            const cv::SparseMat::Node* node = it.node();
+
+            const Value& nodeValue = it.value<Value>();
+            const float fgCost = nodeValue(0) * lambda_u;
+            const float bgCost = nodeValue(1) * lambda_u;
+            const float nodeMass = nodeValue(2);
+            const int nodeNumber = graphNodes.value<int>(node->idx);
+            graph.add_tweights(nodeNumber, bgCost, fgCost);
+
+            for(int d = 0; d < DIMENSIONS; d++) {
+                for(int dir = -1; dir <= 1; dir += 2) {
+                    Index neighbourIndex;
+                    neighbourIndex[0] = node->idx[0]; neighbourIndex[1] = node->idx[1]; neighbourIndex[2] = node->idx[2];
+                    neighbourIndex[3] = node->idx[3]; neighbourIndex[4] = node->idx[4]; neighbourIndex[5] = node->idx[5];
+                    // std::copy(std::begin(node->idx), std::end(node->idx), neighbourIndex.begin());
+                    neighbourIndex[d] += dir;
+
+                    const Value* neighbourValue = data.find<Value>(neighbourIndex.data());
+                    if(neighbourValue == nullptr) continue;
+
+                    const float neighbourMass = (*neighbourValue)(2);
+                    float edgeCost = nodeMass * neighbourMass * std::exp(-0.5f * W[d]);
+                    edgeCost = std::max(edgeCost, minEdgeCost);
+                    const int neighbourNodeNumber = graphNodes.value<int>(neighbourIndex.data());
+                    graph.add_edge(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);
+                }
+            }
+        }
+
+        std::cout << "Computing max flow for graph with " << graph.get_arc_num() << " edges" << std::endl;
+        float cost = graph.maxflow();
+        std::cout << "Max flow cost is " << cost << std::endl;
+
+        std::cout << "Assigning labels to each cell of the grid" << std::endl;
+        int count = 0;
+        for(cv::SparseMatConstIterator_<int> it = graphNodes.begin<int>(); it != graphNodes.end<int>(); ++it) {
+            const cv::SparseMat::Node* node = it.node();
+
+            const int nodeNumber = it.value<int>();
+            bool nodeIsBackground = graph.what_segment(nodeNumber) == Graph<float, float, float>::SINK;
+            if(nodeIsBackground) count++;
+
+            Value& nodeValue = data.ref<Value>(node->idx);
+            nodeValue(3) = nodeIsBackground ? 0.0f : 1.0f;
+        }
+        std::cout << count << " nodes are background" << std::endl;
     }
 }

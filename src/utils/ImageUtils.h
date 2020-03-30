@@ -15,6 +15,9 @@ namespace tfg {
     void copyImages(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
     void readSeedImages(std::istream &file, std::unordered_map<int, cv::Mat> &seedImages);
 
+    void bgr2luv(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
+    void luv2bgr(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
+
     void drawPoint(cv::Mat &image, const cv::Vec2f &position, const cv::Vec3b &color);
     void drawLine(cv::Mat &image, const cv::Vec2f &origin, const cv::Vec2f &destination, const cv::Vec3b &color);
 
