@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <opencv4/opencv2/imgproc.hpp>
 #include "maxflow-v3.04/graph.h"
+#include "ImageUtils.h"
 #include "Grid.h"
 
 namespace tfg {
@@ -52,14 +53,14 @@ namespace tfg {
         // at a distance of at most texturelessRadius pixels. Otherwise, the region is considered textureless.
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat texture(images[f].rows, images[f].cols, CV_8UC1);
-            // texture.setTo(255);
-            texture.setTo(0);
-            for(int r = 0; r < images[f].rows; r += 8) {
-                cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
-                for(int c = 0; c < images[f].cols; c += 8) {
-                    rowPtr[c] = 255;
-                }
-            }
+            texture.setTo(255);
+            // texture.setTo(0);
+            // for(int r = 0; r < images[f].rows; r += 8) {
+            //     cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
+            //     for(int c = 0; c < images[f].cols; c += 8) {
+            //         rowPtr[c] = 255;
+            //     }
+            // }
             texturelessIndicators.push_back(texture);
         }
 
@@ -80,8 +81,9 @@ namespace tfg {
                 cv::circle(texturelessIndicators[FIRST_FRAME + i], cv::Point2i(COL, ROW), texturelessRadius, cv::Scalar(0), -1);
 
                 Index index = {static_cast<int>(FIRST_FRAME + i), COL, ROW, color(0), color(1), color(2)};
-                Value value(0.0f, 0.0f, 0.0f, 0.0f);
-                value(weight < 0.5 ? 0 : 1) = 2 * std::abs(weight - 0.5);
+                const float fgConfidence = 2 * std::max(0.0f, 0.5f - weight);
+                const float bgConfidence = 2 * std::max(0.0f, weight - 0.5f);
+                const Value value(fgConfidence, bgConfidence, 0.0f, 0.0f);
                 splatValue(index, value);
             }
         }
@@ -128,6 +130,7 @@ namespace tfg {
                 }
             }
             cv::medianBlur(slicedFrame, slicedFrame, 3);
+            tfg::removeSmallBlobs(slicedFrame, threshold, 0.1f);
             cv::Mat mask(slicedFrame > threshold);
             masks.push_back(mask);
         }
@@ -191,9 +194,9 @@ namespace tfg {
 
     void Grid::scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) const {
         for(int d = 0; d < DIMENSIONS; d++) {
-            // const float scaledComponent = index[d] * this->scales[d];
-            float scaledComponent = index[d] * this->scales[d];
-            scaledComponent += 0.0001;
+            const float scaledComponent = index[d] * this->scales[d];
+            //float scaledComponent = index[d] * this->scales[d];
+            //scaledComponent += 0.0001;
             scaledIndex[d] = scaledComponent;
         }
     }
@@ -228,7 +231,7 @@ namespace tfg {
             const float bgCost = nodeValue(1) * lambda_u;
             const float nodeMass = nodeValue(2);
             const int nodeNumber = graphNodes.value<int>(node->idx);
-            graph.add_tweights(nodeNumber, bgCost, fgCost);
+            graph.add_tweights(nodeNumber, fgCost, bgCost);
 
             for(int d = 0; d < DIMENSIONS; d++) {
                 for(int dir = -1; dir <= 1; dir += 2) {
@@ -242,7 +245,7 @@ namespace tfg {
                     if(neighbourValue == nullptr) continue;
 
                     const float neighbourMass = (*neighbourValue)(2);
-                    float edgeCost = nodeMass * neighbourMass * std::exp(-0.5f * W[d]);
+                    float edgeCost = lambda_s * nodeMass * neighbourMass * std::exp(-0.5f * W[d]);
                     edgeCost = std::max(edgeCost, minEdgeCost);
                     const int neighbourNodeNumber = graphNodes.value<int>(neighbourIndex.data());
                     graph.add_edge(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);

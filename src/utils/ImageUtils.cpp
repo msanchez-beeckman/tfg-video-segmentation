@@ -119,6 +119,26 @@ namespace tfg {
         }
     }
 
+    void removeSmallBlobs(cv::Mat &matrix, float threshold, float relativeSize) {
+        cv::Mat mask(matrix > threshold);
+        cv::Mat labels;
+        cv::Mat stats;
+        cv::Mat centroids;
+        const int numberOfCC = cv::connectedComponentsWithStats(mask, labels, stats, centroids, 8, CV_16U, cv::CCL_DEFAULT);
+
+        double minArea, maxArea;
+        cv::minMaxIdx(stats.col(cv::CC_STAT_AREA).rowRange(1, stats.rows), &minArea, &maxArea);
+
+        // Correct values in non-thresholded mask
+        for(int i = 1; i < numberOfCC; i++) {
+            int area = stats.at<int>(i, cv::CC_STAT_AREA);
+            if(area > maxArea * relativeSize) continue;
+
+            cv::Mat labelMask(labels == i);
+            matrix.setTo(threshold - 0.00001, labelMask);
+        }
+    }
+
     void saveMaskedImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName) {
         for(unsigned int i = 0; i < images.size(); i++) {
             cv::Mat maskedImage;
@@ -128,6 +148,28 @@ namespace tfg {
             ss << folder << fileName << i << ".png";
             std::string saveAs = ss.str();
             cv::imwrite(saveAs, maskedImage);
+        }
+    }
+
+    void saveOverlaidImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, float alpha) {
+        for(unsigned int i = 0; i < images.size(); i++) {
+
+            cv::Mat redOverlay(images[i].size(), CV_8UC3);
+            redOverlay.setTo(cv::Scalar(0, 0, 255), masks[i]);
+
+            cv::Mat grayImage(images[i].size(), CV_8UC1);
+            cv::cvtColor(images[i], grayImage, cv::COLOR_BGR2GRAY);
+
+            cv::Mat overlaidImage(images[i].size(), CV_8UC3);
+            cv::cvtColor(grayImage, overlaidImage, cv::COLOR_GRAY2BGR);
+
+            redOverlay = (1 - alpha) * overlaidImage + alpha * redOverlay;
+            redOverlay.copyTo(overlaidImage, masks[i]);
+            
+            std::stringstream ss;
+            ss << folder << fileName << i << ".png";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, overlaidImage);
         }
     }
 }

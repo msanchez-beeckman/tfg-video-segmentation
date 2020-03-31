@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     std::string resultsFolder(opt_outmodel.value);
-    std::string fileNameCrudeSaliency = "crudeSaliency";
+    const std::string fileNameCrudeSaliency = "crudeSaliency";
     consensusVoter.saveSaliencies(resultsFolder, fileNameCrudeSaliency);
     std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
     std::cout << "Motion saliency scores computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
@@ -112,8 +112,12 @@ int main(int argc, char* argv[]) {
     // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
 
     // Save results
-    std::string fileNameSegmentation = "result";
+    const std::string fileNameMask = "mask";
+    tfg::saveMaskedImages(finalMasks, finalMasks, resultsFolder, fileNameMask);
+    const std::string fileNameSegmentation = "foreground";
     tfg::saveMaskedImages(images, finalMasks, resultsFolder, fileNameSegmentation);
+    const std::string fileNameOverlaidImages = "resultOverlaid";
+    tfg::saveOverlaidImages(images, finalMasks, resultsFolder, fileNameOverlaidImages);
     std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
     std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
 
