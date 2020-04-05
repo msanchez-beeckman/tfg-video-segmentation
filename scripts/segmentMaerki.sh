@@ -20,13 +20,13 @@ tFLAG=""
 
 while getopts :br:g:u:s:e:t: opt; do
     case $opt in
-        b) BROXFLAG="-b"; TRACKSUFFIX="Brox.dat";;
-        r) rFLAG="-r $OPTARG";;
-        g) gFLAG="-g $OPTARG";;
-        u) uFLAG="-u $OPTARG";;
-        s) sFLAG="-s $OPTARG";;
-        e) eFLAG="-e $OPTARG";;
-        t) tFLAG="-t $OPTARG";;
+        b) BROXFLAG="--brox"; TRACKSUFFIX="Brox.dat";;
+        r) rFLAG="--tradius=$OPTARG";;
+        g) gFLAG="--tbgbias=$OPTARG";;
+        u) uFLAG="--lambdau=$OPTARG";;
+        s) sFLAG="--lambdas=$OPTARG";;
+        e) eFLAG="--minedgecost=$OPTARG";;
+        t) tFLAG="--threshold=$OPTARG";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -41,4 +41,4 @@ FRAMELIMIT=$2
 
 mkdir -p ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}
 rm ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/bilateralVidSeg -o ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${BROXFLAG} ${rFLAG} ${gFLAG} ${uFLAG} ${sFLAG} ${eFLAG} ${tFLAG} ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt
+${TFGLOCATION}/bin/bilateralVidSeg --outfolder=${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${BROXFLAG} ${rFLAG} ${gFLAG} ${uFLAG} ${sFLAG} ${eFLAG} ${tFLAG} ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt

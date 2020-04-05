@@ -15,8 +15,8 @@ namespace tfg {
         std::vector<cv::Vec2f> flowMeans;
         std::vector<float> flowVariances;
 
-        void readTracks(std::istream &file);
-        void readTracksBrox(std::istream &file);
+        void readTracks(std::istream &file, int minDuration);
+        void readTracksBrox(std::istream &file, int minDuration);
         void getMappingsFromTracks();
 
         void computeFlowStatistics();
@@ -25,8 +25,8 @@ namespace tfg {
         TrackTable();
         ~TrackTable();
 
-        void buildFromFile(std::istream &file);
-        void buildFromBroxFile(std::istream &file);
+        void buildFromFile(std::istream &file, int minDuration);
+        void buildFromBroxFile(std::istream &file, int minDuration);
 
         void sortTracksByLabel();
         void sortTracksByNumber();

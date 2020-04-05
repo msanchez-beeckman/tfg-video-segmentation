@@ -10,8 +10,8 @@ namespace tfg {
     TrackTable::TrackTable() {}
     TrackTable::~TrackTable() {}
 
-    void TrackTable::buildFromFile(std::istream &file) {
-        readTracks(file);
+    void TrackTable::buildFromFile(std::istream &file, int minDuration) {
+        readTracks(file, minDuration);
         getMappingsFromTracks();
         computeFlowStatistics();
     }
@@ -20,8 +20,9 @@ namespace tfg {
      * Read tracks from a file, using a format where each line represents a track, the first number of a line corresponds to its initial frame,
      * and the next numbers alternate between the x-axis value and the y-axis value of the points in the following frames.
      * @param file The file where the track information is stored.
+     * @param minDuration The minimum duration of a track to add it to the table.
      */
-    void TrackTable::readTracks(std::istream &file) {
+    void TrackTable::readTracks(std::istream &file, int minDuration) {
         tracks.clear();
         unsigned int trackNumber = 0;
         for(std::string line; std::getline(file, line); ) {
@@ -37,7 +38,7 @@ namespace tfg {
                 coordinates.push_back(point);
             }
             tfg::Track track(coordinates, frameInit);
-            if(track.getDuration() < 10) continue;
+            if(track.getDuration() < minDuration) continue;
             track.setNumber(trackNumber);
             trackNumber++;
             tracks.push_back(track);
@@ -69,8 +70,8 @@ namespace tfg {
         }
     }
 
-    void TrackTable::buildFromBroxFile(std::istream &file) {
-        readTracksBrox(file);
+    void TrackTable::buildFromBroxFile(std::istream &file, int minDuration) {
+        readTracksBrox(file, minDuration);
         getMappingsFromTracks();
         computeFlowStatistics();
     }
@@ -79,8 +80,9 @@ namespace tfg {
      * Read tracks from a file that uses Brox's codification to store the tracks. The first line of the file stores the number of frames,
      * the second stores the number of tracks, and then follows a sequence for each track: its length, and the positions of the points with their corresponding frame.
      * @param file The file where the track information is stored.
+     * @param minDuration The minimum duration of a track to add it to the table.
      */
-    void TrackTable::readTracksBrox(std::istream &file) {
+    void TrackTable::readTracksBrox(std::istream &file, int minDuration) {
         tracks.clear();
         unsigned int trackNumber = 0;
         std::string line;
@@ -109,7 +111,7 @@ namespace tfg {
 
                 coordinates.push_back(point);
             }
-            if(TRACK_DURATION < 10) continue;
+            if(TRACK_DURATION < minDuration) continue;
             Track track(coordinates, frameInit);
             track.setNumber(trackNumber);
             trackNumber++;

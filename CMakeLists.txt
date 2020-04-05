@@ -8,8 +8,7 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(UTIL_LIBS
-        ${CMAKE_SOURCE_DIR}/src/utils/ImageUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/utils/CmdParser.cpp)
+        ${CMAKE_SOURCE_DIR}/src/utils/ImageUtils.cpp)
 
 set(TRACK_LIBS
         ${CMAKE_SOURCE_DIR}/src/tracks/Mapping.cpp

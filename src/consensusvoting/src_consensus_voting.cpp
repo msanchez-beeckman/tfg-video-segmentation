@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <chrono>
 #include <opencv4/opencv2/core.hpp>
@@ -6,44 +7,56 @@
 #include "Region.h"
 #include "ConsensusVoter.h"
 #include "ImageUtils.h"
-#include "CmdParser.h"
 
 int main(int argc, char* argv[]) {
 
     // Parse command line arguments
-    std::vector<OptStruct *> options;
-    OptStruct opt_outmodel = {"o:", 0, "./results/nlcsegmentation/", nullptr, "Folder where the results of the segmentation should be stored"}; options.push_back(&opt_outmodel);
-    OptStruct opt_spsize = {"s:", 0, "16", nullptr, "Superpixel size"}; options.push_back(&opt_spsize);
-    OptStruct opt_F = {"F:", 0, "15", nullptr, "Number of frames for KDTree's window"}; options.push_back(&opt_F);
-    OptStruct opt_L = {"L:", 0, "4", nullptr, "Number of nearest neighbours for each frame in KDTree's window"}; options.push_back(&opt_L);
-    OptStruct opt_sigma2 = {"S:", 0, "0.1", nullptr, "Value used for the denominator when computing costs between nearest neighbours"}; options.push_back(&opt_sigma2);
-    OptStruct opt_T = {"T:", 0, "50", nullptr, "Number of iterations to reach consensus"}; options.push_back(&opt_T);
-    OptStruct opt_threshold = {"t:", 0, "0.3", nullptr, "Minimum value of a vote for a superpixel to be considered foreground"}; options.push_back(&opt_threshold);
-    OptStruct opt_rmblobs = {"r", 0, nullptr, nullptr, "Remove small non-connected blobs after segmentation"}; options.push_back(&opt_rmblobs);
+    const cv::String keys =
+        "{h help usage ?     |     | Print usage }"
+        "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
+        "{d mindommotion     | 0.5 | Minimum ratio of frames with dominant motion to use motion saliency }"
+        "{s spsize           | 16  | Superpixel size }"
+        "{F framewindow      | 15  | Number of frames for KDTree's window }"
+        "{L likelymatches    | 4   | Number of nearest neighbours for each frame in KDTree's window }"
+        "{S sigma2           | 0.1 | Value used for the denominator when computing costs between nearest neighbours }"
+        "{T iterations       | 50  | Number of iterations to reach consensus }"
+        "{t threshold        | 0.3 | Minimum value of a vote for a superpixel to be considered foreground }"
+        "{r removeblobs      |     | Remove small non-connected blobs after segmentation }"
+        "{@images            |     | Text file containing the path to the images to be segmented }"
+        "{@flows             |     | Text file containing the path to the computed flows for each frame }"
+        ;
+    
+    cv::CommandLineParser parser(argc, argv, keys);
+    parser.about("Segmentation by Non-Local Consensus Voting");
 
-    std::vector<ParStruct *> parameters;
-    ParStruct par_images = {"images", nullptr, "Text file containing the path to the images to be segmented"}; parameters.push_back(&par_images);
-    ParStruct par_flows = {"flows", nullptr, "Text file containing the path to the computed flows for each frame"}; parameters.push_back(&par_flows);
-
-    if (!parsecmdline("homography", "Calculating homography between two images", argc, argv, options, parameters))
+    if(parser.has("help") || argc == 1) {
+        parser.printMessage();
+        return EXIT_SUCCESS;
+    }
+    if(!parser.check()) {
+        parser.printErrors();
         return EXIT_FAILURE;
+    }
 
     // Read the images and create a ConsensusVoter object
     std::vector<cv::Mat> images;
-    std::ifstream imageListFile(par_images.value);
+    const std::string imageListFileName = parser.get<std::string>("@images");
+    std::ifstream imageListFile(imageListFileName);
     tfg::readImages(imageListFile, images);
 
-    const int SUPERPIXEL_SIZE = std::stoi(opt_spsize.value);
+    const int SUPERPIXEL_SIZE = parser.get<int>("spsize");
     tfg::ConsensusVoter consensusVoter((images[0].cols * images[1].rows)/(SUPERPIXEL_SIZE * SUPERPIXEL_SIZE), images.size());
 
     // Initialize the votes using motion saliency. If motion saliency does not work, visual saliency is needed.
-    std::ifstream flowListFile(par_flows.value);
+    const std::string flowListFileName = parser.get<std::string>("@flows");
+    std::ifstream flowListFile(flowListFileName);
     std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
-    if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, 0.5f)) {
+    const float minDominantMotionRatio = parser.get<float>("mindommotion");
+    if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, minDominantMotionRatio)) {
         std::cout << "No dominant motion has been found in the video" << std::endl;
         return EXIT_FAILURE;
     }
-    std::string resultsFolder(opt_outmodel.value);
+    const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNameCrudeSaliency = "crudeSaliency";
     consensusVoter.saveSaliencies(resultsFolder, fileNameCrudeSaliency);
     std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
@@ -81,22 +94,22 @@ int main(int argc, char* argv[]) {
 
     // Compute the transition matrix, and reach consensus iteratively multiplying the votes by it
     std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
-    const int F = std::stoi(opt_F.value);
-    const int L = std::stoi(opt_L.value);
-    const float sigma2 = std::stof(opt_sigma2.value);
+    const int F = parser.get<int>("F");
+    const int L = parser.get<int>("L");
+    const float sigma2 = parser.get<float>("sigma2");
     consensusVoter.computeTransitionMatrix(F, L, sigma2);
     std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
     std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
 
-    const int T = std::stoi(opt_T.value);
+    const int T = parser.get<int>("T");
     consensusVoter.reachConsensus(T);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 
     // Get final segmentation from the final votes
     std::vector<cv::Mat> finalMasks;
-    const float THRESHOLD = std::stof(opt_threshold.value);
-    const bool REMOVE_BLOBS = opt_rmblobs.flag != 0;
+    const float THRESHOLD = parser.get<float>("threshold");
+    const bool REMOVE_BLOBS = parser.has("removeblobs");
     consensusVoter.getSegmentation(finalMasks, THRESHOLD, REMOVE_BLOBS);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
     std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
