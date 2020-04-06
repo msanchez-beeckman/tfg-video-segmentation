@@ -3,17 +3,17 @@
 #define TFG_VIDEO_SEGMENTATION_IMAGEUTILS_H
 
 #include <opencv4/opencv2/core.hpp>
+#include <fstream>
 #include <unordered_map>
-// #include "TrackTable.h"
 
 namespace tfg {
 
     bool point_in_image(int x, int y, int w, int h);
     int val_coord(int i, int w);
 
-    void readImages(std::istream &file, std::vector<cv::Mat> &images);
+    void readImages(std::ifstream &file, std::vector<cv::Mat> &images);
     void copyImages(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
-    void readSeedImages(std::istream &file, std::unordered_map<int, cv::Mat> &seedImages);
+    void readSeedImages(std::ifstream &file, std::unordered_map<int, cv::Mat> &seedImages);
 
     void bgr2luv(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
     void luv2bgr(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);

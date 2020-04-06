@@ -2,6 +2,7 @@
 #define TFG_VIDEO_SEGMENTATION_TRACKTABLE_H
 
 #include <opencv4/opencv2/core.hpp>
+#include <fstream>
 #include "Track.h"
 #include "Mapping.h"
 
@@ -15,8 +16,8 @@ namespace tfg {
         std::vector<cv::Vec2f> flowMeans;
         std::vector<float> flowVariances;
 
-        void readTracks(std::istream &file, int minDuration);
-        void readTracksBrox(std::istream &file, int minDuration);
+        void readTracks(std::ifstream &file, int minDuration);
+        void readTracksBrox(std::ifstream &file, int minDuration);
         void getMappingsFromTracks();
 
         void computeFlowStatistics();
@@ -25,8 +26,8 @@ namespace tfg {
         TrackTable();
         ~TrackTable();
 
-        void buildFromFile(std::istream &file, int minDuration);
-        void buildFromBroxFile(std::istream &file, int minDuration);
+        void buildFromFile(std::ifstream &file, int minDuration);
+        void buildFromBroxFile(std::ifstream &file, int minDuration);
 
         void sortTracksByLabel();
         void sortTracksByNumber();

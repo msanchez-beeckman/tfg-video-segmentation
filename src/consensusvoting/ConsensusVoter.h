@@ -3,6 +3,7 @@
 #define TFG_VIDEO_SEGMENTATION_CONSENSUSVOTER_H
 
 #include <vector>
+#include <fstream>
 #include <opencv4/opencv2/core.hpp>
 #include <eigen3/Eigen/Sparse>
 #include "Region.h"
@@ -33,7 +34,7 @@ namespace tfg {
             ConsensusVoter(int estimateSpPerFrame, int numberOfFrames);
             ~ConsensusVoter();
 
-            bool initializeMotionSaliencyScores(std::istream &flowFile, float minimumPercentageValidity);
+            bool initializeMotionSaliencyScores(std::ifstream &flowFile, float minimumPercentageValidity);
             void saveSaliencies(const std::string &folder, const std::string &fileName);
 
             void addRegionsByFrame(std::vector<tfg::Region> &spInFrame);

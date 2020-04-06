@@ -3,6 +3,7 @@
 #include <chrono>
 #include <opencv4/opencv2/core.hpp>
 #include "ImageUtils.h"
+#include "IoUtils.h"
 #include "TrackTable.h"
 #include "Grid.h"
 
@@ -57,11 +58,12 @@ int main(int argc, char* argv[]) {
     const std::string weightFileName = parser.get<std::string>("@weights");
     std::ifstream weightFile(weightFileName);
     std::vector<float> weights;
-    weights.reserve(trackTable.numberOfTracks());
-    for(std::string line; std::getline(weightFile, line); ) {
-        float w = std::stof(line);
-        weights.push_back(w);
-    }
+    // weights.reserve(trackTable.numberOfTracks());
+    // for(std::string line; std::getline(weightFile, line); ) {
+    //     float w = std::stof(line);
+    //     weights.push_back(w);
+    // }
+    tfg::readWeights(weightFile, weights);
     weightFile.close();
     std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
     std::cout << "Track weights read in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag3-flag2).count())/1000000.0 << " seconds." << std::endl;

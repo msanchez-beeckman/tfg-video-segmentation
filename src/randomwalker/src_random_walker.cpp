@@ -11,14 +11,15 @@ int main(int argc, char* argv[]) {
 
     // Parse command line arguments
     const cv::String keys =
-        "{h help usage ?     |    | Print usage }"
-        "{o outfolder        |    | Folder where the results of the track segmentation should be stored }"
-        "{w outweights       |    | Text file where the resulting weights should be stored }"
-        "{b brox             |    | Parse tracks using Brox's codification }"
-        "{d minTrackDuration | 10 | Minimum track duration to take it into account }"
-        "{@images            |    | Text file containing the path to the images to be segmented }"
-        "{@seeds             |    | Text file containing the path and frame number of the seeds for the random walker }"
-        "{@tracks            |    | Text file containing the path to the precomputed tracks }"
+        "{h help usage ?     |     | Print usage }"
+        "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
+        "{w outweights       |     | Text file where the resulting weights should be stored }"
+        "{b brox             |     | Parse tracks using Brox's codification }"
+        "{d minTrackDuration | 10  | Minimum track duration to take it into account }"
+        "{l lambda           | 0.1 | Scale parameter for affinity computations }"
+        "{@images            |     | Text file containing the path to the images to be segmented }"
+        "{@seeds             |     | Text file containing the path and frame number of the seeds for the random walker }"
+        "{@tracks            |     | Text file containing the path to the precomputed tracks }"
         ;
     
     cv::CommandLineParser parser(argc, argv, keys);
@@ -56,7 +57,8 @@ int main(int argc, char* argv[]) {
     // Create the random walker than propagate the seeds to each track
     tfg::RandomWalker walker(trackTable);
     walker.seed(seedImages);
-    walker.propagateSeeds();
+    const float lambda = parser.get<float>("lambda");
+    walker.propagateSeeds(lambda);
 
     // Write the results in a file
     const std::string weightsFileName = parser.get<std::string>("outweights");

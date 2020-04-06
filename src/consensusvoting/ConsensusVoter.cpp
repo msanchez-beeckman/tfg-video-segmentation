@@ -33,7 +33,7 @@ namespace tfg {
      * @param minimumPercentageValidity Minimum percentage of frames with dominant motion that should exist for the computation to be considered successful.
      * @return True if the majority (at least minimumPercentageValidity) of frames have a dominant motion, false otherwise.
      */
-    bool ConsensusVoter::initializeMotionSaliencyScores(std::istream &flowFile, float minimumPercentageValidity) {
+    bool ConsensusVoter::initializeMotionSaliencyScores(std::ifstream &flowFile, float minimumPercentageValidity) {
         this->saliencyScores.clear();
         std::string line;
 

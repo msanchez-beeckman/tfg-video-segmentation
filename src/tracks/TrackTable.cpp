@@ -1,8 +1,8 @@
 #include <opencv4/opencv2/imgcodecs.hpp>
-#include <boost/algorithm/string.hpp>
 #include <string>
 #include <iostream>
 #include "ImageUtils.h"
+#include "IoUtils.h"
 #include "TrackTable.h"
 
 namespace tfg {
@@ -10,7 +10,7 @@ namespace tfg {
     TrackTable::TrackTable() {}
     TrackTable::~TrackTable() {}
 
-    void TrackTable::buildFromFile(std::istream &file, int minDuration) {
+    void TrackTable::buildFromFile(std::ifstream &file, int minDuration) {
         readTracks(file, minDuration);
         getMappingsFromTracks();
         computeFlowStatistics();
@@ -22,12 +22,13 @@ namespace tfg {
      * @param file The file where the track information is stored.
      * @param minDuration The minimum duration of a track to add it to the table.
      */
-    void TrackTable::readTracks(std::istream &file, int minDuration) {
+    void TrackTable::readTracks(std::ifstream &file, int minDuration) {
         tracks.clear();
         unsigned int trackNumber = 0;
         for(std::string line; std::getline(file, line); ) {
             std::vector<std::string> words;
-            boost::split(words, line, boost::is_any_of(" "));
+            // boost::split(words, line, boost::is_any_of(" "));
+            tfg::splitString(line, words);
             const unsigned int frameInit = std::stoi(words[0]);
 
             std::vector<cv::Vec2f> coordinates;
@@ -70,7 +71,7 @@ namespace tfg {
         }
     }
 
-    void TrackTable::buildFromBroxFile(std::istream &file, int minDuration) {
+    void TrackTable::buildFromBroxFile(std::ifstream &file, int minDuration) {
         readTracksBrox(file, minDuration);
         getMappingsFromTracks();
         computeFlowStatistics();
@@ -82,7 +83,7 @@ namespace tfg {
      * @param file The file where the track information is stored.
      * @param minDuration The minimum duration of a track to add it to the table.
      */
-    void TrackTable::readTracksBrox(std::istream &file, int minDuration) {
+    void TrackTable::readTracksBrox(std::ifstream &file, int minDuration) {
         tracks.clear();
         unsigned int trackNumber = 0;
         std::string line;
@@ -97,13 +98,15 @@ namespace tfg {
         for(unsigned int t = 0; t < NUMBER_OF_TRACKS; t++) {
             std::getline(file, line);
             std::vector<std::string> words;
-            boost::split(words, line, boost::is_any_of(" "));
+            // boost::split(words, line, boost::is_any_of(" "));
+            tfg::splitString(line, words);
             const unsigned int TRACK_DURATION = std::stoi(words[1]);
             std::vector<cv::Vec2f> coordinates;
             int frameInit;
             for(unsigned int i = 0; i < TRACK_DURATION; i++) {
                 std::getline(file, line);
-                boost::split(words, line, boost::is_any_of(" "));
+                // boost::split(words, line, boost::is_any_of(" "));
+                tfg::splitString(line, words);
                 const float xCoord = std::stof(words[0]);
                 const float yCoord = std::stof(words[1]);
                 cv::Vec2f point(xCoord, yCoord);

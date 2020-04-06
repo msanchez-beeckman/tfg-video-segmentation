@@ -1,10 +1,10 @@
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <opencv4/opencv2/imgcodecs.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/math/special_functions/round.hpp>
+#include "IoUtils.h"
 #include "ImageUtils.h"
 
 namespace tfg {
@@ -18,7 +18,7 @@ namespace tfg {
         return i_new;
     }
 
-    void readImages(std::istream &file, std::vector<cv::Mat> &images) {
+    void readImages(std::ifstream &file, std::vector<cv::Mat> &images) {
         for(std::string line; std::getline(file, line); ) {
             cv::Mat image = cv::imread(line, cv::IMREAD_COLOR);
             images.push_back(image);
@@ -38,10 +38,11 @@ namespace tfg {
         }
     }
 
-    void readSeedImages(std::istream &file, std::unordered_map<int, cv::Mat> &seedImages) {
+    void readSeedImages(std::ifstream &file, std::unordered_map<int, cv::Mat> &seedImages) {
         for(std::string line; std::getline(file, line); ) {
             std::vector<std::string> words;
-            boost::split(words, line, boost::is_any_of(" "));
+            // boost::split(words, line, boost::is_any_of(" "));
+            tfg::splitString(line, words);
             const int imageNumber = std::stoi(words[1]);
             cv::Mat seedImage = cv::imread(words[0], cv::IMREAD_COLOR);
             seedImages[imageNumber] = seedImage;
@@ -109,8 +110,10 @@ namespace tfg {
         const float xStep = (xDest - xOrig) / distance;
         const float yStep = (yDest - yOrig) / distance;
         for(int i = 1; i <= distance; i++) {
-            const int xPos = boost::math::iround(xOrig + i * xStep);
-            const int yPos = boost::math::iround(yOrig + i * yStep);
+            // const int xPos = boost::math::iround(xOrig + i * xStep);
+            // const int yPos = boost::math::iround(yOrig + i * yStep);
+            const int xPos = std::round(xOrig + i * xStep);
+            const int yPos = std::round(yOrig + i * yStep);
 
             cv::Vec3b& pixel = image.at<cv::Vec3b>(yPos, xPos);
             pixel[2] = color[2];

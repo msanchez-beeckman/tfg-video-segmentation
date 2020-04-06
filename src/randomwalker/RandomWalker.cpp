@@ -71,16 +71,11 @@ namespace tfg {
      * IEEE Transactions on Pattern Analysis and Machine Intelligence, 28(11): 1768-1783, 2006
      * DOI: 10.1109/TPAMI.2006.233
      */
-    void RandomWalker::propagateSeeds() {
+    void RandomWalker::propagateSeeds(float lambda) {
         std::cout << "Beginning propagation of seeds" << std::endl;
 
         Eigen::SparseMatrix<float> laplacianUnlabeled(unlabeledTracks, unlabeledTracks);
         Eigen::SparseMatrix<float> minusBt(unlabeledTracks, labeledTracks);
-
-        std::cout << "Laplacian and -Bt matrices created" << std::endl;
-
-        const float lambda = 0.8f;
-        // const std::vector<float> ones(trackTable->numberOfFrames(), 1.0f);
 
         std::cout << "Filling matrices for the system of equations" << std::endl;
         
@@ -199,7 +194,7 @@ namespace tfg {
      * Write in a file the probabilities that each track has for every label.
      * @param file The file where the probabilities are going to be stored.
      */
-    void RandomWalker::writeProbabilities(std::ostream &file) {
+    void RandomWalker::writeProbabilities(std::ofstream &file) {
         file << unlabeledTracks + labeledTracks << " " << numberOfLabels << std::endl;
         for(unsigned int t = 0; t < unlabeledTracks + labeledTracks; t++) {
             std::vector<float>& trackLabelProbabilities = probabilities.at(t);

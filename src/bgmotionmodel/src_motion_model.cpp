@@ -7,6 +7,7 @@
 #include "TrackTable.h"
 #include "Homography.h"
 #include "ImageUtils.h"
+#include "IoUtils.h"
 #include "MotionModel.h"
 
 int main(int argc, char* argv[]) {
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
     std::ofstream weightsFile(weightsFileName);
     std::vector<float> weightsNotSqr; weightsNotSqr.reserve(weights2.size());
     std::transform(weights2.begin(), weights2.end(), std::back_inserter(weightsNotSqr), [](float weight2) -> float { return std::sqrt(weight2); });
-    tfg::writeWeights(weightsFile, weightsNotSqr);
+    tfg::writeWeights(weightsNotSqr, weightsFile);
     // tfg::writeWeights(weightsFile, inlierWeights);
 
 

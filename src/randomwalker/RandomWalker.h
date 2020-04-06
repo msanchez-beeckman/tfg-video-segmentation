@@ -3,6 +3,7 @@
 #define TFG_VIDEO_SEGMENTATION_RANDOMWALKER_H
 
 #include <unordered_map>
+#include <fstream>
 #include "TrackTable.h"
 
 namespace tfg {
@@ -19,8 +20,8 @@ namespace tfg {
             ~RandomWalker();
 
             void seed(const std::unordered_map<int, cv::Mat> &seedImages);
-            void propagateSeeds();
-            void writeProbabilities(std::ostream &file);
+            void propagateSeeds(float lambda);
+            void writeProbabilities(std::ofstream &file);
     };
 }
 
