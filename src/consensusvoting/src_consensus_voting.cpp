@@ -14,10 +14,10 @@ int main(int argc, char* argv[]) {
     const cv::String keys =
         "{h help usage ?     |     | Print usage }"
         "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
-        "{d mindommotion     | 0.5 | Minimum ratio of frames with dominant motion to use motion saliency }"
+        "{d minDomMotion     | 0.5 | Minimum ratio of frames with dominant motion to use motion saliency }"
         "{s spsize           | 16  | Superpixel size }"
-        "{F framewindow      | 15  | Number of frames for KDTree's window }"
-        "{L likelymatches    | 4   | Number of nearest neighbours for each frame in KDTree's window }"
+        "{F frameWindow      | 15  | Number of frames for KDTree's window }"
+        "{L likelyMatches    | 4   | Number of nearest neighbours for each frame in KDTree's window }"
         "{S sigma2           | 0.1 | Value used for the denominator when computing costs between nearest neighbours }"
         "{T iterations       | 50  | Number of iterations to reach consensus }"
         "{t threshold        | 0.3 | Minimum value of a vote for a superpixel to be considered foreground }"
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     const std::string flowListFileName = parser.get<std::string>("@flows");
     std::ifstream flowListFile(flowListFileName);
     std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
-    const float minDominantMotionRatio = parser.get<float>("mindommotion");
+    const float minDominantMotionRatio = parser.get<float>("minDomMotion");
     if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, minDominantMotionRatio)) {
         std::cout << "No dominant motion has been found in the video" << std::endl;
         return EXIT_FAILURE;

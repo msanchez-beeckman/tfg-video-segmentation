@@ -6,14 +6,18 @@ TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 TRACKLOCATION="${TFGLOCATION}/test/tracks"
 
-usage () { echo "Usage: $0 [-b] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-l lambda] datasetName frameLimit"; }
 
-BROXFLAG=""
 TRACKSUFFIX=".txt"
+BROXFLAG=""
+dFLAG=""
+lFLAG=""
 
-while getopts :b opt; do
+while getopts :bd:l: opt; do
     case $opt in
-        b) BROXFLAG="-b"; TRACKSUFFIX="Brox.dat";;
+        b) BROXFLAG="--brox"; TRACKSUFFIX="Brox.dat";;
+        d) dFLAG="--minTrackDuration=${OPTARG}";;
+        l) lFLAG="--lambda=${OPTARG}";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -33,5 +37,5 @@ python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg
 python ${TFGLOCATION}/scripts/list_images.py ${SEEDLOCATION}/ png ${FRAMELIMIT} ${SEEDLOCATION}/seeds.txt True
 mkdir -p ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/walkerprobs/
-rm ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/*
-${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${TRACKLOCATION}/${DATASETNAME}${TRACKSUFFIX} ${SEEDLOCATION}/seeds.txt ${DATALOCATION}/${DATASETNAME}/images.txt -w ${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt -o ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/
+rm -f ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/*
+${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${dFLAG} ${lFLAG} --outweights=${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/ ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${SEEDLOCATION}/seeds.txt ${DATALOCATION}/${DATASETNAME}/images.txt

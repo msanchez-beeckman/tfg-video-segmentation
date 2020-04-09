@@ -14,7 +14,7 @@ NEWSIZE="854x480"
 while getopts :br: opt; do
     case $opt in
         b) IMAGEFORMAT="ppm"; LDOF=1;;
-        r) NEWSIZE="$OPTARG";;
+        R) NEWSIZE="$OPTARG";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac

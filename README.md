@@ -5,7 +5,6 @@
 The project uses the following external libraries:
 * OpenCV 4.2.0
 * Eigen 3.3
-* Boost
 
 It is recommended to use the versions above, since all the testing has been performed using them.
 Earlier versions of Eigen may work, but the project uses some calls from OpenCV's API that do not exist in version 2 and have not been tested in version 3.

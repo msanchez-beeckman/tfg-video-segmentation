@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
         "{g tbgbias          | 0.05  | Synthetic background observation for regions without reliable tracks }"
         "{u lambdau          | 100   | Unary cost weight for energy minimization }"
         "{s lambdas          | 0.001 | Smoothness cost weight for energy minimization }"
-        "{e minedgecost      | 0     | Minimum edge cost on graph cut }"
+        "{e minEdgeCost      | 0     | Minimum edge cost on graph cut }"
         "{t threshold        | 0.25  | Threshold to obtain mask from sliced values }"
         "{@images            |       | Text file containing the path to the images to be segmented }"
         "{@tracks            |       | Text file containing the path to the precomputed tracks }"
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     // Min cut phase
     const float lambda_u = parser.get<float>("lambdau");
     const float lambda_s = parser.get<float>("lambdas");
-    const float minEdgeCost = parser.get<float>("minedgecost");
+    const float minEdgeCost = parser.get<float>("minEdgeCost");
     const std::array<float, 6> W = {0.5f, 0.5f, 0.5f, 1.3f, 1.5f, 1.5f};
     bilateralGrid.graphCut(lambda_u, lambda_s, minEdgeCost, W);
     std::chrono::steady_clock::time_point flag7 = std::chrono::steady_clock::now();
