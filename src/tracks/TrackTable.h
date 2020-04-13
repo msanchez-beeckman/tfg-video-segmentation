@@ -30,6 +30,8 @@ namespace tfg {
         void buildFromFile(std::ifstream &file, int minDuration);
         void buildFromBroxFile(std::ifstream &file, int minDuration);
 
+        void writeTracks(std::ofstream &file, int minDuration=2);
+
         void initializeFromPreviousTable(const tfg::TrackTable &previousTable);
         void addTrack(const tfg::Track &track);
         void addPointToTrack(const cv::Vec2f &point, unsigned int track);
@@ -42,7 +44,7 @@ namespace tfg {
 
         void printMappings() const;
 
-        void paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
+        void paintWeightedTracks(const std::vector<float> &weights, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int minDuration=2) const;
         void paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
 
         inline unsigned int numberOfFrames() const {
@@ -61,7 +63,7 @@ namespace tfg {
             return tracks[track].getDuration();
         };
 
-        inline std::vector<cv::Vec2f> pointsInTrack(unsigned int track) const {
+        inline const std::vector<cv::Vec2f>& pointsInTrack(unsigned int track) const {
             return tracks[track].getPoints();
         };
 

@@ -8,8 +8,8 @@
 namespace tfg {
 
     void computeStructureTensorEigenvalues(const cv::Mat &image, cv::Mat &lambda1, cv::Mat &lambda2);
-    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, int trackDensity, int coverRadius, double rho);
-    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, tfg::TrackTable &trackTable, int frame);
+    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, std::vector<float> &weights, int trackDensity, int coverRadius, double rho);
+    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, int frame, tfg::TrackTable &trackTable);
 
 }
 

@@ -52,6 +52,18 @@ namespace tfg {
         }
     }
 
+    void TrackTable::writeTracks(std::ofstream &file, int minDuration) {
+        for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
+            if(this->durationOfTrack(t) < minDuration) continue;
+            file << this->firstFrameOfTrack(t);
+            const std::vector<cv::Vec2f> coordinates = this->pointsInTrack(t);
+            for(unsigned int i = 0; i < this->durationOfTrack(t); i++) {
+                file << " " << coordinates[i](0) << " " << coordinates[i](1);
+            }
+            file << std::endl;
+        }
+    }
+
     /**
      * Get origin-destination pairs for points in tracks for each frame of a video. This is basically formatting the sequence of tracks
      * in an alternative way to make it easier to manipulate the points that are in a frame.
@@ -176,17 +188,18 @@ namespace tfg {
      * @param images A sequence of images over which the tracks are going to be painted.
      * @param folder The folder where the output file will be placed.
      * @param fileName The name of the output image.
+     * @param minDuration Minimum duration of the track to paint it.
      */
-    void TrackTable::paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
+    void TrackTable::paintWeightedTracks(const std::vector<float> &weights, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int minDuration) const {
         for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
-            std::vector<cv::Vec2f> points = this->pointsInTrack(t);
+            const std::vector<cv::Vec2f> points = this->pointsInTrack(t);
             unsigned int initFrame = this->firstFrameOfTrack(t);
 
-            if(points.size() == 1) continue;
+            if(points.size() < minDuration) continue;
             for(unsigned int f = 0; f < points.size(); f++) {
                 cv::Vec3b color;
-                color(2) = weights2[t] < 0.25 ? 0 : 255;
-                color(1) = weights2[t] < 0.25 ? 255 : 0;
+                color(2) = weights[t] < 0.5 ? 0 : 255;
+                color(1) = weights[t] < 0.5 ? 255 : 0;
                 // drawPoint(images[initFrame + f], points[f], color);
                 const int remainingFrames = points.size() - f - 1;
                 const int T = std::min(5, remainingFrames);

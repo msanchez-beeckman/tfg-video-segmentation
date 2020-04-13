@@ -1,24 +1,27 @@
 #include <iostream>
 #include <fstream>
 #include <opencv4/opencv2/core.hpp>
-#include <chrono>
 #include "ImageUtils.h"
+#include "IoUtils.h"
 #include "Tracking.h"
 
 int main(int argc, char* argv[]) {
 
     // Parse command line arguments
     const cv::String keys =
-        "{h help usage ? |        | Print usage }"
-        "{o outfolder    |        | Folder where the results of the track segmentation should be stored }"
-        "{f flo          |        | Flag that indicates that the flows are in .flo format instead of .tiff }"
-        "{d density      | 8      | Track density }"
-        "{c coverRadius  | 20     | Minimum distance to the nearest track to initialize a new one in a pixel }"
-        "{r rho          | 3.0    | Parameter used for Gaussian blur }"
-        "{@images        |        | Text file containing the path to the images }"
-        "{@flows         |        | Text file containing the path to the precomputed flows }"
-        "{@rflows        |        | Text file containing the path to the precomputed reverse flows}"
-        "{@prevtracks    | <none> | Text file containing the path to previous tracks in the sequence, if there are }"
+        "{h help usage ?  |        | Print usage }"
+        "{o outfolder     |        | Folder where the results of the track segmentation should be stored }"
+        "{w outweights    |        | Text file where the resulting weights should be stored }"
+        "{t trackFilePath |        | Path to the output track file }"
+        "{f flo           |        | Flag that indicates that the flows are in .flo format instead of .tiff }"
+        "{d density       | 8      | Track density }"
+        "{c coverRadius   | 8      | Minimum distance to the nearest track to initialize a new one in a pixel }"
+        "{r rho           | 3.0    | Parameter used for Gaussian blur }"
+        "{@images         |        | Text file containing the path to the images }"
+        "{@flows          |        | Text file containing the path to the precomputed flows }"
+        "{@rflows         |        | Text file containing the path to the precomputed reverse flows}"
+        "{@prevtracks     | <none> | Text file containing the path to previous tracks in the sequence, if there are }"
+        "{@prevweights    | <none> | Text file containing the path to the weights of the previous tracks }"
         ;
     
     cv::CommandLineParser parser(argc, argv, keys);
@@ -37,6 +40,7 @@ int main(int argc, char* argv[]) {
     std::ifstream imageFile(imageFileName);
     std::vector<cv::Mat> images;
     tfg::readImages(imageFile, images);
+    imageFile.close();
     const unsigned int NUMBER_OF_IMAGES = images.size();
 
     const std::string flowFileName = parser.get<std::string>("@flows");
@@ -52,6 +56,8 @@ int main(int argc, char* argv[]) {
         tfg::readFlowsTiff(flowFile, flows);
         tfg::readFlowsTiff(bwdFlowFile, bwdFlows);
     }
+    flowFile.close();
+    bwdFlowFile.close();
 
     tfg::TrackTable previousTrackTable;
     tfg::TrackTable newTrackTable;
@@ -61,22 +67,50 @@ int main(int argc, char* argv[]) {
         const std::string trackFileName = parser.get<std::string>("@prevtracks");
         std::ifstream trackFile(trackFileName);
         previousTrackTable.buildFromFile(trackFile, 1);
+        trackFile.close();
         newTrackTable.initializeFromPreviousTable(previousTrackTable);
+    }
+
+    std::vector<float> weights;
+    const bool hasPreviousWeights = parser.has("@prevweights");
+    if(hasPreviousWeights) {
+        const std::string weightsFileName = parser.get<std::string>("@prevweights");
+        std::ifstream weightsFile(weightsFileName);
+        tfg::readWeights(weightsFile, weights);
+        weightsFile.close();
     }
 
     const int trackDensity = parser.get<int>("density");
     const int coverRadius = parser.get<int>("coverRadius");
     const double rho = parser.get<double>("rho");
     for(unsigned int f = 0; f < NUMBER_OF_IMAGES - 1; f++) {
-        tfg::addTracksToUncoveredZones(images[f], f, newTrackTable, trackDensity, coverRadius, rho);
-        tfg::followExistingTracks(flows[f], bwdFlows[f], newTrackTable, f);
+        tfg::addTracksToUncoveredZones(images[f], f, newTrackTable, weights, trackDensity, coverRadius, rho);
+        tfg::followExistingTracks(flows[f], bwdFlows[f], f, newTrackTable);
     }
 
-    // Continue: write track file and paint tracks (using tfg::TrackTable::paintWeightedTracks() with weight = 1)
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNames = "tracks";
     const std::vector<float> ones(newTrackTable.numberOfTracks(), 1.0f);
     newTrackTable.getMappingsFromTracks();
     newTrackTable.paintWeightedTracks(ones, images, resultsFolder, fileNames);
 
+    const std::string outTrackFileName = parser.get<std::string>("trackFilePath");
+    std::ofstream outTrackFile(outTrackFileName);
+    newTrackTable.writeTracks(outTrackFile);
+    outTrackFile.close();
+
+    if(parser.has("outweights")) {
+        std::vector<float> filteredWeights;
+        filteredWeights.reserve(weights.size());
+        for(unsigned int i = 0; i < weights.size(); i++) {
+            if(newTrackTable.durationOfTrack(i) < 2) continue;
+            filteredWeights.push_back(weights[i]);
+        }
+        const std::string outWeightsFileName = parser.get<std::string>("outweights");
+        std::ofstream outWeightsFile(outWeightsFileName);
+        tfg::writeWeights(filteredWeights, outWeightsFile);
+        outWeightsFile.close();
+    }
+
+    return EXIT_SUCCESS;
 }

@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
     std::ifstream seedFile(seedFileName);
     std::unordered_map<int, cv::Mat> seedImages;
     tfg::readSeedImages(seedFile, seedImages);
+    seedFile.close();
 
     // Create the random walker than propagate the seeds to each track
     tfg::RandomWalker walker(trackTable);
@@ -65,12 +66,14 @@ int main(int argc, char* argv[]) {
     std::ofstream weightsFile(weightsFileName);
     std::cout << "Writing in a file the probabilities of each label for each track" << std::endl;
     walker.writeProbabilities(weightsFile);
+    weightsFile.close();
 
     // Paint the tracks according to their most likely label (using the same color as the seeds for the label)
     const std::string imageNamesFileName = parser.get<std::string>("@images");
     std::ifstream imageNamesFile(imageNamesFileName);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
+    imageNamesFile.close();
 
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileName = "out";

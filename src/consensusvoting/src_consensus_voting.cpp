@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
     const std::string imageListFileName = parser.get<std::string>("@images");
     std::ifstream imageListFile(imageListFileName);
     tfg::readImages(imageListFile, images);
+    imageListFile.close();
 
     const int SUPERPIXEL_SIZE = parser.get<int>("spsize");
     tfg::ConsensusVoter consensusVoter((images[0].cols * images[1].rows)/(SUPERPIXEL_SIZE * SUPERPIXEL_SIZE), images.size());
@@ -53,9 +54,11 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point flag1 = std::chrono::steady_clock::now();
     const float minDominantMotionRatio = parser.get<float>("minDomMotion");
     if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, minDominantMotionRatio)) {
+        flowListFile.close();
         std::cout << "No dominant motion has been found in the video" << std::endl;
         return EXIT_FAILURE;
     }
+    flowListFile.close();
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNameCrudeSaliency = "crudeSaliency";
     consensusVoter.saveSaliencies(resultsFolder, fileNameCrudeSaliency);

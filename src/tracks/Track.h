@@ -22,7 +22,7 @@ namespace tfg {
 
         void addPoint(const cv::Vec2f &point);
 
-        inline std::vector<cv::Vec2f> getPoints() const {
+        inline const std::vector<cv::Vec2f>& getPoints() const {
             return coordinates;
         };
 

@@ -41,7 +41,7 @@ namespace tfg {
         lambda2 = tmp1 - tmp4;
     }
 
-    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, int trackDensity, int coverRadius, double rho) {
+    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, std::vector<float> &weights, int trackDensity, int coverRadius, double rho) {
         cv::Mat uncovered(image.size(), CV_8UC1, cv::Scalar(255));
         for(unsigned int i = 0; i < trackTable.numberOfTracks(); i++) {
             const int lastFrameOfTrack = trackTable.firstFrameOfTrack(i) + trackTable.durationOfTrack(i) - 1;
@@ -79,11 +79,12 @@ namespace tfg {
                 const std::vector<cv::Vec2f> coordinates = {vec};
                 tfg::Track track(coordinates, frame);
                 trackTable.addTrack(track);
+                weights.push_back(1.0f);
             }
         }
     }
 
-    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, tfg::TrackTable &trackTable, int frame) {
+    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, int frame, tfg::TrackTable &trackTable) {
         cv::Mat fwdFlowDerivX, fwdFlowDerivY;
         cv::Sobel(flow, fwdFlowDerivX, CV_32F, 1, 0, 3);
         cv::Sobel(flow, fwdFlowDerivY, CV_32F, 0, 1, 3);

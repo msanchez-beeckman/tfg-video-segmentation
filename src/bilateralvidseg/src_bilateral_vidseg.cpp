@@ -58,23 +58,18 @@ int main(int argc, char* argv[]) {
     const std::string weightFileName = parser.get<std::string>("@weights");
     std::ifstream weightFile(weightFileName);
     std::vector<float> weights;
-    // weights.reserve(trackTable.numberOfTracks());
-    // for(std::string line; std::getline(weightFile, line); ) {
-    //     float w = std::stof(line);
-    //     weights.push_back(w);
-    // }
     tfg::readWeights(weightFile, weights);
     weightFile.close();
     std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
     std::cout << "Track weights read in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag3-flag2).count())/1000000.0 << " seconds." << std::endl;
 
     // Read images to be segmented
-    //std::ifstream imageNamesFile(par_images.value);
     const std::string imageNamesFileName = parser.get<std::string>("@images");
     std::ifstream imageNamesFile(imageNamesFileName);
     std::vector<cv::Mat> images;
     std::vector<cv::Mat> imagesLuv;
     tfg::readImages(imageNamesFile, images);
+    imageNamesFile.close();
     tfg::bgr2luv(images, imagesLuv);
     std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
     std::cout << "Images read and converted to Luv in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag4-flag3).count())/1000000.0 << " seconds." << std::endl;

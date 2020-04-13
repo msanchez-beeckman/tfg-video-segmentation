@@ -14,16 +14,17 @@ int main(int argc, char* argv[]) {
 
     // Parse command line arguments
     const cv::String keys =
-        "{h help usage ?     |     | Print usage }"
-        "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
-        "{w outweights       |     | Text file where the resulting weights should be stored }"
-        "{b brox             |     | Parse tracks using Brox's codification }"
-        "{d minTrackDuration | 10  | Minimum track duration to take it into account }"
-        "{i ransacIterations | 500 | Number of iterations for RANSAC }"
-        "{e ransacEpsilon    | 2   | Tolerance used in RANSAC }"
-        "{t tau2             | 16  | Square of the inlier threshold used to limit the cost of the residuals }"
-        "{@images            |     | Text file containing the path to the images to be segmented }"
-        "{@tracks            |     | Text file containing the path to the precomputed tracks }"
+        "{h help usage ?     |        | Print usage }"
+        "{o outfolder        |        | Folder where the results of the track segmentation should be stored }"
+        "{w outweights       |        | Text file where the resulting weights should be stored }"
+        "{b brox             |        | Parse tracks using Brox's codification }"
+        "{d minTrackDuration | 10     | Minimum track duration to take it into account }"
+        "{i ransacIterations | 500    | Number of iterations for RANSAC }"
+        "{e ransacEpsilon    | 2      | Tolerance used in RANSAC }"
+        "{t tau2             | 16     | Square of the inlier threshold used to limit the cost of the residuals }"
+        "{@images            |        | Text file containing the path to the images to be segmented }"
+        "{@tracks            |        | Text file containing the path to the precomputed tracks }"
+        "{@prevweights       | <none> | Text file containing the path to the previous weights of the tracks. This parameter must be accompanied with --minTrackDuration=2 }"
         ;
     
     cv::CommandLineParser parser(argc, argv, keys);
@@ -77,8 +78,15 @@ int main(int argc, char* argv[]) {
     std::ofstream weightsFile(weightsFileName);
     std::vector<float> weightsNotSqr; weightsNotSqr.reserve(weights2.size());
     std::transform(weights2.begin(), weights2.end(), std::back_inserter(weightsNotSqr), [](float weight2) -> float { return std::sqrt(weight2); });
+    if(parser.has("@prevweights")) {
+        const std::string prevWeightsFileName = parser.get<std::string>("@prevweights");
+        std::ifstream prevWeightsFile(prevWeightsFileName);
+        std::vector<float> prevWeights;
+        tfg::readWeights(prevWeightsFile, prevWeights);
+        std::transform(weightsNotSqr.begin(), weightsNotSqr.end(), prevWeights.begin(), weightsNotSqr.begin(), [](float w1, float w2) -> float { return std::min(w1, w2); });
+    }
     tfg::writeWeights(weightsNotSqr, weightsFile);
-    // tfg::writeWeights(weightsFile, inlierWeights);
+    weightsFile.close();
 
 
     // Read images, then paint the tracks over them using green for foreground and red for background
@@ -86,11 +94,12 @@ int main(int argc, char* argv[]) {
     std::ifstream imageNamesFile(imageNamesFileName);
     std::vector<cv::Mat> images;
     tfg::readImages(imageNamesFile, images);
+    imageNamesFile.close();
 
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNameModel = "finalModel";
     // std::string fileNameInliers = "ransacModel";
-    trackTable->paintWeightedTracks(weights2, images, resultsFolder, fileNameModel);
+    trackTable->paintWeightedTracks(weightsNotSqr, images, resultsFolder, fileNameModel);
     // trackTable->paintWeightedTracks(inlierWeights, images, resultsFolder, fileNameInliers);
 
 
