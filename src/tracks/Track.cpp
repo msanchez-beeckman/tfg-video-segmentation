@@ -11,11 +11,14 @@ namespace tfg {
     Track::Track(const std::vector<cv::Vec2f> &coordinates, const unsigned int initFrame) {
         this->coordinates = coordinates;
         this->initFrame = initFrame;
-        this->duration = coordinates.size();
         this->label = -1;
     }
 
     Track::~Track() {}
+
+    void Track::addPoint(const cv::Vec2f &point) {
+        coordinates.push_back(point);
+    }
 
     void Track::setNumber(unsigned int number) {
         this->number = number;
@@ -40,7 +43,7 @@ namespace tfg {
         // The distance is computed using only the common frames between the tracks
         const unsigned int MIN_COMMON_FRAMES = 1;
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
-        const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
+        const unsigned int lastCommonFrame = std::min(initFrame + this->getDuration() - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
         if(lastCommonFrame - firstCommonFrame + 1 < MIN_COMMON_FRAMES) return std::numeric_limits<float>::infinity(); // If not enough common frames, consider an infinite distance
 
         // float averageSpatialDistance = this->averageSpatialDistance(trackB);
@@ -70,6 +73,7 @@ namespace tfg {
      * @param derivative An output vector containing the derivative.
      */
     void Track::deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const {
+        const unsigned int duration = this->getDuration();
         assert(frame >= initFrame && frame < initFrame + duration - 1);
 
         const int framesForward = 5;
@@ -84,7 +88,7 @@ namespace tfg {
      */
     float Track::averageSpatialDistance(const Track &trackB) const {
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
-        const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
+        const unsigned int lastCommonFrame = std::min(initFrame + this->getDuration() - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
         if(firstCommonFrame > lastCommonFrame) return std::numeric_limits<float>::infinity();
 
         std::vector<cv::Vec2f> trackBcoordinates = trackB.getPoints();
@@ -103,7 +107,7 @@ namespace tfg {
      */
     float Track::maximalSpatialDistance(const Track &trackB) const {
         const unsigned int firstCommonFrame = std::max(initFrame, trackB.getInitFrame());
-        const unsigned int lastCommonFrame = std::min(initFrame + duration - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
+        const unsigned int lastCommonFrame = std::min(initFrame + this->getDuration() - 1, trackB.getInitFrame() + trackB.getDuration() - 1);
         if(firstCommonFrame > lastCommonFrame) return std::numeric_limits<float>::infinity();
 
         std::vector<cv::Vec2f> trackBcoordinates = trackB.getPoints();

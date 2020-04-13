@@ -10,7 +10,6 @@ namespace tfg {
     private:
         std::vector<cv::Vec2f> coordinates;
         unsigned int initFrame;
-        unsigned int duration;
         unsigned int number;
         int label;
 
@@ -21,8 +20,14 @@ namespace tfg {
 
         ~Track();
 
+        void addPoint(const cv::Vec2f &point);
+
         inline std::vector<cv::Vec2f> getPoints() const {
             return coordinates;
+        };
+
+        inline cv::Vec2f getLastPoint() const {
+            return coordinates.back();
         };
         
         inline unsigned int getInitFrame() const {
@@ -30,7 +35,7 @@ namespace tfg {
         };
 
         inline unsigned int getDuration() const {
-            return duration;
+            return coordinates.size();
         };
 
         inline unsigned int getNumber() const {

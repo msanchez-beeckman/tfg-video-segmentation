@@ -10,6 +10,12 @@ namespace tfg {
     TrackTable::TrackTable() {}
     TrackTable::~TrackTable() {}
 
+    TrackTable::TrackTable(std::vector<tfg::Track> &tracks) {
+        this->tracks = tracks;
+        getMappingsFromTracks();
+        computeFlowStatistics();
+    }
+
     void TrackTable::buildFromFile(std::ifstream &file, int minDuration) {
         readTracks(file, minDuration);
         getMappingsFromTracks();
@@ -61,7 +67,7 @@ namespace tfg {
                 const std::vector<Mapping>::size_type listSize = mappings.size();
 
                 if(frame > listSize - 1) {
-                    Mapping newMapping;
+                    tfg::Mapping newMapping;
                     newMapping.addPoint(points[i], points[i+1], t);
                     mappings.push_back(newMapping);
                 } else {
@@ -69,6 +75,31 @@ namespace tfg {
                 }
             }
         }
+    }
+
+    void TrackTable::initializeFromPreviousTable(const tfg::TrackTable &previousTable) {
+        tracks.clear();
+        mappings.clear();
+        flowMeans.clear();
+        flowVariances.clear();
+
+        if(previousTable.numberOfFrames() == 0) return;
+
+        const std::vector<cv::Vec2f> lastPoints = previousTable.destinationPointsInLastFrame();
+        this->tracks.reserve(lastPoints.size());
+        for(unsigned int i = 0; i < lastPoints.size(); i++) {
+            const std::vector<cv::Vec2f> coordinates = {lastPoints[i]};
+            tfg::Track track(coordinates, 0);
+            tracks.push_back(track);
+        }
+    }
+
+    void TrackTable::addTrack(const tfg::Track &track) {
+        tracks.push_back(track);
+    }
+
+    void TrackTable::addPointToTrack(const cv::Vec2f &point, unsigned int track) {
+        tracks[track].addPoint(point);
     }
 
     void TrackTable::buildFromBroxFile(std::ifstream &file, int minDuration) {
@@ -151,6 +182,7 @@ namespace tfg {
             std::vector<cv::Vec2f> points = this->pointsInTrack(t);
             unsigned int initFrame = this->firstFrameOfTrack(t);
 
+            if(points.size() == 1) continue;
             for(unsigned int f = 0; f < points.size(); f++) {
                 cv::Vec3b color;
                 color(2) = weights2[t] < 0.25 ? 0 : 255;

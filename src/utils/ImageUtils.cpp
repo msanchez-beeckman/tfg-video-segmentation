@@ -4,12 +4,13 @@
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <opencv4/opencv2/imgcodecs.hpp>
+#include <opencv4/opencv2/video/tracking.hpp>
 #include "IoUtils.h"
 #include "ImageUtils.h"
 
 namespace tfg {
 
-    bool point_in_image(int x, int y, int w, int h) {
+    bool isPointInImage(int x, int y, int w, int h) {
         return x >= 0 && x < w && y >= 0 && y < h;
     }
 
@@ -22,6 +23,26 @@ namespace tfg {
         for(std::string line; std::getline(file, line); ) {
             cv::Mat image = cv::imread(line, cv::IMREAD_COLOR);
             images.push_back(image);
+        }
+    }
+
+    void readFlowsFlo(std::ifstream &file, std::vector<cv::Mat> &flows) {
+        for(std::string line; std::getline(file, line); ) {
+            cv::Mat flow = cv::readOpticalFlow(line);
+            flows.push_back(flow);
+        }
+    }
+
+    void readFlowsTiff(std::ifstream &file, std::vector<cv::Mat> &flows) {
+        for(std::string line; std::getline(file, line); ) {
+            cv::Mat flowu = cv::imread(line, cv::IMREAD_ANYDEPTH);
+            std::getline(file, line);
+            cv::Mat flowv = cv::imread(line, cv::IMREAD_ANYDEPTH);
+
+            cv::Mat flow;
+            std::vector<cv::Mat> channels = {flowu, flowv};
+            cv::merge(channels, flow);
+            flows.push_back(flow);
         }
     }
 
@@ -76,7 +97,7 @@ namespace tfg {
         const int w = image.cols;
         const int h = image.rows;
 
-        if(!point_in_image(x, y, w, h)) return;
+        if(!isPointInImage(x, y, w, h)) return;
 
         const int x_left = val_coord(x-1, w);
         const int x_right = val_coord(x+1, w);
@@ -102,7 +123,7 @@ namespace tfg {
         const int w = image.cols;
         const int h = image.rows;
 
-        if(!point_in_image(xOrig, yOrig, w, h) || !point_in_image(xDest, yDest, w, h)) return;
+        if(!isPointInImage(xOrig, yOrig, w, h) || !isPointInImage(xDest, yDest, w, h)) return;
 
         drawPoint(image, origin, color); 
 

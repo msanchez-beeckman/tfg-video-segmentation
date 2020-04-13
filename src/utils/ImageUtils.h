@@ -8,10 +8,12 @@
 
 namespace tfg {
 
-    bool point_in_image(int x, int y, int w, int h);
+    bool isPointInImage(int x, int y, int w, int h);
     int val_coord(int i, int w);
 
     void readImages(std::ifstream &file, std::vector<cv::Mat> &images);
+    void readFlowsFlo(std::ifstream &file, std::vector<cv::Mat> &flows);
+    void readFlowsTiff(std::ifstream &file, std::vector<cv::Mat> &flows);
     void copyImages(const std::vector<cv::Mat> &images1, std::vector<cv::Mat> &images2);
     void readSeedImages(std::ifstream &file, std::unordered_map<int, cv::Mat> &seedImages);
 

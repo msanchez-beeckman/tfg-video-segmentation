@@ -18,7 +18,6 @@ namespace tfg {
 
         void readTracks(std::ifstream &file, int minDuration);
         void readTracksBrox(std::ifstream &file, int minDuration);
-        void getMappingsFromTracks();
 
         void computeFlowStatistics();
     
@@ -26,8 +25,16 @@ namespace tfg {
         TrackTable();
         ~TrackTable();
 
+        TrackTable(std::vector<tfg::Track> &tracks);
+
         void buildFromFile(std::ifstream &file, int minDuration);
         void buildFromBroxFile(std::ifstream &file, int minDuration);
+
+        void initializeFromPreviousTable(const tfg::TrackTable &previousTable);
+        void addTrack(const tfg::Track &track);
+        void addPointToTrack(const cv::Vec2f &point, unsigned int track);
+
+        void getMappingsFromTracks();
 
         void sortTracksByLabel();
         void sortTracksByNumber();
@@ -64,6 +71,10 @@ namespace tfg {
 
         inline std::vector<cv::Vec2f> destinationPointsInFrame(unsigned int frame) const {
             return mappings[frame].getDestination();
+        };
+
+        inline std::vector<cv::Vec2f> destinationPointsInLastFrame() const {
+            return mappings.back().getDestination();
         };
 
         inline std::vector<unsigned int> trajectoriesInFrame(unsigned int frame) const {

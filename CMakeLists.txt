@@ -16,6 +16,9 @@ set(TRACK_LIBS
         ${CMAKE_SOURCE_DIR}/src/tracks/Track.cpp
         ${CMAKE_SOURCE_DIR}/src/tracks/TrackTable.cpp)
 
+set(TRACKING_LIBS
+        ${CMAKE_SOURCE_DIR}/src/tracks/Tracking.cpp)
+
 set(BGMM_LIBS
         ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/Homography.cpp
         ${CMAKE_SOURCE_DIR}/src/bgmotionmodel/MotionModel.cpp)
@@ -46,6 +49,17 @@ target_link_libraries(tracks
         utils)
 target_include_directories(tracks
         PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
+
+##### LIBRARIES FOR POINT TRACKING (Brox)
+add_library(tracking ${TRACKING_LIBS})
+target_link_libraries(tracking
+        tracks)
+target_include_directories(tracking
+        PUBLIC ${CMAKE_SOURCE_DIR}/src/tracks)
+
+add_executable(continueTracks ${CMAKE_SOURCE_DIR}/src/tracks/src_continue_tracks.cpp)
+target_link_libraries(continueTracks
+        tracking)
 
 ##### LIBRARIES FOR BACKGROUND MOTION MODELING (Szeliski)
 add_library(bgmm ${BGMM_LIBS})
