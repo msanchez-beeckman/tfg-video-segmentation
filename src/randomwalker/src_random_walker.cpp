@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
         "{b brox             |     | Parse tracks using Brox's codification }"
         "{d minTrackDuration | 10  | Minimum track duration to take it into account }"
         "{l lambda           | 0.1 | Scale parameter for affinity computations }"
+        "{F firstNameIndex   | 0   | The first index that should be appended at the end of the images' names }"
         "{@images            |     | Text file containing the path to the images to be segmented }"
         "{@seeds             |     | Text file containing the path and frame number of the seeds for the random walker }"
         "{@tracks            |     | Text file containing the path to the precomputed tracks }"
@@ -77,7 +78,8 @@ int main(int argc, char* argv[]) {
 
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileName = "out";
-    trackTable->paintLabeledTracks(images, resultsFolder, fileName);
+    const int firstNameIndex = parser.get<int>("firstNameIndex");
+    trackTable->paintLabeledTracks(images, resultsFolder, fileName, firstNameIndex);
 
     std::cout << "Painted tracks according to seeds" << std::endl;
     

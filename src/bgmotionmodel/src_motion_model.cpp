@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
         "{i ransacIterations | 500    | Number of iterations for RANSAC }"
         "{e ransacEpsilon    | 2      | Tolerance used in RANSAC }"
         "{t tau2             | 16     | Square of the inlier threshold used to limit the cost of the residuals }"
+        "{F firstNameIndex   | 0      | The first index that should be appended at the end of the images' names }"
         "{@images            |        | Text file containing the path to the images to be segmented }"
         "{@tracks            |        | Text file containing the path to the precomputed tracks }"
         "{@prevweights       | <none> | Text file containing the path to the previous weights of the tracks. This parameter must be accompanied with --minTrackDuration=2 }"
@@ -74,8 +75,6 @@ int main(int argc, char* argv[]) {
 
 
     // Write the weights of each track to a file, to use it in the dense segmentation 
-    const std::string weightsFileName = parser.get<std::string>("outweights");
-    std::ofstream weightsFile(weightsFileName);
     std::vector<float> weightsNotSqr; weightsNotSqr.reserve(weights2.size());
     std::transform(weights2.begin(), weights2.end(), std::back_inserter(weightsNotSqr), [](float weight2) -> float { return std::sqrt(weight2); });
     if(parser.has("@prevweights")) {
@@ -84,7 +83,13 @@ int main(int argc, char* argv[]) {
         std::vector<float> prevWeights;
         tfg::readWeights(prevWeightsFile, prevWeights);
         std::transform(weightsNotSqr.begin(), weightsNotSqr.end(), prevWeights.begin(), weightsNotSqr.begin(), [](float w1, float w2) -> float { return std::min(w1, w2); });
+        // for(unsigned int i = 0; i < weightsNotSqr.size(); i++) {
+        //     weightsNotSqr[i] = std::min(weightsNotSqr[i], prevWeights[i]);
+        // }
+        prevWeightsFile.close();
     }
+    const std::string weightsFileName = parser.get<std::string>("outweights");
+    std::ofstream weightsFile(weightsFileName);
     tfg::writeWeights(weightsNotSqr, weightsFile);
     weightsFile.close();
 
@@ -99,7 +104,8 @@ int main(int argc, char* argv[]) {
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNameModel = "finalModel";
     // std::string fileNameInliers = "ransacModel";
-    trackTable->paintWeightedTracks(weightsNotSqr, images, resultsFolder, fileNameModel);
+    const int firstNameIndex = parser.get<int>("firstNameIndex");
+    trackTable->paintWeightedTracks(weightsNotSqr, images, resultsFolder, fileNameModel, minTrackDuration, firstNameIndex);
     // trackTable->paintWeightedTracks(inlierWeights, images, resultsFolder, fileNameInliers);
 
 

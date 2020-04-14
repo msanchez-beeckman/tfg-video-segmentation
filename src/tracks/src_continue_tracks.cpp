@@ -9,19 +9,20 @@ int main(int argc, char* argv[]) {
 
     // Parse command line arguments
     const cv::String keys =
-        "{h help usage ?  |        | Print usage }"
-        "{o outfolder     |        | Folder where the results of the track segmentation should be stored }"
-        "{w outweights    |        | Text file where the resulting weights should be stored }"
-        "{t trackFilePath |        | Path to the output track file }"
-        "{f flo           |        | Flag that indicates that the flows are in .flo format instead of .tiff }"
-        "{d density       | 8      | Track density }"
-        "{c coverRadius   | 8      | Minimum distance to the nearest track to initialize a new one in a pixel }"
-        "{r rho           | 3.0    | Parameter used for Gaussian blur }"
-        "{@images         |        | Text file containing the path to the images }"
-        "{@flows          |        | Text file containing the path to the precomputed flows }"
-        "{@rflows         |        | Text file containing the path to the precomputed reverse flows}"
-        "{@prevtracks     | <none> | Text file containing the path to previous tracks in the sequence, if there are }"
-        "{@prevweights    | <none> | Text file containing the path to the weights of the previous tracks }"
+        "{h help usage ?   |        | Print usage }"
+        "{o outfolder      |        | Folder where the results of the track segmentation should be stored }"
+        "{w outweights     |        | Text file where the resulting weights should be stored }"
+        "{t trackFilePath  |        | Path to the output track file }"
+        "{f flo            |        | Flag that indicates that the flows are in .flo format instead of .tiff }"
+        "{d density        | 8      | Track density }"
+        "{c coverRadius    | 8      | Minimum distance to the nearest track to initialize a new one in a pixel }"
+        "{r rho            | 3.0    | Parameter used for Gaussian blur }"
+        "{F firstNameIndex | 0      | The first index that should be appended at the end of the images' names }"
+        "{@images          |        | Text file containing the path to the images }"
+        "{@flows           |        | Text file containing the path to the precomputed flows }"
+        "{@rflows          |        | Text file containing the path to the precomputed reverse flows}"
+        "{@prevtracks      | <none> | Text file containing the path to previous tracks in the sequence, if there are }"
+        "{@prevweights     | <none> | Text file containing the path to the weights of the previous tracks }"
         ;
     
     cv::CommandLineParser parser(argc, argv, keys);
@@ -90,9 +91,10 @@ int main(int argc, char* argv[]) {
 
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNames = "tracks";
+    const int firstNameIndex = parser.get<int>("firstNameIndex");
     const std::vector<float> ones(newTrackTable.numberOfTracks(), 1.0f);
     newTrackTable.getMappingsFromTracks();
-    newTrackTable.paintWeightedTracks(ones, images, resultsFolder, fileNames);
+    newTrackTable.paintWeightedTracks(ones, images, resultsFolder, fileNames, 2, firstNameIndex);
 
     const std::string outTrackFileName = parser.get<std::string>("trackFilePath");
     std::ofstream outTrackFile(outTrackFileName);

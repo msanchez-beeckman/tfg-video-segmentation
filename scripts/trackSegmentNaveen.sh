@@ -33,8 +33,8 @@ FRAMELIMIT=$2
 # This variable should also be modified if the seeds for the images are stored elsewhere
 SEEDLOCATION="${DATALOCATION}/${DATASETNAME}/seeds"
 
-python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
-python ${TFGLOCATION}/scripts/list_images.py ${SEEDLOCATION}/ png ${FRAMELIMIT} ${SEEDLOCATION}/seeds.txt True
+python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg 0 ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
+python ${TFGLOCATION}/scripts/list_images.py ${SEEDLOCATION}/ png 0 ${FRAMELIMIT} ${SEEDLOCATION}/seeds.txt True
 mkdir -p ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/walkerprobs/
 rm -f ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/*

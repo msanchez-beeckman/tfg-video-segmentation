@@ -163,19 +163,19 @@ namespace tfg {
         }
     }
 
-    void saveMaskedImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName) {
+    void saveMaskedImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, int firstNameIndex) {
         for(unsigned int i = 0; i < images.size(); i++) {
             cv::Mat maskedImage;
             images[i].copyTo(maskedImage, masks[i]);
 
             std::stringstream ss;
-            ss << folder << fileName << i << ".png";
+            ss << folder << fileName << firstNameIndex + i << ".png";
             std::string saveAs = ss.str();
             cv::imwrite(saveAs, maskedImage);
         }
     }
 
-    void saveOverlaidImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, float alpha) {
+    void saveOverlaidImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, float alpha, int firstNameIndex) {
         for(unsigned int i = 0; i < images.size(); i++) {
 
             cv::Mat redOverlay(images[i].size(), CV_8UC3);
@@ -191,7 +191,7 @@ namespace tfg {
             redOverlay.copyTo(overlaidImage, masks[i]);
             
             std::stringstream ss;
-            ss << folder << fileName << i << ".png";
+            ss << folder << fileName << firstNameIndex + i << ".png";
             std::string saveAs = ss.str();
             cv::imwrite(saveAs, overlaidImage);
         }

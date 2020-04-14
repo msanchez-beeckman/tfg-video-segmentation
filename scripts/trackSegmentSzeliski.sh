@@ -34,7 +34,7 @@ shift $(( OPTIND - 1 ))
 DATASETNAME=$1
 FRAMELIMIT=$2
 
-python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
+python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg 0 ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/model/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/weights/
 rm -f ${TFGLOCATION}/results/model/${DATASETNAME}/*

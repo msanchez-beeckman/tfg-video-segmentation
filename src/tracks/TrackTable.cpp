@@ -189,8 +189,9 @@ namespace tfg {
      * @param folder The folder where the output file will be placed.
      * @param fileName The name of the output image.
      * @param minDuration Minimum duration of the track to paint it.
+     * @param firstNameIndex The first index that should be appended at the end of the images' names.
      */
-    void TrackTable::paintWeightedTracks(const std::vector<float> &weights, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int minDuration) const {
+    void TrackTable::paintWeightedTracks(const std::vector<float> &weights, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int minDuration, int firstNameIndex) const {
         for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
             const std::vector<cv::Vec2f> points = this->pointsInTrack(t);
             unsigned int initFrame = this->firstFrameOfTrack(t);
@@ -213,7 +214,7 @@ namespace tfg {
 
         for (unsigned int i = 0; i < images.size(); i++) {
             std::stringstream ss;
-            ss << folder << fileName << i << ".png";
+            ss << folder << fileName << firstNameIndex + i << ".png";
             std::string saveAs = ss.str();
             cv::imwrite(saveAs, images[i]);
         }
@@ -224,8 +225,9 @@ namespace tfg {
      * @param images A sequence of images over which the tracks are going to be painted.
      * @param folder The folder where the output file will be placed.
      * @param fileName The name of the output image.
+     * @param firstNameIndex The first index that should be appended at the end of the images' names.
      */
-    void TrackTable::paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const {
+    void TrackTable::paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int firstNameIndex) const {
         for(unsigned int t = 0; t < this->numberOfTracks(); t++) {
             const int label = this->labelOfTrack(t);
             std::vector<cv::Vec2f> points = this->pointsInTrack(t);
@@ -251,7 +253,7 @@ namespace tfg {
 
         for (unsigned int i = 0; i < images.size(); i++) {
             std::stringstream ss;
-            ss << folder << fileName << i << ".png";
+            ss << folder << fileName << firstNameIndex + i << ".png";
             std::string saveAs = ss.str();
             cv::imwrite(saveAs, images[i]);
         }

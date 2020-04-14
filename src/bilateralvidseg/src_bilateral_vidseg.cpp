@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
         "{s lambdas          | 0.001 | Smoothness cost weight for energy minimization }"
         "{e minEdgeCost      | 0     | Minimum edge cost on graph cut }"
         "{t threshold        | 0.25  | Threshold to obtain mask from sliced values }"
+        "{F firstNameIndex   | 0     | The first index that should be appended at the end of the images' names }"
         "{@images            |       | Text file containing the path to the images to be segmented }"
         "{@tracks            |       | Text file containing the path to the precomputed tracks }"
         "{@weights           |       | Text file containing the weights of the tracks }"
@@ -105,13 +106,14 @@ int main(int argc, char* argv[]) {
     std::cout << "Sliced values in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
 
     // Paint only the foreground of the original images
+    const int firstNameIndex = parser.get<int>("firstNameIndex");
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileNameMask = "mask";
-    tfg::saveMaskedImages(masks, masks, resultsFolder, fileNameMask);
+    tfg::saveMaskedImages(masks, masks, resultsFolder, fileNameMask, firstNameIndex);
     const std::string fileNameSegmentation = "foreground";
-    tfg::saveMaskedImages(images, masks, resultsFolder, fileNameSegmentation);
+    tfg::saveMaskedImages(images, masks, resultsFolder, fileNameSegmentation, firstNameIndex);
     const std::string fileNameOverlaidImages = "resultOverlaid";
-    tfg::saveOverlaidImages(images, masks, resultsFolder, fileNameOverlaidImages);
+    tfg::saveOverlaidImages(images, masks, resultsFolder, fileNameOverlaidImages, 0.4f, firstNameIndex);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
     std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
 

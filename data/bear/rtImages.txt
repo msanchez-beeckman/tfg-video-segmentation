@@ -1,0 +1,2 @@
+/home/marco/Projects/tfg_video_segmentation/data/bear/00080.jpg
+/home/marco/Projects/tfg_video_segmentation/data/bear/00081.jpg
