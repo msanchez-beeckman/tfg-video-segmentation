@@ -38,4 +38,4 @@ python ${TFGLOCATION}/scripts/list_images.py ${SEEDLOCATION}/ png 0 ${FRAMELIMIT
 mkdir -p ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/walkerprobs/
 rm -f ${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/*
-${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${dFLAG} ${lFLAG} --outweights=${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/ ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${SEEDLOCATION}/seeds.txt ${DATALOCATION}/${DATASETNAME}/images.txt
+${TFGLOCATION}/bin/randomWalker ${BROXFLAG} ${dFLAG} ${lFLAG} --outweights=${TFGLOCATION}/results/walkerprobs/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/walkedseeds/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${SEEDLOCATION}/seeds.txt ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX}
