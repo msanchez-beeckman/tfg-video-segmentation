@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
         "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
         "{w outweights       |     | Text file where the resulting weights should be stored }"
         "{b brox             |     | Parse tracks using Brox's codification }"
+        "{D davis            |     | Use Davis' ground truth as seeds }"
         "{d minTrackDuration | 10  | Minimum track duration to take it into account }"
         "{l lambda           | 0.1 | Scale parameter for affinity computations }"
         "{F firstNameIndex   | 0   | The first index that should be appended at the end of the images' names }"
@@ -35,6 +36,12 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Read the image sequence
+    const std::string imageNamesFileName = parser.get<std::string>("@images");
+    std::ifstream imageNamesFile(imageNamesFileName);
+    std::vector<cv::Mat> images;
+    tfg::readImages(imageNamesFile, images);
+    imageNamesFile.close();
 
     // Read tracks from text file
     const std::string trackFileName = parser.get<std::string>("@tracks");
@@ -48,6 +55,7 @@ int main(int argc, char* argv[]) {
         trackTable->buildFromFile(trackFile, minTrackDuration);
     }
     trackFile.close();
+    trackTable->addColorInfo(images);
 
     // Read images that serve as seeds
     const std::string seedFileName = parser.get<std::string>("@seeds");
@@ -57,8 +65,13 @@ int main(int argc, char* argv[]) {
     seedFile.close();
 
     // Create the random walker than propagate the seeds to each track
+    const bool usingDavisGT = parser.has("davis");
     tfg::RandomWalker walker(trackTable);
-    walker.seed(seedImages);
+    if(usingDavisGT) {
+        walker.seedDavis(seedImages);
+    } else {
+        walker.seed(seedImages);
+    }
     const float lambda = parser.get<float>("lambda");
     walker.propagateSeeds(lambda);
 
@@ -70,12 +83,6 @@ int main(int argc, char* argv[]) {
     weightsFile.close();
 
     // Paint the tracks according to their most likely label (using the same color as the seeds for the label)
-    const std::string imageNamesFileName = parser.get<std::string>("@images");
-    std::ifstream imageNamesFile(imageNamesFileName);
-    std::vector<cv::Mat> images;
-    tfg::readImages(imageNamesFile, images);
-    imageNamesFile.close();
-
     const std::string resultsFolder = parser.get<std::string>("outfolder");
     const std::string fileName = "out";
     const int firstNameIndex = parser.get<int>("firstNameIndex");

@@ -114,6 +114,16 @@ namespace tfg {
         tracks[track].addPoint(point);
     }
 
+    void TrackTable::addPointToTrack(const cv::Vec2f &point, const cv::Vec3b &color, unsigned int track) {
+        tracks[track].addPoint(point, color);
+    }
+
+    void TrackTable::addColorInfo(const std::vector<cv::Mat> &sequence) {
+        for(unsigned int i = 0; i < tracks.size(); i++) {
+            tracks[i].obtainColors(sequence);
+        }
+    }
+
     void TrackTable::buildFromBroxFile(std::ifstream &file, int minDuration) {
         readTracksBrox(file, minDuration);
         getMappingsFromTracks();

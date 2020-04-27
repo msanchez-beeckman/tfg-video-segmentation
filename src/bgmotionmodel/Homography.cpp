@@ -52,7 +52,7 @@ namespace tfg {
      * @param p0 Origin points.
      * @param p1 Destination points.
      * @param n Number of points.
-     * @param iter Number of iterations for RANSAC.
+     * @param niter Number of iterations for RANSAC.
      * @param tolerance Maximum distance in pixels to consider a point an inlier.
      * @param H Output homography.
      * @param inliers Output list of indexes that correspond to those of the tracks that are inliers.

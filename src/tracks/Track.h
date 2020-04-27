@@ -9,6 +9,7 @@ namespace tfg {
     class Track {
     private:
         std::vector<cv::Vec2f> coordinates;
+        std::vector<cv::Vec3b> colors;
         unsigned int initFrame;
         unsigned int number;
         int label;
@@ -21,9 +22,16 @@ namespace tfg {
         ~Track();
 
         void addPoint(const cv::Vec2f &point);
+        void addPoint(const cv::Vec2f &point, const cv::Vec3b &color);
+
+        void obtainColors(const std::vector<cv::Mat> &sequence);
 
         inline const std::vector<cv::Vec2f>& getPoints() const {
             return coordinates;
+        };
+
+        inline const std::vector<cv::Vec3b>& getColors() const {
+            return colors;
         };
 
         inline cv::Vec2f getLastPoint() const {
@@ -49,10 +57,12 @@ namespace tfg {
         void setNumber(unsigned int number);
         void setLabel(int label);
 
-        float maximalMotionDistance2(const Track &trackB, const std::vector<float> &flowVariances) const;
-        void deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const;
+        float distance2(const Track &trackB, const std::vector<float> &flowVariances) const;
         float averageSpatialDistance(const Track &trackB) const;
         float maximalSpatialDistance(const Track &trackB) const;
+        float averageColorDistance(const Track &trackB) const;
+        float maximalMotionDistance(const Track &trackB, const std::vector<float> &flowVariances) const;
+        void deriveForwardDifferences(unsigned int frame, cv::Vec2f &derivative) const;
     };
 }
 

@@ -30,11 +30,14 @@ namespace tfg {
         void buildFromFile(std::ifstream &file, int minDuration);
         void buildFromBroxFile(std::ifstream &file, int minDuration);
 
+        void addColorInfo(const std::vector<cv::Mat> &sequence);
+
         void writeTracks(std::ofstream &file, int minDuration=2);
 
         void initializeFromPreviousTable(const tfg::TrackTable &previousTable);
         void addTrack(const tfg::Track &track);
         void addPointToTrack(const cv::Vec2f &point, unsigned int track);
+        void addPointToTrack(const cv::Vec2f &point, const cv::Vec3b &color, unsigned int track);
 
         void getMappingsFromTracks();
 
@@ -94,7 +97,7 @@ namespace tfg {
         };
 
         inline float distance2BetweenTracks(unsigned int A, unsigned int B) const {
-            return tracks[A].maximalMotionDistance2(tracks[B], flowVariances);
+            return tracks[A].distance2(tracks[B], flowVariances);
         };
 
         inline cv::Vec2f flowMeanOfFrame(unsigned int frame) const {

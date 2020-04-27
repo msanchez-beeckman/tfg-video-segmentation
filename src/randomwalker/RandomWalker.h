@@ -10,7 +10,8 @@ namespace tfg {
     class RandomWalker {
         private:
             std::shared_ptr<tfg::TrackTable> trackTable;
-            std::unordered_map<int, std::vector<float>> probabilities;
+            // std::unordered_map<int, std::vector<float>> probabilities;
+            std::vector<std::vector<float>> probabilities;
             unsigned int numberOfLabels;
             unsigned int unlabeledTracks;
             unsigned int labeledTracks;
@@ -20,6 +21,7 @@ namespace tfg {
             ~RandomWalker();
 
             void seed(const std::unordered_map<int, cv::Mat> &seedImages);
+            void seedDavis(const std::unordered_map<int, cv::Mat> &seedImages);
             void propagateSeeds(float lambda);
             void writeProbabilities(std::ofstream &file);
     };
