@@ -26,6 +26,7 @@ namespace tfg {
     void removeSmallBlobs(cv::Mat &matrix, float threshold, float relativeSize);
     void saveMaskedImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, int firstNameIndex=0);
     void saveOverlaidImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks, const std::string &folder, const std::string &fileName, float alpha=0.4f, int firstNameIndex=0);
+    void saveOverlaidMultilabeledImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &labelMasks, int numberOfLabels, const std::string &folder, const std::string &fileName, float alpha=0.4f, int firstNameIndex=0);
 }
 
 #endif //TFG_VIDEO_SEGMENTATION_IMAGEUTILS_H

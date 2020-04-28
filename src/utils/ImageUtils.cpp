@@ -196,4 +196,33 @@ namespace tfg {
             cv::imwrite(saveAs, overlaidImage);
         }
     }
+
+    void saveOverlaidMultilabeledImages(const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &labelMasks, int numberOfLabels, const std::string &folder, const std::string &fileName, float alpha, int firstNameIndex) {
+        for(unsigned int i = 0; i < images.size(); i++) {
+            cv::Mat grayImage(images[i].size(), CV_8UC1);
+            cv::cvtColor(images[i], grayImage, cv::COLOR_BGR2GRAY);
+
+            cv::Mat overlaidImage(images[i].size(), CV_8UC3);
+            cv::cvtColor(grayImage, overlaidImage, cv::COLOR_GRAY2BGR);
+
+            cv::Mat overlay(images[i].size(), CV_8UC3);
+            for(int l = 1; l <= numberOfLabels; l++) {
+                const cv::Mat objectMask(labelMasks[i] == l);
+                const unsigned char blueColor = l % 8 >= 4 ? 255 : 0;
+                const unsigned char greenColor = l % 4 >= 2 ? 255 : 0;
+                const unsigned char redColor = l % 2 == 1 ? 255 : 0;
+                overlay.setTo(cv::Scalar(blueColor, greenColor, redColor), objectMask);
+            }
+
+            overlay = (1 - alpha) * overlaidImage + alpha * overlay;
+
+            cv::Mat foregroundMask(labelMasks[i] != 0);
+            overlay.copyTo(overlaidImage, foregroundMask);
+
+            std::stringstream ss;
+            ss << folder << fileName << firstNameIndex + i << ".png";
+            std::string saveAs = ss.str();
+            cv::imwrite(saveAs, overlaidImage);
+        }
+    }
 }
