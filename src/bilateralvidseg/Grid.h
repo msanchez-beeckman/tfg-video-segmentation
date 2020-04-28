@@ -18,6 +18,7 @@ namespace tfg {
             std::array<float, 6> scales;
 
             std::vector<cv::Mat> images;
+            std::vector<cv::Mat> masks;
             cv::SparseMat data;
 
             void splatValue(const Index &index, const Value &value);
@@ -29,13 +30,13 @@ namespace tfg {
 
         public:
             Grid();
-            Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images);
+            Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks);
             ~Grid();
 
             void splatMass();
             void splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights, int texturelessRadius, float bgBias);
             void graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W);
-            void slice(std::vector<cv::Mat> &masks, float threshold);
+            void slice(std::vector<cv::Mat> &outMasks, float threshold);
 
 
     };

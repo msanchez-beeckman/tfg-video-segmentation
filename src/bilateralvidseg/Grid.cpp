@@ -11,9 +11,10 @@ namespace tfg {
     Grid::Grid() {}
     Grid::~Grid() {}
 
-    Grid::Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images) {
+    Grid::Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks) {
         this->scales = scales;
         this->images = images;
+        this->masks = masks;
 
         std::array<int, 6> sizes;
         const int scaledFrames = std::ceil(images.size() * scales[0]);
@@ -39,29 +40,12 @@ namespace tfg {
             for(int r = 0; r < images[f].rows; r++) {
                 const cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
                 for(int c = 0; c < images[f].cols; c++) {
+                    // if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
                     const Index index = {static_cast<int>(f), c, r, rowPtr[c](0), rowPtr[c](1), rowPtr[c](2)};
                     splatValue(index, value);
                 }
             }
         }
-
-        // for(unsigned int f = 0; f < images.size(); f++) {
-        //     images[f].forEach<cv::Vec3b>([=](const cv::Vec3b &pixel, const int *position) -> void {
-        //         const Index index = {static_cast<int>(f), position[1], position[0], pixel(0), pixel(1), pixel(2)};
-        //         splatValue(index, value);
-        //     });
-        // }
-
-        // cv::parallel_for_(cv::Range(0, images.size() * images[0].rows * images[0].cols), [&](const cv::Range &range) {
-        //     for(int r = range.start; r < range.end; r++) {
-        //         const int col = r % images[0].cols;
-        //         const int row = (r % (images[0].cols * images[0].rows)) / images[0].cols;
-        //         const int frame = r / (images[0].cols * images[0].rows);
-        //         const cv::Vec3b color = images[frame].ptr<cv::Vec3b>(row)[col];
-        //         const Index index = {frame, col, row, color(0), color(1), color(2)};
-        //         splatValue(index, value);
-        //     }
-        // });
     }
 
     void Grid::splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights, int texturelessRadius, float bgBias) {
@@ -94,6 +78,7 @@ namespace tfg {
             for(unsigned int i = 0; i < DURATION; i++) {
                 const int COL = std::round(points[i](0));
                 const int ROW = std::round(points[i](1));
+                // if(masks[FIRST_FRAME + i].ptr<unsigned char>(ROW)[COL] == 0) continue;
                 const cv::Vec3b& color = images[FIRST_FRAME + i].at<cv::Vec3b>(ROW, COL);
 
                 cv::circle(texturelessIndicators[FIRST_FRAME + i], cv::Point2i(COL, ROW), texturelessRadius, cv::Scalar(0), -1);
@@ -113,22 +98,13 @@ namespace tfg {
                 const unsigned char* rowPtr = texturelessIndicators[f].ptr<unsigned char>(r);
                 for(int c = 0; c < texturelessIndicators[f].cols; c++) {
                     if(rowPtr[c] == 0) continue;
+                    // if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
                     const cv::Vec3b& color = images[f].at<cv::Vec3b>(r, c);
                     const Index index = {static_cast<int>(f), c, r, color(0), color(1), color(2)};
                     splatValue(index, syntheticBg);
                 }
             }
         }
-        // for(unsigned int f = 0; f < texturelessIndicators.size(); f++) {
-        //     texturelessIndicators[f].forEach<unsigned char>([&](unsigned char &pixel, const int *position) -> void {
-        //         if(pixel != 0) {
-        //             std::cout << "Reached" << std::endl;
-        //             const cv::Vec3b& color = images[f].at<cv::Vec3b>(position[0], position[1]);
-        //             const Index index = {static_cast<int>(f), position[1], position[0], color(0), color(1), color(2)};
-        //             splatValue(index, syntheticBg);
-        //         }
-        //     });
-        // }
     }
 
     void Grid::splatValue(const Index &index, const Value &value) {
@@ -141,9 +117,9 @@ namespace tfg {
         }
     }
 
-    void Grid::slice(std::vector<cv::Mat> &masks, float threshold) {
-        masks.clear();
-        masks.reserve(images.size());
+    void Grid::slice(std::vector<cv::Mat> &outMasks, float threshold) {
+        outMasks.clear();
+        outMasks.reserve(images.size());
         // for(unsigned int f = 0; f < images.size(); f++) {
         //     cv::Mat slicedFrame(images[f].size(), CV_32FC1);
         //     for(int r = 0; r < images[f].rows; r++) {
@@ -165,6 +141,10 @@ namespace tfg {
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat slicedFrame(images[f].size(), CV_32FC1);
             images[f].forEach<cv::Vec3b>([&](const cv::Vec3b &pixel, const int *position) -> void {
+                // if(masks[f].ptr<unsigned char>(position[0])[position[1]] == 0) {
+                //     slicedFrame.ptr<float>(position[0])[position[1]] = 0.0f;
+                //     return;
+                // }
                 const Index index = {static_cast<int>(f), position[1], position[0], pixel(0), pixel(1), pixel(2)};
                 Value slicedValue;
                 sliceIndex(index, slicedValue);
@@ -173,7 +153,7 @@ namespace tfg {
             cv::medianBlur(slicedFrame, slicedFrame, 3);
             tfg::removeSmallBlobs(slicedFrame, threshold, 0.1f);
             cv::Mat mask(slicedFrame > threshold);
-            masks.push_back(mask);
+            outMasks.push_back(mask);
         }
     }
 
