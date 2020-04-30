@@ -40,7 +40,7 @@ namespace tfg {
             for(int r = 0; r < images[f].rows; r++) {
                 const cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
                 for(int c = 0; c < images[f].cols; c++) {
-                    // if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
+                    if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
                     const Index index = {static_cast<int>(f), c, r, rowPtr[c](0), rowPtr[c](1), rowPtr[c](2)};
                     splatValue(index, value);
                 }
@@ -78,7 +78,7 @@ namespace tfg {
             for(unsigned int i = 0; i < DURATION; i++) {
                 const int COL = std::round(points[i](0));
                 const int ROW = std::round(points[i](1));
-                // if(masks[FIRST_FRAME + i].ptr<unsigned char>(ROW)[COL] == 0) continue;
+                if(masks[FIRST_FRAME + i].ptr<unsigned char>(ROW)[COL] == 0) continue;
                 const cv::Vec3b& color = images[FIRST_FRAME + i].at<cv::Vec3b>(ROW, COL);
 
                 cv::circle(texturelessIndicators[FIRST_FRAME + i], cv::Point2i(COL, ROW), texturelessRadius, cv::Scalar(0), -1);
@@ -98,7 +98,7 @@ namespace tfg {
                 const unsigned char* rowPtr = texturelessIndicators[f].ptr<unsigned char>(r);
                 for(int c = 0; c < texturelessIndicators[f].cols; c++) {
                     if(rowPtr[c] == 0) continue;
-                    // if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
+                    if(masks[f].ptr<unsigned char>(r)[c] == 0) continue;
                     const cv::Vec3b& color = images[f].at<cv::Vec3b>(r, c);
                     const Index index = {static_cast<int>(f), c, r, color(0), color(1), color(2)};
                     splatValue(index, syntheticBg);
@@ -141,10 +141,10 @@ namespace tfg {
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat slicedFrame(images[f].size(), CV_32FC1);
             images[f].forEach<cv::Vec3b>([&](const cv::Vec3b &pixel, const int *position) -> void {
-                // if(masks[f].ptr<unsigned char>(position[0])[position[1]] == 0) {
-                //     slicedFrame.ptr<float>(position[0])[position[1]] = 0.0f;
-                //     return;
-                // }
+                if(masks[f].ptr<unsigned char>(position[0])[position[1]] == 0) {
+                    slicedFrame.ptr<float>(position[0])[position[1]] = 0.0f;
+                    return;
+                }
                 const Index index = {static_cast<int>(f), position[1], position[0], pixel(0), pixel(1), pixel(2)};
                 Value slicedValue;
                 sliceIndex(index, slicedValue);
@@ -216,8 +216,6 @@ namespace tfg {
     void Grid::scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) const {
         for(int d = 0; d < DIMENSIONS; d++) {
             const float scaledComponent = index[d] * this->scales[d];
-            //float scaledComponent = index[d] * this->scales[d];
-            //scaledComponent += 0.0001;
             scaledIndex[d] = scaledComponent;
         }
     }
@@ -234,7 +232,6 @@ namespace tfg {
         cv::SparseMat graphNodes(DIMENSIONS, data.size(), CV_32SC1);
         int n = 0;
 
-        std::cout << "Creating correspondences between Grid indexes and Graph nodes" << std::endl;
         for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it, n++) {
             const cv::SparseMat::Node* node = it.node();
             graphNodes.ref<int>(node->idx) = n;
@@ -243,7 +240,6 @@ namespace tfg {
         const int NUMBER_OF_NODES = data.nzcount();
         Graph<float, float, float> graph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
         graph.add_node(NUMBER_OF_NODES);
-        std::cout << "Building graph with " << graph.get_node_num() << " nodes" << std::endl;
         for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
 
@@ -259,7 +255,6 @@ namespace tfg {
                     Index neighbourIndex;
                     neighbourIndex[0] = node->idx[0]; neighbourIndex[1] = node->idx[1]; neighbourIndex[2] = node->idx[2];
                     neighbourIndex[3] = node->idx[3]; neighbourIndex[4] = node->idx[4]; neighbourIndex[5] = node->idx[5];
-                    // std::copy(std::begin(node->idx), std::end(node->idx), neighbourIndex.begin());
                     neighbourIndex[d] += dir;
 
                     const Value* neighbourValue = data.find<Value>(neighbourIndex.data());
@@ -274,22 +269,20 @@ namespace tfg {
             }
         }
 
-        std::cout << "Computing max flow for graph with " << graph.get_arc_num() << " edges" << std::endl;
-        float cost = graph.maxflow();
-        std::cout << "Max flow cost is " << cost << std::endl;
-
-        std::cout << "Assigning labels to each cell of the grid" << std::endl;
+        std::cout << "Built graph with " << graph.get_node_num() << " nodes and " << graph.get_arc_num() << " edges" << '\n';
+        const float cost = graph.maxflow();
+        std::cout << "Solved max flow with cost " << cost << '\n';
         int count = 0;
         for(cv::SparseMatConstIterator_<int> it = graphNodes.begin<int>(); it != graphNodes.end<int>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
 
             const int nodeNumber = it.value<int>();
             bool nodeIsBackground = graph.what_segment(nodeNumber) == Graph<float, float, float>::SINK;
-            if(nodeIsBackground) count++;
+            if(!nodeIsBackground) count++;
 
             Value& nodeValue = data.ref<Value>(node->idx);
             nodeValue(3) = nodeIsBackground ? 0.0f : 1.0f;
         }
-        std::cout << count << " nodes are background" << std::endl;
+        std::cout << count << " nodes are foreground" << '\n';
     }
 }

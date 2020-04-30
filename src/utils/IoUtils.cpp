@@ -34,27 +34,6 @@ namespace tfg {
         }
     }
 
-    // void readWeightsMultilabel(std::ifstream &weightFile, std::vector<std::vector<float>> &weights) {
-    //     std::string line;
-    //     std::getline(weightFile, line);
-    //     std::vector<std::string> firstLineWords;
-    //     tfg::splitString(line, firstLineWords, ' ');
-    //     const int NUMBER_OF_ITEMS = std::stoi(firstLineWords[0]);
-    //     const int NUMBER_OF_LABELS = std::stoi(firstLineWords[1]);
-    //     weights.clear();
-    //     weights.resize(NUMBER_OF_ITEMS);
-    //     for(int i = 0; i < NUMBER_OF_ITEMS; i++) {
-    //         std::getline(weightFile, line);
-    //         std::vector<std::string> labelWeights;
-    //         tfg::splitString(line, labelWeights, ' ');
-    //         weights[i].resize(NUMBER_OF_LABELS);
-    //         for(int l = 0; l < NUMBER_OF_LABELS; l++) {
-    //             const float weight = std::stof(labelWeights[l]);
-    //             weights[i][l] = weight;
-    //         }
-    //     }
-    // }
-
     void readWeightsMultilabel(std::ifstream &weightFile, std::vector<std::vector<float>> &weights) {
         std::string line;
         std::getline(weightFile, line);
@@ -78,34 +57,18 @@ namespace tfg {
         }
     }
 
-    // void groupLabelWeights(const std::vector<std::vector<float>> &weights, std::vector<float> &groupedWeights) {
-    //     const unsigned int NUMBER_OF_ITEMS = weights.size();
-    //     groupedWeights.clear();
-    //     groupedWeights.resize(NUMBER_OF_ITEMS);
-    //     for(unsigned int i = 0; i < NUMBER_OF_ITEMS; i++) {
-    //         const unsigned int NUMBER_OF_LABELS = weights[i].size();
-    //         const float firstHalfWeightSum = std::accumulate(weights[i].begin(), weights[i].begin() + NUMBER_OF_LABELS/2, 0.0f);
-    //         const float totalWeightSum = std::accumulate(weights[i].begin(), weights[i].end(), 0.0f);
-    //         const float weight = firstHalfWeightSum / totalWeightSum;
-    //         groupedWeights[i] = weight;
-    //     }
-    // }
-
-    void groupLabelWeights(const std::vector<std::vector<float>> &weights, std::vector<float> &groupedWeights) {
+    void groupLabelWeights(const std::vector<std::vector<float>> &weights, std::vector<float> &groupedWeights, int foregroundLabel) {
         const unsigned int NUMBER_OF_LABELS = weights.size();
         const unsigned int NUMBER_OF_ITEMS = weights[0].size();
         groupedWeights.clear();
         groupedWeights.resize(NUMBER_OF_ITEMS);
         for(unsigned int i = 0; i < NUMBER_OF_ITEMS; i++) {
-            float firstHalfWeightSum = 0.0f;
             float totalWeightSum = 0.0f;
             for(unsigned int l = 0; l < NUMBER_OF_LABELS; l++) {
+                if(l == foregroundLabel) continue;
                 totalWeightSum += weights[l][i];
-                if(l > NUMBER_OF_LABELS/2) continue;
-                firstHalfWeightSum += weights[l][i];
             }
-            const float weight = firstHalfWeightSum / totalWeightSum;
-            groupedWeights[i] = weight;
+            groupedWeights[i] = totalWeightSum;
         }
     }
 }
