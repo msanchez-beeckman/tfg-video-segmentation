@@ -7,24 +7,26 @@ DATALOCATION="${TFGLOCATION}/data"
 TRACKLOCATION="${TFGLOCATION}/test/tracks"
 WEIGHTLOCATION="${TFGLOCATION}/results/weights"
 
-usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-e minEdgeCost] [-g bgBiasTextureless] [-s lambdaS] [-u lambdaU] [-r radiusTextureless] [-t threshold] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-e minEdgeCost] [-g bgBiasTextureless] [-M] [-s lambdaS] [-u lambdaU] [-r radiusTextureless] [-t threshold] datasetName frameLimit"; }
 
 TRACKSUFFIX=".txt"
 BROXFLAG=""
 dFLAG=""
 eFLAG=""
 gFLAG=""
+MFLAG=""
 sFLAG=""
 uFLAG=""
 rFLAG=""
 tFLAG=""
 
-while getopts :bd:e:g:s:u:r:t: opt; do
+while getopts :bd:e:g:Ms:u:r:t: opt; do
     case $opt in
         b) BROXFLAG="--brox"; TRACKSUFFIX="Brox.dat";;
         d) dFLAG="--minTrackDuration=${OPTARG}";;
         e) eFLAG="--minEdgeCost=${OPTARG}";;
         g) gFLAG="--tbgbias=${OPTARG}";;
+        M) MFLAG="--multilabel";;
         s) sFLAG="--lambdas=${OPTARG}";;
         u) uFLAG="--lambdau=${OPTARG}";;
         r) rFLAG="--tradius=${OPTARG}";;
@@ -43,4 +45,4 @@ FRAMELIMIT=$2
 
 mkdir -p ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}
 rm -f ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/bilateralVidSeg ${BROXFLAG} ${dFLAG} ${eFLAG} ${gFLAG} ${sFLAG} ${uFLAG} ${rFLAG} ${tFLAG} --outfolder=${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt
+${TFGLOCATION}/bin/bilateralVidSeg ${BROXFLAG} ${dFLAG} ${eFLAG} ${gFLAG} ${MFLAG} ${sFLAG} ${uFLAG} ${rFLAG} ${tFLAG} --outfolder=${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt
