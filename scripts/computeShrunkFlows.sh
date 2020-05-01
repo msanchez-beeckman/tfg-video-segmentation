@@ -30,7 +30,7 @@ SURROUNDFRAMES=$3
 
 FLOWFOLDER="${TFGLOCATION}/results/flows/${DATASETNAME}"
 mkdir -p ${FLOWFOLDER}
-echo "${FRAMELIMIT}" > ${FLOWFOLDER}/flows.txt
+echo "${FRAMELIMIT}" > ${FLOWFOLDER}/surroundingFlows.txt
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do
     IMAGE=$(printf "%05d" $i)
@@ -43,7 +43,7 @@ for (( i=0; i<${FRAMELIMIT}; i++ )); do
     min=$(( (i - SURROUNDFRAMES) < 0 ? 0 : (i - SURROUNDFRAMES) ))
     max=$(( (i + SURROUNDFRAMES) > (FRAMELIMIT - 1) ? (FRAMELIMIT - 1) : (i + SURROUNDFRAMES) ))
     totalflows=$(( max - min ))
-    echo "${totalflows}" >> ${FLOWFOLDER}/flows.txt
+    echo "${totalflows}" >> ${FLOWFOLDER}/surroundingFlows.txt
     for (( j=min; j<=max; j++ )); do
         if [ $j -eq $i ]; then continue; fi
         TARGETIMAGE=$(printf "%05d" $j)
@@ -56,8 +56,8 @@ for (( i=0; i<${FRAMELIMIT}; i++ )); do
             src_flow_tv_l1 -l 0.1 ${FLOWFOLDER}/shrink_${CURRENTIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/shrink_${TARGETIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff;
         fi
 
-        echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff" >> ${FLOWFOLDER}/flows.txt
-        echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff" >> ${FLOWFOLDER}/flows.txt
+        echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff" >> ${FLOWFOLDER}/surroundingFlows.txt
+        echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff" >> ${FLOWFOLDER}/surroundingFlows.txt
     done
 done
 

@@ -6,16 +6,20 @@ TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 FLOWLOCATION="${TFGLOCATION}/results/flows"
 
-usage () { echo "Usage: $0 [-c coverRadius] [-d density] [-f] [-r rho] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-B] [-S] [-c coverRadius] [-d density] [-f] [-r rho] datasetName frameLimit"; }
 
 flowFormat="tiff"
+BFLAG=""
+SFLAG=""
 cFLAG=""
 dFLAG=""
 fFLAG=""
 rFLAG=""
 
-while getopts :c:d:fr: opt; do
+while getopts :BSc:d:fr: opt; do
     case $opt in
+        B) BFLAG="--motionBoundary";;
+        S) SFLAG="--structure";;
         c) cFLAG="--coverRadius=${OPTARG}";;
         d) dFLAG="--density=${OPTARG}";;
         f) fFLAG="--flo"; flowFormat="flo";;
@@ -38,5 +42,4 @@ python ${TFGLOCATION}/scripts/list_flows.py ${FLOWLOCATION}/${DATASETNAME}/ ${fl
 python ${TFGLOCATION}/scripts/list_flows.py ${FLOWLOCATION}/${DATASETNAME}/ ${flowFormat} 0 ${FRAMELIMIT} ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt True
 
 mkdir -p ${TFGLOCATION}/results/tracks/${DATASETNAME}
-rm -f ${TFGLOCATION}/results/tracks/${DATASETNAME}/*
-${TFGLOCATION}/bin/continueTracks ${cFLAG} ${dFLAG} ${fFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/tracks/${DATASETNAME}/ --trackFilePath=${TFGLOCATION}/results/tracks/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}.txt ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt
+${TFGLOCATION}/bin/continueTracks ${BFLAG} ${SFLAG} ${cFLAG} ${dFLAG} ${fFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/tracks/${DATASETNAME}/ --trackFilePath=${TFGLOCATION}/results/tracks/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}.txt ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt

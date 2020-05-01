@@ -4,7 +4,7 @@
 # to the directory containing the data, and to the directory containing the tracks file, respectively.
 TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
-TRACKLOCATION="${TFGLOCATION}/test/tracks"
+TRACKLOCATION="${TFGLOCATION}/results/tracks"
 
 usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-e ransacEpsilon] [-i ransacIterations] [-t tau2] datasetName frameLimit"; }
 
@@ -38,4 +38,4 @@ python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg
 mkdir -p ${TFGLOCATION}/results/model/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/weights/
 rm -f ${TFGLOCATION}/results/model/${DATASETNAME}/*
-${TFGLOCATION}/bin/motionModel ${BROXFLAG} ${dFLAG} ${eFLAG} ${iFLAG} ${tFLAG} --outweights=${TFGLOCATION}/results/weights/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/model/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX}
+${TFGLOCATION}/bin/motionModel ${BROXFLAG} ${dFLAG} ${eFLAG} ${iFLAG} ${tFLAG} --outweights=${TFGLOCATION}/results/weights/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/model/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX}

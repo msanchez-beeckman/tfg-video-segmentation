@@ -41,7 +41,7 @@ namespace tfg {
         lambda2 = tmp1 - tmp4;
     }
 
-    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, std::vector<float> &weights, int trackDensity, int coverRadius, double rho) {
+    void addTracksToUncoveredZones(const cv::Mat &image, int frame, tfg::TrackTable &trackTable, std::vector<float> &weights, int trackDensity, int coverRadius, double rho, bool keepStructurelessPoints) {
         cv::Mat uncovered(image.size(), CV_8UC1, cv::Scalar(255));
         for(unsigned int i = 0; i < trackTable.numberOfTracks(); i++) {
             const int lastFrameOfTrack = trackTable.firstFrameOfTrack(i) + trackTable.durationOfTrack(i) - 1;
@@ -67,11 +67,10 @@ namespace tfg {
                 if(noExtraTrackNeeded) continue;
 
                 const int distanceToClosestBoundary = std::min(std::min(c, image.cols - c), std::min(r, image.rows - r));
-                // const int distanceToClosestBoundary = std::min(std::min(std::min(c, r), image.cols - c), image.rows - r);
 
                 const float relativeDistToBoundary = std::exp(-0.1f * distanceToClosestBoundary);
                 const bool tooSmallEigenvalue = rowPtrLambda[c] < meanSecondEigenvalue * (0.1f + relativeDistToBoundary);
-                if(tooSmallEigenvalue) continue;
+                if(tooSmallEigenvalue && !keepStructurelessPoints) continue;
 
                 cv::Vec2f vec;
                 vec(0) = static_cast<float>(c);
@@ -82,28 +81,9 @@ namespace tfg {
                 weights.push_back(1.0f);
             }
         }
-
-        // uncovered.forEach<unsigned char>([&](const unsigned char &pixel, const int *position) -> void {
-        //     if(position[0] % trackDensity != 0 || position[1] % trackDensity != 0) return;
-        //     if(position[0] < trackDensity || position[1] < trackDensity || position[0] > uncovered.rows - trackDensity || position[1] > uncovered.cols - trackDensity) return;
-        //     if(pixel == 0) return;
-
-        //     const int distanceToClosestBoundary = std::min(std::min(position[1], image.cols - position[1]), std::min(position[0], image.rows - position[0]));
-        //     const float relativeDistToBoundary = std::exp(-0.1f * distanceToClosestBoundary);
-        //     const bool tooSmallEigenvalue = lambda2.ptr<float>(position[0])[position[1]] < meanSecondEigenvalue * (0.1f + relativeDistToBoundary);
-        //     if(tooSmallEigenvalue) return;
-
-        //     cv::Vec2f vec;
-        //     vec(0) = static_cast<float>(position[1]);
-        //     vec(1) = static_cast<float>(position[0]);
-        //     const std::vector<cv::Vec2f> coordinates = {vec};
-        //     const tfg::Track track(coordinates, frame);
-        //     trackTable.addTrack(track);
-        //     weights.push_back(1.0f);
-        // });
     }
 
-    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, int frame, tfg::TrackTable &trackTable) {
+    void followExistingTracks(const cv::Mat &flow, const cv::Mat &rflow, int frame, tfg::TrackTable &trackTable, bool trackMotionBoundaries) {
         cv::Mat fwdFlowDerivX, fwdFlowDerivY;
         cv::Sobel(flow, fwdFlowDerivX, CV_32F, 1, 0, 3);
         cv::Sobel(flow, fwdFlowDerivY, CV_32F, 0, 1, 3);
@@ -141,12 +121,12 @@ namespace tfg {
             const float bwdFlowNorm = cv::norm(interpolatedBwdFlow, cv::NORM_L2SQR);
             if(leftRightError > 0.01f * (fwdFlowNorm + bwdFlowNorm) + 0.5f) continue;
 
-            // const cv::Vec2f flowXDerivs = (1-originAlphaY)*((1-originAlphaX)*(fwdFlowDerivX.at<cv::Vec2f>(pointRowFloor, pointColFloor)) + originAlphaX*(fwdFlowDerivX.at<cv::Vec2f>(pointRowFloor, pointColCeil)))
-            //                                + originAlphaY*((1-originAlphaX)*(fwdFlowDerivX.at<cv::Vec2f>(pointRowCeil, pointColFloor)) + originAlphaX*(fwdFlowDerivX.at<cv::Vec2f>(pointRowCeil, pointColCeil)));
-            // const cv::Vec2f flowYDerivs = (1-originAlphaY)*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColCeil)))
-            //                                + originAlphaY*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColCeil)));
-            // const float sqrFlowGradientSum = cv::norm(flowXDerivs, cv::NORM_L2SQR) + cv::norm(flowYDerivs, cv::NORM_L2SQR);
-            // if(sqrFlowGradientSum > 0.01f * fwdFlowNorm + 0.002f) continue;
+            const cv::Vec2f flowXDerivs = (1-originAlphaY)*((1-originAlphaX)*(fwdFlowDerivX.at<cv::Vec2f>(pointRowFloor, pointColFloor)) + originAlphaX*(fwdFlowDerivX.at<cv::Vec2f>(pointRowFloor, pointColCeil)))
+                                           + originAlphaY*((1-originAlphaX)*(fwdFlowDerivX.at<cv::Vec2f>(pointRowCeil, pointColFloor)) + originAlphaX*(fwdFlowDerivX.at<cv::Vec2f>(pointRowCeil, pointColCeil)));
+            const cv::Vec2f flowYDerivs = (1-originAlphaY)*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColCeil)))
+                                           + originAlphaY*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColCeil)));
+            const float sqrFlowGradientSum = cv::norm(flowXDerivs, cv::NORM_L2SQR) + cv::norm(flowYDerivs, cv::NORM_L2SQR);
+            if((sqrFlowGradientSum > 0.01f * fwdFlowNorm + 0.002f) && !trackMotionBoundaries) continue;
 
             trackTable.addPointToTrack(destinationPoint, i);
         }

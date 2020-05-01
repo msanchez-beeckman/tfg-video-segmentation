@@ -4,7 +4,7 @@
 # and to the directory containing the data, respectively.
 TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
-TRACKLOCATION="${TFGLOCATION}/test/tracks"
+TRACKLOCATION="${TFGLOCATION}/results/tracks"
 WEIGHTLOCATION="${TFGLOCATION}/results/weights"
 
 usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-e minEdgeCost] [-g bgBiasTextureless] [-M] [-s lambdaS] [-u lambdaU] [-r radiusTextureless] [-t threshold] datasetName frameLimit"; }
@@ -45,4 +45,4 @@ FRAMELIMIT=$2
 
 mkdir -p ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}
 rm -f ${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/bilateralVidSeg ${BROXFLAG} ${dFLAG} ${eFLAG} ${gFLAG} ${MFLAG} ${sFLAG} ${uFLAG} ${rFLAG} ${tFLAG} --outfolder=${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt
+${TFGLOCATION}/bin/bilateralVidSeg ${BROXFLAG} ${dFLAG} ${eFLAG} ${gFLAG} ${MFLAG} ${sFLAG} ${uFLAG} ${rFLAG} ${tFLAG} --outfolder=${TFGLOCATION}/results/bvsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX} ${WEIGHTLOCATION}/${DATASETNAME}.txt

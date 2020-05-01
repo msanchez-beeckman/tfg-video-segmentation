@@ -42,4 +42,4 @@ FRAMELIMIT=$2
 python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg 0 ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}
 rm -f ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/consensusVoting ${dFLAG} ${sFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt
+${TFGLOCATION}/bin/consensusVoting ${dFLAG} ${sFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/surroundingFlows.txt

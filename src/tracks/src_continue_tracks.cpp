@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
         "{c coverRadius    | 8      | Minimum distance to the nearest track to initialize a new one in a pixel }"
         "{r rho            | 3.0    | Parameter used for Gaussian blur }"
         "{F firstNameIndex | 0      | The first index that should be appended at the end of the images' names }"
+        "{S structure      |        | Do not remove points that do not show any structure in their vicinity (these points may be incorrectly tracked) }"
+        "{B motionBoundary |        | Do not stop tracking points near motion boundaries (this can cause tracks to share the motion of various objects) }"
         "{@images          |        | Text file containing the path to the images }"
         "{@flows           |        | Text file containing the path to the precomputed flows }"
         "{@rflows          |        | Text file containing the path to the precomputed reverse flows}"
@@ -84,9 +86,11 @@ int main(int argc, char* argv[]) {
     const int trackDensity = parser.get<int>("density");
     const int coverRadius = parser.get<int>("coverRadius");
     const double rho = parser.get<double>("rho");
+    const bool keepStructurelessPoints = parser.has("structure");
+    const bool trackMotionBoundaries = parser.has("motionBoundary");
     for(unsigned int f = 0; f < NUMBER_OF_IMAGES - 1; f++) {
-        tfg::addTracksToUncoveredZones(images[f], f, newTrackTable, weights, trackDensity, coverRadius, rho);
-        tfg::followExistingTracks(flows[f], bwdFlows[f], f, newTrackTable);
+        tfg::addTracksToUncoveredZones(images[f], f, newTrackTable, weights, trackDensity, coverRadius, rho, keepStructurelessPoints);
+        tfg::followExistingTracks(flows[f], bwdFlows[f], f, newTrackTable, trackMotionBoundaries);
     }
 
     const std::string resultsFolder = parser.get<std::string>("outfolder");
