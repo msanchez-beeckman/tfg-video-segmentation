@@ -120,24 +120,6 @@ namespace tfg {
     void Grid::slice(std::vector<cv::Mat> &outMasks, float threshold) {
         outMasks.clear();
         outMasks.reserve(images.size());
-        // for(unsigned int f = 0; f < images.size(); f++) {
-        //     cv::Mat slicedFrame(images[f].size(), CV_32FC1);
-        //     for(int r = 0; r < images[f].rows; r++) {
-        //         const cv::Vec3b* frameRowPtr = images[f].ptr<cv::Vec3b>(r);
-        //         float* slicedFrameRowPtr = slicedFrame.ptr<float>(r);
-        //         for(int c = 0; c < images[f].cols; c++) {
-        //             const Index index = {static_cast<int>(f), c, r, frameRowPtr[c](0), frameRowPtr[c](1), frameRowPtr[c](2)};
-        //             Value slicedValue;
-        //             sliceIndex(index, slicedValue);
-        //             // std::cout << "Frame " << f << ", pos (" << r << ", " << c << ") --> " << slicedValue << std::endl;
-        //             slicedFrameRowPtr[c] = slicedValue(3); // The fourth component of a Value is its fg/bg label after the graph cut
-        //         }
-        //     }
-        //     cv::medianBlur(slicedFrame, slicedFrame, 3);
-        //     tfg::removeSmallBlobs(slicedFrame, threshold, 0.1f);
-        //     cv::Mat mask(slicedFrame > threshold);
-        //     masks.push_back(mask);
-        // }
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat slicedFrame(images[f].size(), CV_32FC1);
             images[f].forEach<cv::Vec3b>([&](const cv::Vec3b &pixel, const int *position) -> void {
