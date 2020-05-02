@@ -47,20 +47,12 @@ namespace tfg {
         return weights;
     }
 
-    template <typename T>
-    void printVector(std::vector<T> &vector) {
-        for(unsigned int i = 0; i < vector.size(); i++) {
-            std::cout << vector[i] << std::endl;
-        }
-        std::cout << std::endl;
-    }
-
     /**
      * Obtain the homography that fits a model the best given a set of origin points and another set of destinations, using RANSAC.
      * @param p0 Origin points.
      * @param p1 Destination points.
      * @param n Number of points.
-     * @param iter Number of iterations for RANSAC.
+     * @param niter Number of iterations for RANSAC.
      * @param tolerance Maximum distance in pixels to consider a point an inlier.
      * @param H Output homography.
      * @param inliers Output list of indexes that correspond to those of the tracks that are inliers.
@@ -301,14 +293,5 @@ namespace tfg {
             numIter++;
         }
         weights2.swap(bestWeights2);
-        // std::cout << "First homography of the best model:" << std::endl;
-        // model->printHomography(0);
-    }
-
-
-    void writeWeights(std::ostream &file, std::vector<float> &weights) {
-        for(float weight : weights) {
-            file << weight << std::endl;
-        }
     }
 }

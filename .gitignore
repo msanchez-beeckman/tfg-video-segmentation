@@ -11,6 +11,9 @@ build/*
 bin/*
 results/*
 
+# External dependencies
+external/lib/*
+
 # Unwanted C++ files
 *.o
 *.a

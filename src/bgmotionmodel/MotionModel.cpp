@@ -86,15 +86,17 @@ namespace tfg {
 
     /**
      * Fit the model using RANSAC, and compute its residuals and cost.
+     * @param iterations Number of iterations used in RANSAC.
+     * @param tolerance Inlier tolerance.
      * @param inliers Output vector of track indexes, corresponding to the RANSAC inliers.
      */
-    void MotionModel::fitFromRANSAC(std::vector<std::vector<int>> &inliers) {
-        computeHomographiesRANSAC(inliers);
+    void MotionModel::fitFromRANSAC(int iterations, float tolerance, std::vector<std::vector<int>> &inliers) {
+        computeHomographiesRANSAC(iterations, tolerance, inliers);
         computeResiduals2();
         computeModelCost();
     }
 
-    void MotionModel::computeHomographiesRANSAC(std::vector<std::vector<int>> &inliers) {
+    void MotionModel::computeHomographiesRANSAC(int iterations, float tolerance, std::vector<std::vector<int>> &inliers) {
         homographies.clear();
         inliers.clear();
         homographies.reserve(trackTable->numberOfFrames());
@@ -107,7 +109,7 @@ namespace tfg {
             std::vector<cv::Vec2f> destination = trackTable->destinationPointsInFrame(f);
             cv::Matx33f H;
             std::vector<int> frameInliers;
-            tfg::computeHomographyRANSAC(origin, destination, origin.size(), 500, 2.0f, H, frameInliers);
+            tfg::computeHomographyRANSAC(origin, destination, origin.size(), iterations, tolerance, H, frameInliers);
             inliers.push_back(frameInliers);
             homographies.push_back(H);
         }

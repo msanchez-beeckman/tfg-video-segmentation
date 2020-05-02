@@ -17,7 +17,7 @@ namespace tfg {
         float cost;
 
         void computeHomographiesWLS();
-        void computeHomographiesRANSAC(std::vector<std::vector<int>> &inliers);
+        void computeHomographiesRANSAC(int iterations, float tolerance, std::vector<std::vector<int>> &inliers);
         void computeResiduals2();
         void computeModelCost();
     
@@ -26,7 +26,7 @@ namespace tfg {
         ~MotionModel();
 
         void fitFromWeights(std::vector<float> &weights2);
-        void fitFromRANSAC(std::vector<std::vector<int>> &inliers);
+        void fitFromRANSAC(int iterations, float tolerance, std::vector<std::vector<int>> &inliers);
 
         void printHomography(int n);
         inline std::vector<float> getResiduals2() const {

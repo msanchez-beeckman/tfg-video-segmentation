@@ -1,0 +1,2 @@
+/home/marco/Projects/tfg_video_segmentation/data/bmx-bumps/00029.jpg
+/home/marco/Projects/tfg_video_segmentation/data/bmx-bumps/00030.jpg

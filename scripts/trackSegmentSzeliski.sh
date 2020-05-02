@@ -4,16 +4,24 @@
 # to the directory containing the data, and to the directory containing the tracks file, respectively.
 TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
-TRACKLOCATION="${TFGLOCATION}/test/tracks"
+TRACKLOCATION="${TFGLOCATION}/results/tracks"
 
-usage () { echo "Usage: $0 [-b] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-b] [-d minTrackDuration] [-e ransacEpsilon] [-i ransacIterations] [-t tau2] datasetName frameLimit"; }
 
-BROXFLAG=""
 TRACKSUFFIX=".txt"
+BROXFLAG=""
+dFLAG=""
+eFLAG=""
+iFLAG=""
+tFLAG=""
 
-while getopts :b opt; do
+while getopts :bd:e:i:t: opt; do
     case $opt in
-        b) BROXFLAG="-b"; TRACKSUFFIX="Brox.dat";;
+        b) BROXFLAG="--brox"; TRACKSUFFIX="Brox.dat";;
+        d) dFLAG="--minTrackDuration=${OPTARG}";;
+        e) eFLAG="--ransacEpsilon=${OPTARG}";;
+        i) iFLAG="--ransacIterations=${OPTARG}";;
+        t) tFLAG="--tau2=${OPTARG}";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -26,8 +34,8 @@ shift $(( OPTIND - 1 ))
 DATASETNAME=$1
 FRAMELIMIT=$2
 
-python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
+python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg 0 ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/model/${DATASETNAME}
 mkdir -p ${TFGLOCATION}/results/weights/
-rm ${TFGLOCATION}/results/model/${DATASETNAME}/*
-${TFGLOCATION}/bin/motionModel ${BROXFLAG} ${TRACKLOCATION}/${DATASETNAME}${TRACKSUFFIX} ${DATALOCATION}/${DATASETNAME}/images.txt -w ${TFGLOCATION}/results/weights/${DATASETNAME}.txt -o ${TFGLOCATION}/results/model/${DATASETNAME}/
+rm -f ${TFGLOCATION}/results/model/${DATASETNAME}/*
+${TFGLOCATION}/bin/motionModel ${BROXFLAG} ${dFLAG} ${eFLAG} ${iFLAG} ${tFLAG} --outweights=${TFGLOCATION}/results/weights/${DATASETNAME}.txt --outfolder=${TFGLOCATION}/results/model/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${TRACKLOCATION}/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}${TRACKSUFFIX}

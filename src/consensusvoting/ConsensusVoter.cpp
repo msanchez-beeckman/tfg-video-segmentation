@@ -2,11 +2,13 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <cmath>
 #include <opencv4/opencv2/ml/ml.hpp>
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/Dense>
+#include "ImageUtils.h"
 #include "ConsensusVoter.h"
 
 namespace tfg {
@@ -31,7 +33,7 @@ namespace tfg {
      * @param minimumPercentageValidity Minimum percentage of frames with dominant motion that should exist for the computation to be considered successful.
      * @return True if the majority (at least minimumPercentageValidity) of frames have a dominant motion, false otherwise.
      */
-    bool ConsensusVoter::initializeMotionSaliencyScores(std::istream &flowFile, float minimumPercentageValidity) {
+    bool ConsensusVoter::initializeMotionSaliencyScores(std::ifstream &flowFile, float minimumPercentageValidity) {
         this->saliencyScores.clear();
         std::string line;
 
@@ -328,7 +330,7 @@ namespace tfg {
                     float weight = 1.0f;
                     if(ownIndex != neighbourIndex) {
                         const float neighbourDistance2 = NNDistances2.at<float>(y, x);
-                        weight = exp(-neighbourDistance2 / sigma2);
+                        weight = std::exp(-neighbourDistance2 / sigma2);
                     }
                     transMEntries.push_back(Eigen::Triplet<float>(ownIndex, neighbourIndex, weight));
                 }
@@ -400,8 +402,9 @@ namespace tfg {
      * Threshold the existing votes and get a sequence of masks from them.
      * @param masks The output vector of masks.
      * @param threshold The threshold value.
+     * @param removeSmallBlobs True if small non-connected blobs should be removed, false otherwise.
      */
-    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold) {
+    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold, bool removeSmallBlobs) {
         const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
         const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
         masks.clear();
@@ -423,7 +426,7 @@ namespace tfg {
             // The segmented images tend to have small non-connected blobs that are similar in color to the foreground,
             // but that are really background. This function eliminates the blobs that are much smaller than the biggest object
             // (that is assumed to be the real foreground)
-            correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
+            if(removeSmallBlobs) correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
             cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }
@@ -440,23 +443,7 @@ namespace tfg {
      * @param relativeSize The minimum relative size the blobs should at least have with respect to the biggest object in order no to be removed.
      */
     void ConsensusVoter::correctVotesForSmallBlobs(cv::Mat &matrix, int spBegin, int spEnd, const cv::Mat &regionLabels, float threshold, float relativeSize) {
-        cv::Mat mask(matrix > threshold);
-        cv::Mat labels;
-        cv::Mat stats;
-        cv::Mat centroids;
-        const int numberOfCC = cv::connectedComponentsWithStats(mask, labels, stats, centroids, 8, CV_16U, cv::CCL_DEFAULT);
-
-        double minArea, maxArea;
-        cv::minMaxIdx(stats.col(cv::CC_STAT_AREA).rowRange(1, stats.rows), &minArea, &maxArea);
-
-        // Correct values in non-thresholded mask
-        for(int i = 1; i < numberOfCC; i++) {
-            int area = stats.at<int>(i, cv::CC_STAT_AREA);
-            if(area > maxArea * relativeSize) continue;
-
-            cv::Mat labelMask(labels == i);
-            matrix.setTo(threshold - 0.00001, labelMask);
-        }
+        tfg::removeSmallBlobs(matrix, threshold, relativeSize);
 
         // Correct values in votes vector
         for(int s = spBegin; s <= spEnd; s++) {

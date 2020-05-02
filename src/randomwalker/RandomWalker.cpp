@@ -36,8 +36,8 @@ namespace tfg {
                 if(frame < trackTable->firstFrameOfTrack(t) || frame > trackTable->firstFrameOfTrack(t) + trackTable->durationOfTrack(t) - 1) continue;
 
                 const cv::Vec2f position = trackTable->pointsInTrack(t)[frame - trackTable->firstFrameOfTrack(t)];
-                const int posX = static_cast<int>(position(0));
-                const int posY = static_cast<int>(position(1));
+                const int posX = std::round(position(0));
+                const int posY = std::round(position(1));
                 const cv::Vec3b& color = image.at<cv::Vec3b>(posY, posX);
 
                 // The labeling in the images must be done using colors the following way:
@@ -62,6 +62,41 @@ namespace tfg {
         std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << std::endl;
     }
 
+    void RandomWalker::seedDavis(const std::unordered_map<int, cv::Mat> &seedImages) {
+        std::cout << "Seeding tracks" << std::endl;
+
+        // For each matrix of seeds, label each track passing through a seed with its corresponding tag.
+        // If a track passes through two or more different seeds, tag it as unreliable and don't use it for propagation.
+        for(auto& [ frame, image ] : seedImages) {
+            for(unsigned int t = 0; t < trackTable->numberOfTracks(); t++) {
+                const int trackLabel = trackTable->labelOfTrack(t);
+                if(trackLabel == -2) continue; // If unreliable, do nothing to the track
+                if(frame < trackTable->firstFrameOfTrack(t) || frame > trackTable->firstFrameOfTrack(t) + trackTable->durationOfTrack(t) - 1) continue;
+
+                const cv::Vec2f position = trackTable->pointsInTrack(t)[frame - trackTable->firstFrameOfTrack(t)];
+                const int posX = std::round(position(0));
+                const int posY = std::round(position(1));
+                const cv::Vec3b& color = image.at<cv::Vec3b>(posY, posX);
+
+                // The labeling in the images must be done using colors the following way:
+                // a BGR value of 0-0-0 (black/no color) corresponds to the background
+                // a BGR value of 0-0-128 (red) corresponds to the first object
+                // any other combination of values using 128 or 255
+                int label = color[2]/128 + 2*(color[1]/128) + 4*(color[0]/128);
+                int labelWithValidityCheck = trackLabel < 0 || trackLabel == label ? label : -2; // If a track is already labeled and it passes through a seed with a different tag, mark it as unreliable
+                trackTable->setLabelToTrack(labelWithValidityCheck, t);
+            }
+        }
+
+        trackTable->sortTracksByLabel();
+        this->numberOfLabels = trackTable->labelOfTrack(trackTable->numberOfTracks() - 1) + 1;
+        this->unlabeledTracks = trackTable->indexOfFirstLabel();
+        this->labeledTracks = trackTable->numberOfTracks() - unlabeledTracks;
+
+        std::cout << "Sorted tracks according to labels" << std::endl;
+        std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << std::endl;
+    }
+
     /**
      * Propagate the labels of the graph. This is done by solving a system of equations, specifically
      * the one in eq. 10 in the following paper:
@@ -71,16 +106,11 @@ namespace tfg {
      * IEEE Transactions on Pattern Analysis and Machine Intelligence, 28(11): 1768-1783, 2006
      * DOI: 10.1109/TPAMI.2006.233
      */
-    void RandomWalker::propagateSeeds() {
+    void RandomWalker::propagateSeeds(float lambda) {
         std::cout << "Beginning propagation of seeds" << std::endl;
 
         Eigen::SparseMatrix<float> laplacianUnlabeled(unlabeledTracks, unlabeledTracks);
         Eigen::SparseMatrix<float> minusBt(unlabeledTracks, labeledTracks);
-
-        std::cout << "Laplacian and -Bt matrices created" << std::endl;
-
-        const float lambda = 0.8f;
-        // const std::vector<float> ones(trackTable->numberOfFrames(), 1.0f);
 
         std::cout << "Filling matrices for the system of equations" << std::endl;
         
@@ -104,10 +134,11 @@ namespace tfg {
                 // IEEE Transactions on Pattern Analysis and Machine Intelligence, 36(6): 1187-1200, Jun 2014.
                 // DOI: 10.1109/TPAMI.2013.242
                 const float trackDistance2 = trackTable->distance2BetweenTracks(tA, tB);
-                const float weightAB = exp(-lambda * trackDistance2);
+                const float weightAB = std::exp(-lambda * trackDistance2);
 
                 // If the weight between tracks is almost 0, consider it 0 and do not store it explicitly in the sparse matrix
-                if(weightAB < 1e-8) continue;
+                // if(weightAB < 1e-8) continue;
+                if(weightAB == 0) continue;
                 unlabeledTracksDegrees[tA] += weightAB;
 
                 if(tB >= unlabeledTracks) {
@@ -159,7 +190,8 @@ namespace tfg {
         }
 
         probabilities.clear();
-        probabilities.reserve(unlabeledTracks + labeledTracks);
+        // probabilities.reserve(unlabeledTracks + labeledTracks);
+        probabilities.resize(unlabeledTracks + labeledTracks);
 
         // For every unlabeled track, save the probabilities for each label
         // and order them the original way
@@ -199,14 +231,16 @@ namespace tfg {
      * Write in a file the probabilities that each track has for every label.
      * @param file The file where the probabilities are going to be stored.
      */
-    void RandomWalker::writeProbabilities(std::ostream &file) {
+    void RandomWalker::writeProbabilities(std::ofstream &file) {
         file << unlabeledTracks + labeledTracks << " " << numberOfLabels << std::endl;
         for(unsigned int t = 0; t < unlabeledTracks + labeledTracks; t++) {
-            std::vector<float>& trackLabelProbabilities = probabilities.at(t);
+            // std::vector<float>& trackLabelProbabilities = probabilities.at(t);
             for(unsigned int k = 0; k < numberOfLabels - 1; k++) {
-                file << trackLabelProbabilities[k] << " ";
+                // file << trackLabelProbabilities[k] << " ";
+                file << probabilities[t][k] << " ";
             }
-            file << trackLabelProbabilities[numberOfLabels - 1] << std::endl;
+            // file << trackLabelProbabilities[numberOfLabels - 1] << std::endl;
+            file << probabilities[t][numberOfLabels - 1] << std::endl;
         }
     }
 

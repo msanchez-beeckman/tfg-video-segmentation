@@ -2,6 +2,7 @@
 #define TFG_VIDEO_SEGMENTATION_TRACKTABLE_H
 
 #include <opencv4/opencv2/core.hpp>
+#include <fstream>
 #include "Track.h"
 #include "Mapping.h"
 
@@ -15,9 +16,8 @@ namespace tfg {
         std::vector<cv::Vec2f> flowMeans;
         std::vector<float> flowVariances;
 
-        void readTracks(std::istream &file);
-        void readTracksBrox(std::istream &file);
-        void getMappingsFromTracks();
+        void readTracks(std::ifstream &file, int minDuration);
+        void readTracksBrox(std::ifstream &file, int minDuration);
 
         void computeFlowStatistics();
     
@@ -25,8 +25,21 @@ namespace tfg {
         TrackTable();
         ~TrackTable();
 
-        void buildFromFile(std::istream &file);
-        void buildFromBroxFile(std::istream &file);
+        TrackTable(std::vector<tfg::Track> &tracks);
+
+        void buildFromFile(std::ifstream &file, int minDuration);
+        void buildFromBroxFile(std::ifstream &file, int minDuration);
+
+        void addColorInfo(const std::vector<cv::Mat> &sequence);
+
+        void writeTracks(std::ofstream &file, int minDuration=2);
+
+        void initializeFromPreviousTable(const tfg::TrackTable &previousTable);
+        void addTrack(const tfg::Track &track);
+        void addPointToTrack(const cv::Vec2f &point, unsigned int track);
+        void addPointToTrack(const cv::Vec2f &point, const cv::Vec3b &color, unsigned int track);
+
+        void getMappingsFromTracks();
 
         void sortTracksByLabel();
         void sortTracksByNumber();
@@ -34,8 +47,8 @@ namespace tfg {
 
         void printMappings() const;
 
-        void paintWeightedTracks(const std::vector<float> &weights2, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
-        void paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName) const;
+        void paintWeightedTracks(const std::vector<float> &weights, std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int minDuration=2, int firstNameIndex=0) const;
+        void paintLabeledTracks(std::vector<cv::Mat> images, const std::string &folder, const std::string &fileName, int firstNameIndex=0) const;
 
         inline unsigned int numberOfFrames() const {
             return mappings.size();
@@ -53,7 +66,7 @@ namespace tfg {
             return tracks[track].getDuration();
         };
 
-        inline std::vector<cv::Vec2f> pointsInTrack(unsigned int track) const {
+        inline const std::vector<cv::Vec2f>& pointsInTrack(unsigned int track) const {
             return tracks[track].getPoints();
         };
 
@@ -63,6 +76,10 @@ namespace tfg {
 
         inline std::vector<cv::Vec2f> destinationPointsInFrame(unsigned int frame) const {
             return mappings[frame].getDestination();
+        };
+
+        inline std::vector<cv::Vec2f> destinationPointsInLastFrame() const {
+            return mappings.back().getDestination();
         };
 
         inline std::vector<unsigned int> trajectoriesInFrame(unsigned int frame) const {
@@ -80,7 +97,7 @@ namespace tfg {
         };
 
         inline float distance2BetweenTracks(unsigned int A, unsigned int B) const {
-            return tracks[A].maximalMotionDistance2(tracks[B], flowVariances);
+            return tracks[A].distance2(tracks[B], flowVariances);
         };
 
         inline cv::Vec2f flowMeanOfFrame(unsigned int frame) const {

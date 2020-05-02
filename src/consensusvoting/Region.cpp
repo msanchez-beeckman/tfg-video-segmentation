@@ -31,7 +31,7 @@ namespace tfg {
         computeColorHistogramBGR(20);
         computeColorHistogramLAB(20);
         computeHOG(9, 6, 15);
-        computeRelativeDistance();
+        computeRelativeCoordinates();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
     }
@@ -207,7 +207,7 @@ namespace tfg {
      * The relative coordinates take values between 0 and 1, such that the center of the image
      * is at (0.5, 0.5).
      */
-    void Region::computeRelativeDistance() {
+    void Region::computeRelativeCoordinates() {
         float centerX = (boundaries.x + boundaries.width)/2;
         float centerY = (boundaries.y + boundaries.height)/2;
 
@@ -217,15 +217,15 @@ namespace tfg {
         float relativeCenterY = centerY / image.rows;
 
         std::vector<float> relativePosition = {relativeCenterX, relativeCenterY};
-        this->relativeDistanceDescriptor = cv::Mat(1, 2, CV_32FC1, &relativePosition[0]);
+        this->relativeCoordinatesDescriptor = cv::Mat(1, 2, CV_32FC1, &relativePosition[0]);
     }
 
     /**
      * Concatenate the descriptors of the region into a single vector.
      */
     cv::Mat Region::getDescriptor() const {
-        std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeDistanceDescriptor};
-        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, relativeDistanceDescriptor};
+        std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeCoordinatesDescriptor};
+        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, relativeCoordinatesDescriptor};
         cv::Mat descriptorMat;
         cv::hconcat(descriptorVec, descriptorMat);
         return descriptorMat;
