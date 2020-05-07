@@ -25,7 +25,7 @@ namespace tfg {
      * @param seedImages An unordered map of OpenCV Mat objects, whose key is an integer that indicates the frame the seed is for.
      */
     void RandomWalker::seed(const std::unordered_map<int, cv::Mat> &seedImages) {
-        std::cout << "Seeding tracks" << std::endl;
+        std::cout << "Seeding tracks" << '\n';
 
         // For each matrix of seeds, label each track passing through a seed with its corresponding tag.
         // If a track passes through two or more different seeds, tag it as unreliable and don't use it for propagation.
@@ -58,12 +58,12 @@ namespace tfg {
         this->unlabeledTracks = trackTable->indexOfFirstLabel();
         this->labeledTracks = trackTable->numberOfTracks() - unlabeledTracks;
 
-        std::cout << "Sorted tracks according to labels" << std::endl;
-        std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << std::endl;
+        std::cout << "Sorted tracks according to labels" << '\n';
+        std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << '\n';
     }
 
     void RandomWalker::seedDavis(const std::unordered_map<int, cv::Mat> &seedImages) {
-        std::cout << "Seeding tracks" << std::endl;
+        std::cout << "Seeding tracks" << '\n';
 
         // For each matrix of seeds, label each track passing through a seed with its corresponding tag.
         // If a track passes through two or more different seeds, tag it as unreliable and don't use it for propagation.
@@ -93,8 +93,8 @@ namespace tfg {
         this->unlabeledTracks = trackTable->indexOfFirstLabel();
         this->labeledTracks = trackTable->numberOfTracks() - unlabeledTracks;
 
-        std::cout << "Sorted tracks according to labels" << std::endl;
-        std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << std::endl;
+        std::cout << "Sorted tracks according to labels" << '\n';
+        std::cout << "There are " << unlabeledTracks << " unlabeled tracks and " << labeledTracks << " labeled tracks" << '\n';
     }
 
     /**
@@ -107,12 +107,12 @@ namespace tfg {
      * DOI: 10.1109/TPAMI.2006.233
      */
     void RandomWalker::propagateSeeds(float lambda) {
-        std::cout << "Beginning propagation of seeds" << std::endl;
+        std::cout << "Beginning propagation of seeds" << '\n';
 
         Eigen::SparseMatrix<float> laplacianUnlabeled(unlabeledTracks, unlabeledTracks);
         Eigen::SparseMatrix<float> minusBt(unlabeledTracks, labeledTracks);
 
-        std::cout << "Filling matrices for the system of equations" << std::endl;
+        std::cout << "Filling matrices for the system of equations" << '\n';
         
         std::chrono::steady_clock::time_point beginFill = std::chrono::steady_clock::now();
         std::vector<Eigen::Triplet<float>> laplacianEntries;
@@ -153,10 +153,10 @@ namespace tfg {
         laplacianUnlabeled.setFromTriplets(laplacianEntries.begin(), laplacianEntries.end());
         minusBt.setFromTriplets(minusBtEntries.begin(), minusBtEntries.end());
         std::chrono::steady_clock::time_point endFill = std::chrono::steady_clock::now();
-        std::cout << "Filled in " << (std::chrono::duration_cast<std::chrono::microseconds>(endFill-beginFill).count())/1000000.0 << " seconds" << std::endl;
+        std::cout << "Filled in " << (std::chrono::duration_cast<std::chrono::microseconds>(endFill-beginFill).count())/1000000.0 << " seconds" << '\n';
 
 
-        std::cout << "Starting walking process" << std::endl;
+        std::cout << "Starting walking process" << '\n';
         std::vector<Eigen::VectorXf> labelProbabilities;
         labelProbabilities.reserve(numberOfLabels - 1);
 
@@ -177,7 +177,7 @@ namespace tfg {
 
             // Get product -Bt*m_s, right hand of eq. 10 in Grady's paper
             Eigen::SparseMatrix<float> minusBtByM = minusBt * M;
-            std::cout << "Solving system of equations for label " << k << std::endl;
+            std::cout << "Solving system of equations for label " << k << '\n';
             std::chrono::steady_clock::time_point beginSolve = std::chrono::steady_clock::now();
 
             // Solve the system of equations using an iterative conjugate gradient algorithm for self-adjoint sparse matrices
@@ -186,7 +186,7 @@ namespace tfg {
             Eigen::VectorXf probabilityLabel = conjGrad.solve(minusBtByM);
             labelProbabilities.push_back(probabilityLabel);
             std::chrono::steady_clock::time_point endSolve = std::chrono::steady_clock::now();
-            std::cout << "Solved in " << (std::chrono::duration_cast<std::chrono::microseconds>(endSolve-beginSolve).count())/1000000.0 << " seconds" << std::endl;
+            std::cout << "Solved in " << (std::chrono::duration_cast<std::chrono::microseconds>(endSolve-beginSolve).count())/1000000.0 << " seconds" << '\n';
         }
 
         probabilities.clear();
@@ -232,15 +232,15 @@ namespace tfg {
      * @param file The file where the probabilities are going to be stored.
      */
     void RandomWalker::writeProbabilities(std::ofstream &file) {
-        file << unlabeledTracks + labeledTracks << " " << numberOfLabels << std::endl;
+        file << unlabeledTracks + labeledTracks << " " << numberOfLabels << '\n';
         for(unsigned int t = 0; t < unlabeledTracks + labeledTracks; t++) {
             // std::vector<float>& trackLabelProbabilities = probabilities.at(t);
             for(unsigned int k = 0; k < numberOfLabels - 1; k++) {
                 // file << trackLabelProbabilities[k] << " ";
                 file << probabilities[t][k] << " ";
             }
-            // file << trackLabelProbabilities[numberOfLabels - 1] << std::endl;
-            file << probabilities[t][numberOfLabels - 1] << std::endl;
+            // file << trackLabelProbabilities[numberOfLabels - 1] << '\n';
+            file << probabilities[t][numberOfLabels - 1] << '\n';
         }
     }
 

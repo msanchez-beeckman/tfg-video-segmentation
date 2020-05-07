@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
     const float ransacEpsilon = parser.get<float>("ransacEpsilon");
     model->fitFromRANSAC(ransacIterations, ransacEpsilon, inliers);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "(0) Cost: " << model->getCost() << std::endl;
-    std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "(0) Cost: " << model->getCost() << '\n';
+    std::cout << "RANSAC total time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << '\n';
 
     // Get residuals and weights from initial model
     std::vector<float> residuals2 = model->getResiduals2();

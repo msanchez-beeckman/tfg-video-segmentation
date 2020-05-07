@@ -121,8 +121,8 @@ namespace tfg {
             for(int j = 0; j < 3; j++) {
                 std::cout << homographies[n](i, j) << " ";
             }
-            std::cout << std::endl;
+            std::cout << '\n';
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }  
 }

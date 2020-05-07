@@ -33,7 +33,7 @@ namespace tfg {
         computeHOG(9, 6, 15);
         computeRelativeCoordinates();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
+        // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << '\n';
     }
 
     /**
@@ -153,9 +153,9 @@ namespace tfg {
         cv::HOGDescriptor hogd(cv::Size(patchSize, patchSize), cv::Size(patchSize, patchSize), cv::Size(cellSize, cellSize), cv::Size(cellSize, cellSize), nbins);
         hogd.compute(patch, descriptors);
 
-        // std::cout << "Cell size: " << cellSize << std::endl;
-        // std::cout << "Patch size: " << patch.rows << " x " << patch.cols << std::endl;
-        // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << std::endl << std::endl;
+        // std::cout << "Cell size: " << cellSize << '\n';
+        // std::cout << "Patch size: " << patch.rows << " x " << patch.cols << '\n';
+        // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << '\n' << '\n';
 
         // Make bins sum 1
         // cv::Mat unnormalizedDescriptor(1, ncells * nbins, CV_32FC1, &descriptors[0]);

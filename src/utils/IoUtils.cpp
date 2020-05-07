@@ -28,9 +28,9 @@ namespace tfg {
     }
 
     void writeWeights(const std::vector<float> &weights, std::ofstream &weightFile) {
-        weightFile << weights.size() << " 2" << std::endl;
+        weightFile << weights.size() << " 2" << '\n';
         for(unsigned int i = 0; i < weights.size(); i++) {
-            weightFile << weights[i] << " " << 1 - weights[i] << std::endl;
+            weightFile << weights[i] << " " << 1 - weights[i] << '\n';
         }
     }
 
