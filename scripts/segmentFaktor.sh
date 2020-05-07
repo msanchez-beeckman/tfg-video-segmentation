@@ -10,6 +10,7 @@ usage () { echo "Usage: $0 [-d minDomMotion] [-s spSize] [-F windowRadius] [-L N
 
 dFLAG=""
 sFLAG=""
+OFLAG=""
 FFLAG=""
 LFLAG=""
 SFLAG=""
@@ -17,16 +18,17 @@ TFLAG=""
 tFLAG=""
 rFLAG=""
 
-while getopts :d:s:F:L:S:T:t:r opt; do
+while getopts :d:s:OF:L:S:T:t:r: opt; do
     case $opt in
         d) dFLAG="--minDomMotion=${OPTARG}";;
         s) sFLAG="--spsize=${OPTARG}";;
+        O) OFLAG="--slico";;
         F) FFLAG="-F=${OPTARG}";;
         L) LFLAG="-L=${OPTARG}";;
         S) SFLAG="--sigma2=${OPTARG}";;
         T) TFLAG="--iterations=${OPTARG}";;
         t) tFLAG="--threshold=${OPTARG}";;
-        r) rFLAG="--removeBlobs";;
+        r) rFLAG="--removeBlobsTh=${OPTARG}";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -42,4 +44,4 @@ FRAMELIMIT=$2
 python ${TFGLOCATION}/scripts/list_images.py ${DATALOCATION}/${DATASETNAME}/ jpg 0 ${FRAMELIMIT} ${DATALOCATION}/${DATASETNAME}/images.txt False
 mkdir -p ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}
 rm -f ${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/*
-${TFGLOCATION}/bin/consensusVoting ${dFLAG} ${sFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/surroundingFlows.txt
+${TFGLOCATION}/bin/consensusVoting ${dFLAG} ${sFLAG} ${OFLAG} ${FFLAG} ${LFLAG} ${SFLAG} ${TFLAG} ${tFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/nlcsegmentation/${DATASETNAME}/ ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/surroundingFlows.txt
