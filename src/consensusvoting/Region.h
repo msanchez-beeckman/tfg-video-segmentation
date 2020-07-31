@@ -42,7 +42,11 @@ namespace tfg {
 
             inline cv::Mat getFrameLabels() const {
                 return frameSuperpixelLabels;
-            }
+            };
+
+            inline void printCoordDescriptor() const {
+                std::cout << relativeCoordinatesDescriptor << '\n';
+            };
     };
 }
 

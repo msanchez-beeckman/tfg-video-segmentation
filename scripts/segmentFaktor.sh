@@ -6,7 +6,7 @@ TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
 DATALOCATION="${TFGLOCATION}/data"
 FLOWLOCATION="${TFGLOCATION}/results/flows"
 
-usage () { echo "Usage: $0 [-d minDomMotion] [-s spSize] [-F windowRadius] [-L NNperFrame] [-S sigma2] [-T iterations] [-t threshold] [-r removeBlobs] datasetName frameLimit"; }
+usage () { echo "Usage: $0 [-d minDomMotion] [-s spSize] [-O] [-F windowRadius] [-L NNperFrame] [-S sigma2] [-T iterations] [-t threshold] [-r removeBlobs] datasetName frameLimit"; }
 
 dFLAG=""
 sFLAG=""

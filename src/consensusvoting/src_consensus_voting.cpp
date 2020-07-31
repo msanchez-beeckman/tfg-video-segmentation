@@ -69,6 +69,7 @@ int main(int argc, char* argv[]) {
     std::vector<cv::Mat> imageMotionInfo;
     consensusVoter.mergeSaliencyWithImages(images, imageMotionInfo);
     const int SLICType = parser.has("slico") ? cv::ximgproc::SLICO : cv::ximgproc::SLIC;
+    std::vector<cv::Mat> spContourMasks(images.size());
     
     // Extract superpixels for each frame, compute their descriptors, and initialize their votes from the saliency scores
     for(unsigned int f = 0; f < images.size(); f++) {
@@ -78,6 +79,7 @@ int main(int argc, char* argv[]) {
         // cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, SUPERPIXEL_SIZE);
         cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(imageMotionInfo[f], SLICType, SUPERPIXEL_SIZE);
         sp->iterate();
+        // sp->enforceLabelConnectivity();
         std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
 
         std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag4-flag3).count())/1000000.0 << " seconds." << '\n';
@@ -85,6 +87,10 @@ int main(int argc, char* argv[]) {
         const int SUPERPIXELS_IN_FRAME = sp->getNumberOfSuperpixels();
         cv::Mat pixelLabels;
         sp->getLabels(pixelLabels);
+        cv::Mat spContourMask;
+        sp->getLabelContourMask(spContourMask);
+        spContourMasks[f] = 255 - spContourMask;
+
         std::vector<tfg::Region> regionsInFrame;
         regionsInFrame.reserve(SUPERPIXELS_IN_FRAME);
         for(int s = 0; s < SUPERPIXELS_IN_FRAME; s++) {
@@ -134,6 +140,8 @@ int main(int argc, char* argv[]) {
     // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << '\n';
 
     // Save results
+    const std::string fileNameSpContour = "slic";
+    tfg::saveMaskedImages(images, spContourMasks, resultsFolder, fileNameSpContour);
     const std::string fileNameMask = "mask";
     tfg::saveMaskedImages(finalMasks, finalMasks, resultsFolder, fileNameMask);
     const std::string fileNameSegmentation = "foreground";

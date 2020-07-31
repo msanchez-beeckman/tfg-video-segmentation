@@ -390,6 +390,7 @@ namespace tfg {
         std::vector<cv::Mat> descriptorsVector;
         descriptorsVector.reserve(this->superpixels.size());
         for(unsigned int r = 0; r < this->superpixels.size(); r++) {
+            // cv::Mat singleRegionDescriptor = this->superpixels[r].getDescriptor();
             cv::Mat singleRegionDescriptor = this->superpixels[r].getDescriptor();
             descriptorsVector.push_back(singleRegionDescriptor);
         }
@@ -431,6 +432,7 @@ namespace tfg {
         for(int f = 0; f < NUMBER_OF_FRAMES; f++) {
             const int spBegin = this->frameBeginningIndex[f];
             const int spEnd = (f == (NUMBER_OF_FRAMES - 1)) ? (NUMBER_OF_REGIONS - 1) : (this->frameBeginningIndex[f + 1] - 1);
+            // cv::Mat framePixelLabels = this->superpixels[spBegin].getFrameLabels();
             cv::Mat framePixelLabels = this->superpixels[spBegin].getFrameLabels();
 
             // Set the values of the mask (before thresholding) by superpixel: each pixel of a superpixel is attributed the same
