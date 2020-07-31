@@ -1,2 +1,0 @@
-/home/marco/Projects/tfg_video_segmentation/data/hike/00029.jpg
-/home/marco/Projects/tfg_video_segmentation/data/hike/00030.jpg

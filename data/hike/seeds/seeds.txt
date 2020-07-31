@@ -1,3 +1,0 @@
-/home/marco/Projects/tfg_video_segmentation/data/hike/seeds/00000.png 0
-/home/marco/Projects/tfg_video_segmentation/data/hike/seeds/00010.png 10
-/home/marco/Projects/tfg_video_segmentation/data/hike/seeds/00020.png 20
