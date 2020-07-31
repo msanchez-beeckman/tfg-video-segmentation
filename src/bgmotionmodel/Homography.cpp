@@ -238,7 +238,7 @@ namespace tfg {
      * @param tau2 Tau squared, an inlier threshold for equations (2) to (4) in Szeliski's paper.
      */
     void IRLS(std::shared_ptr<tfg::MotionModel> &model, std::shared_ptr<tfg::TrackTable> &trackTable, std::vector<float> &weights2, float tau2) {
-        // std::cout << "First homography of the initial model:" << std::endl;
+        // std::cout << "First homography of the initial model:" << '\n';
         // model->printHomography(0);
 
         float s = 1.0f;
@@ -272,9 +272,9 @@ namespace tfg {
 
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-            std::cout << "(" << k + 1 << ") Iteration cost: " << cost << std::endl;
-            std::cout << "(" << k + 1 << ") Cost margin: " << std::abs((cost - bestCost) / bestCost) << std::endl;
-            std::cout << "(" << k + 1 << ") Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds" << std::endl;
+            std::cout << "(" << k + 1 << ") Iteration cost: " << cost << '\n';
+            std::cout << "(" << k + 1 << ") Cost margin: " << std::abs((cost - bestCost) / bestCost) << '\n';
+            std::cout << "(" << k + 1 << ") Time: " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds" << '\n';
 
             // If the cost has increased, reduce the step. If it has decreased, make the step bigger and update the best model to the new one
             if(cost > bestCost && bestCost >= 0) {

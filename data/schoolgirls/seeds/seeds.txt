@@ -1,4 +1,0 @@
-/home/marco/Projects/tfg_video_segmentation/data/schoolgirls/seeds/00000.png 0
-/home/marco/Projects/tfg_video_segmentation/data/schoolgirls/seeds/00020.png 20
-/home/marco/Projects/tfg_video_segmentation/data/schoolgirls/seeds/00040.png 40
-/home/marco/Projects/tfg_video_segmentation/data/schoolgirls/seeds/00060.png 60

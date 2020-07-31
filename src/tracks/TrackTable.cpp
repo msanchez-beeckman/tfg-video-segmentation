@@ -60,7 +60,7 @@ namespace tfg {
             for(unsigned int i = 0; i < this->durationOfTrack(t); i++) {
                 file << " " << coordinates[i](0) << " " << coordinates[i](1);
             }
-            file << std::endl;
+            file << '\n';
         }
     }
 
@@ -187,7 +187,7 @@ namespace tfg {
             for(unsigned int i = 0; i < origin.size(); i++) {
                 std::cout << "Frame " << f << " --> " << f + 1 << " (traj " << trajectories[i] << ")";
                 std::cout << ": Point (" << origin[i](0) << ", " << origin[i](1);
-                std::cout << ") maps to (" << destination[i](0) << ", " << destination[i](1) << ")" << std::endl;
+                std::cout << ") maps to (" << destination[i](0) << ", " << destination[i](1) << ")" << '\n';
             }
         }
     }

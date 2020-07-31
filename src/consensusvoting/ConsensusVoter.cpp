@@ -38,18 +38,18 @@ namespace tfg {
         std::string line;
 
         std::getline(flowFile, line);
-        const unsigned int NUMBER_OF_FRAMES = std::stoi(line); // The first line of the file tells the number of frames
+        const int NUMBER_OF_FRAMES = std::stoi(line); // The first line of the file tells the number of frames
         this->saliencyScores.reserve(NUMBER_OF_FRAMES);
         int framesWithDominantMotion = 0;
 
         // Each frame has a certain number of optical flows attributed to it, typically both forward and backward
-        for(unsigned int f = 0; f < NUMBER_OF_FRAMES; f++) {
+        for(int f = 0; f < NUMBER_OF_FRAMES; f++) {
             std::getline(flowFile, line);
-            const unsigned int NUMBER_OF_FLOWS = std::stoi(line); // The first line of a particular frame tells the number of flows
+            const int NUMBER_OF_FLOWS = std::stoi(line); // The first line of a particular frame tells the number of flows
 
             std::vector<cv::Mat> motionSaliencies;
             // For each flow which the frame is the origin of, compute a motion saliency score
-            for(unsigned int i = 0; i < NUMBER_OF_FLOWS; i++) {
+            for(int i = 0; i < NUMBER_OF_FLOWS; i++) {
                 std::getline(flowFile, line);
                 cv::Mat flowu = cv::imread(line, cv::IMREAD_ANYDEPTH);
 
@@ -61,7 +61,7 @@ namespace tfg {
                 bool existsDominantMotion = computeMotionSaliency(flowu, flowv, saliency, 5, 1.0f, 0.55f, 10);
                 // If a dominant motion exists, store temporarily the corresponding saliencies
                 if(existsDominantMotion) {
-                    std::cout << " in flow " << i << " of frame " << f << std::endl;
+                    std::cout << " in flow " << i << " of frame " << f << '\n';
                     motionSaliencies.push_back(saliency);
                 }
             }
@@ -72,7 +72,7 @@ namespace tfg {
                 elementwiseMean(motionSaliencies, frameScore);
                 framesWithDominantMotion += 1;
             } else {
-                std::cout << "No dominant motion in frame " << f << ": saliency initialized to 0" << std::endl;
+                std::cout << "No dominant motion in frame " << f << ": saliency initialized to 0" << '\n';
             }
 
             this->saliencyScores.push_back(frameScore);
@@ -222,6 +222,25 @@ namespace tfg {
         }
     }
 
+    void ConsensusVoter::mergeSaliencyWithImages(const std::vector<cv::Mat> &images, std::vector<cv::Mat> &mergedImages) {
+        mergedImages.clear();
+        mergedImages.resize(images.size());
+        for(unsigned int f = 0; f < images.size(); f++) {
+            cv::Mat imageLab;
+            cv::cvtColor(images[f], imageLab, cv::COLOR_BGR2Lab);
+            std::vector<cv::Mat> imageChannels;
+            cv::split(imageLab, imageChannels);
+
+            cv::Mat saliencyOfFrame;
+            cv::resize(this->saliencyScores[f], saliencyOfFrame, images[f].size());
+            cv::Mat fourthChannel;
+            saliencyOfFrame.convertTo(fourthChannel, CV_8UC1, 255.0, 0.0);
+            imageChannels.push_back(fourthChannel);
+
+            cv::merge(imageChannels, mergedImages[f]);
+        }
+    }
+
     /**
      * Add a group of regions belonging to a single frame to the list of superpixels.
      * @param spInFrame A vector of Region objects containing information of superpixels in a frame.
@@ -242,7 +261,7 @@ namespace tfg {
         cv::Mat saliencyOfFrame;
         cv::resize(this->saliencyScores[frame], saliencyOfFrame, pixelLabels.size());
 
-        for(unsigned int i = 0; i < numberOfSuperpixels; i++) {
+        for(int i = 0; i < numberOfSuperpixels; i++) {
             cv::Mat superpixelMask(pixelLabels == i);
             cv::Scalar regionMeanVote = cv::mean(saliencyOfFrame, superpixelMask);
             const float vote = regionMeanVote(0);
@@ -263,8 +282,8 @@ namespace tfg {
     void ConsensusVoter::computeTransitionMatrix(int F, int L, float sigma2) {
         computeDescriptors();
 
-        const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
-        const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
+        const int NUMBER_OF_REGIONS = static_cast<int>(this->superpixels.size());
+        const int NUMBER_OF_FRAMES = static_cast<int>(this->frameBeginningIndex.size());
         const int M = L*(2*F + 1);
         Eigen::SparseMatrix<float, Eigen::RowMajor> transM(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
         std::vector<Eigen::Triplet<float>> transMEntries;
@@ -280,7 +299,7 @@ namespace tfg {
             currentFrameDelimiter.width = this->descriptors.cols;
             cv::Mat descriptorsInFrame(this->descriptors, currentFrameDelimiter);
 
-            std::cout << "Extracted descriptors of superpixels in frame " << f << std::endl;
+            std::cout << "Extracted descriptors of superpixels in frame " << f << '\n';
 
             // Extract the submatrix corresponding to the descriptors of all the regions in the neighbouring frames
             cv::Rect searchWindow;
@@ -292,23 +311,23 @@ namespace tfg {
             searchWindow.width = this->descriptors.cols;
             cv::Mat descriptorsInNeighbouringFrames(this->descriptors, searchWindow);
 
-            std::cout << "Extracted descriptors of neighbours of frame " << f << std::endl;
+            std::cout << "Extracted descriptors of neighbours of frame " << f << '\n';
 
             // Keep track of the position of every neighbouring region
             // Put them in a Mat object so the KDTree returns the indices of the nearest neighbours
             std::vector<float> neighbourIndices(searchWindow.height);
             std::iota(neighbourIndices.begin(), neighbourIndices.end(), searchWindow.y);
-            std::cout << "Frame " << f << " iota: from " << neighbourIndices[0] << " to " << neighbourIndices.back() << std::endl;
+            std::cout << "Frame " << f << " iota: from " << neighbourIndices[0] << " to " << neighbourIndices.back() << '\n';
             cv::Mat regionIndices(neighbourIndices.size(), 1, CV_32FC1, neighbourIndices.data());
 
-            std::cout << "Created matrix with neighbour indices" << std::endl;
+            std::cout << "Created matrix with neighbour indices" << '\n';
 
             // Create a KDTree and train it using the descriptors in the neighbouring frames
             // Each sample belongs to a column, and its response is the index of the region
             cv::Ptr<cv::ml::KNearest> tree = cv::ml::KNearest::create();
             tree->train(descriptorsInNeighbouringFrames, cv::ml::ROW_SAMPLE, regionIndices);
 
-            std::cout << "Created and trained KDTree " << f << std::endl;
+            std::cout << "Created and trained KDTree " << f << '\n';
 
             // Search for the nearest M neighbours inside of the samples.
             // Since there can be more than one good match per frame, we search up to L regions per frame
@@ -319,7 +338,7 @@ namespace tfg {
             cv::Mat NNDistances2;
             tree->findNearest(descriptorsInFrame, M, result, NNIndices, NNDistances2);
 
-            std::cout << "Found nearest neighbours of superpixels in frame " << f << '\n' << std::endl;
+            std::cout << "Found nearest neighbours of superpixels in frame " << f << '\n' << '\n';
 
             // Knowing who the nearest neighbours are and the distance to them, define a weight based on
             // the distance, and create a random walk transition matrix (which is sparse)
@@ -337,9 +356,8 @@ namespace tfg {
             }
         }
         transM.setFromTriplets(transMEntries.begin(), transMEntries.end());
-        // std::cout << transM.bottomRows(1) << std::endl;
 
-        std::cout << "Created sparse transition matrix" << std::endl;
+        std::cout << "Created sparse transition matrix" << '\n';
 
         // Upon computing the transition matrix, normalize it by dividing each row by the sum of its elements
         Eigen::SparseMatrix<float, Eigen::RowMajor> normalizationMatrix(NUMBER_OF_REGIONS, NUMBER_OF_REGIONS);
@@ -354,7 +372,7 @@ namespace tfg {
         }
         normalizationMatrix.setFromTriplets(normalizationMatrixEntries.begin(), normalizationMatrixEntries.end());
 
-        std::cout << "Created normalization matrix" << std::endl;
+        std::cout << "Created normalization matrix" << '\n';
 
         // TODO: measure efficiency difference between computing normalization matrix and multiplying transM by it (as it is now),
         // and looping through transM a second time and directly modifying the value through it.valueRef()
@@ -372,6 +390,7 @@ namespace tfg {
         std::vector<cv::Mat> descriptorsVector;
         descriptorsVector.reserve(this->superpixels.size());
         for(unsigned int r = 0; r < this->superpixels.size(); r++) {
+            // cv::Mat singleRegionDescriptor = this->superpixels[r].getDescriptor();
             cv::Mat singleRegionDescriptor = this->superpixels[r].getDescriptor();
             descriptorsVector.push_back(singleRegionDescriptor);
         }
@@ -383,15 +402,16 @@ namespace tfg {
      * @param iterations The number of times the votes are to be multiplied by the matrix.
      */
     void ConsensusVoter::reachConsensus(int iterations) {
-        Eigen::Map<Eigen::VectorXf> updatedVotes(this->votes.data(), this->votes.size());
+        const int NUMBER_OF_FRAMES = static_cast<int>(this->frameBeginningIndex.size());
+        const int NUMBER_OF_VOTES = static_cast<int>(this->votes.size());
 
-        // std::cout << transitionMatrix.bottomRows(1) << std::endl;
+        Eigen::Map<Eigen::VectorXf> updatedVotes(this->votes.data(), NUMBER_OF_VOTES);
 
         for(int t = 0; t < iterations; t++) {
             updatedVotes = transitionMatrix * updatedVotes;
 
-            for(unsigned int f = 0; f < this->frameBeginningIndex.size(); f++) {
-                const int superpixelsInFrame = (f == (frameBeginningIndex.size() - 1)) ? (votes.size() - frameBeginningIndex[f]) : (frameBeginningIndex[f + 1] - frameBeginningIndex[f]);
+            for(int f = 0; f < NUMBER_OF_FRAMES; f++) {
+                const int superpixelsInFrame = (f == (NUMBER_OF_FRAMES - 1)) ? (NUMBER_OF_VOTES - frameBeginningIndex[f]) : (frameBeginningIndex[f + 1] - frameBeginningIndex[f]);
                 const float maxVoteInFrame = updatedVotes.segment(frameBeginningIndex[f], superpixelsInFrame).maxCoeff();
                 updatedVotes.segment(frameBeginningIndex[f], superpixelsInFrame) /= maxVoteInFrame + (maxVoteInFrame <= 0);
             }
@@ -402,16 +422,17 @@ namespace tfg {
      * Threshold the existing votes and get a sequence of masks from them.
      * @param masks The output vector of masks.
      * @param threshold The threshold value.
-     * @param removeSmallBlobs True if small non-connected blobs should be removed, false otherwise.
+     * @param smallBlobsThreshold Relative size to the biggest object below which small non-connected blobs should be removed.
      */
-    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold, bool removeSmallBlobs) {
-        const unsigned int NUMBER_OF_FRAMES = this->frameBeginningIndex.size();
-        const unsigned int NUMBER_OF_REGIONS = this->superpixels.size();
+    void ConsensusVoter::getSegmentation(std::vector<cv::Mat> &masks, float threshold, float smallBlobsThreshold) {
+        const int NUMBER_OF_FRAMES = static_cast<int>(this->frameBeginningIndex.size());
+        const int NUMBER_OF_REGIONS = static_cast<int>(this->superpixels.size());
         masks.clear();
         masks.reserve(NUMBER_OF_FRAMES);
-        for(unsigned int f = 0; f < NUMBER_OF_FRAMES; f++) {
+        for(int f = 0; f < NUMBER_OF_FRAMES; f++) {
             const int spBegin = this->frameBeginningIndex[f];
             const int spEnd = (f == (NUMBER_OF_FRAMES - 1)) ? (NUMBER_OF_REGIONS - 1) : (this->frameBeginningIndex[f + 1] - 1);
+            // cv::Mat framePixelLabels = this->superpixels[spBegin].getFrameLabels();
             cv::Mat framePixelLabels = this->superpixels[spBegin].getFrameLabels();
 
             // Set the values of the mask (before thresholding) by superpixel: each pixel of a superpixel is attributed the same
@@ -426,7 +447,7 @@ namespace tfg {
             // The segmented images tend to have small non-connected blobs that are similar in color to the foreground,
             // but that are really background. This function eliminates the blobs that are much smaller than the biggest object
             // (that is assumed to be the real foreground)
-            if(removeSmallBlobs) correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, 0.25);
+            correctVotesForSmallBlobs(maskNotThresholded, spBegin, spEnd, framePixelLabels, threshold, smallBlobsThreshold);
             cv::Mat mask(maskNotThresholded > threshold);
             masks.push_back(mask);
         }

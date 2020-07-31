@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     // Write the results in a file
     const std::string weightsFileName = parser.get<std::string>("outweights");
     std::ofstream weightsFile(weightsFileName);
-    std::cout << "Writing in a file the probabilities of each label for each track" << std::endl;
+    std::cout << "Writing in a file the probabilities of each label for each track" << '\n';
     walker.writeProbabilities(weightsFile);
     weightsFile.close();
 
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     const int firstNameIndex = parser.get<int>("firstNameIndex");
     trackTable->paintLabeledTracks(images, resultsFolder, fileName, firstNameIndex);
 
-    std::cout << "Painted tracks according to seeds" << std::endl;
+    std::cout << "Painted tracks according to seeds" << '\n';
     
     return EXIT_SUCCESS;
 }

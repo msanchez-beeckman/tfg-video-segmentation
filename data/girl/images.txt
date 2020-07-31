@@ -1,8 +1,0 @@
-/home/marco/Projects/tfg_video_segmentation/data/girl/00000.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00001.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00002.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00003.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00004.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00005.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00006.jpg
-/home/marco/Projects/tfg_video_segmentation/data/girl/00007.jpg

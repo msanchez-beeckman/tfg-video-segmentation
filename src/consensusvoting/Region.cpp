@@ -33,7 +33,7 @@ namespace tfg {
         computeHOG(9, 6, 15);
         computeRelativeCoordinates();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << std::endl;
+        // std::cout << "Descriptor of superpixel " << number << " in frame " << frame << " computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count())/1000000.0 << " seconds." << '\n';
     }
 
     /**
@@ -103,8 +103,11 @@ namespace tfg {
     void Region::computeColorHistogramLAB(int nbins) {
         colorHistLABDescriptor.release();
 
+        cv::Mat imageFloat;
+        image.convertTo(imageFloat, CV_32FC3, 1.0/255.0);
+
         cv::Mat imageLab;
-        cv::cvtColor(image, imageLab, cv::COLOR_BGR2Lab);
+        cv::cvtColor(imageFloat, imageLab, cv::COLOR_BGR2Lab);
         cv::Mat mask(frameSuperpixelLabels == number);
 
         cv::Mat histL, histA, histB;
@@ -114,8 +117,8 @@ namespace tfg {
         int histSize[] = {nbins};
 
         // OpenCV converts the Lab values to range [0..255] in 8 bit images
-        // float lRange[] = {0, 101};
-        float lRange[] = {0, 256};
+        float lRange[] = {0, 101};
+        // float lRange[] = {0, 256};
         float abRange[] = {0, 256};
         // float abRange[] = {-128, 128};
         const float* rangesL[] = {lRange};
@@ -147,22 +150,27 @@ namespace tfg {
      * @param patchSize The size of the patch where to compute the HOG (the region of interest).
      */
     void Region::computeHOG(int ncells, int nbins, int patchSize) {
+        this->HOGDescriptor.release();
+
         cv::Mat patch = computeRegionOfInterest(patchSize);
         std::vector<float> descriptors;
-        int cellSize = static_cast<int>(patchSize / sqrt(ncells));
+        const int cellSize = static_cast<int>(patchSize / sqrt(ncells));
         cv::HOGDescriptor hogd(cv::Size(patchSize, patchSize), cv::Size(patchSize, patchSize), cv::Size(cellSize, cellSize), cv::Size(cellSize, cellSize), nbins);
         hogd.compute(patch, descriptors);
 
-        // std::cout << "Cell size: " << cellSize << std::endl;
-        // std::cout << "Patch size: " << patch.rows << " x " << patch.cols << std::endl;
-        // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << std::endl << std::endl;
+        // std::cout << "Cell size: " << cellSize << '\n';
+        // std::cout << "Patch size: " << patch.rows << " x " << patch.cols << '\n';
+        // std::cout << "HOG descriptor size: " << descriptors.size() << " / " << ncells * nbins << '\n' << '\n';
 
         // Make bins sum 1
         // cv::Mat unnormalizedDescriptor(1, ncells * nbins, CV_32FC1, &descriptors[0]);
         // cv::Scalar sumDesc = cv::sum(unnormalizedDescriptor);
         // this->HOGDescriptor = unnormalizedDescriptor / (sumDesc(0) + (sumDesc(0) == 0));
         
-        this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, &descriptors[0]);
+        // this->HOGDescriptor = cv::Mat(1, ncells * nbins, CV_32FC1, descriptors.data());
+        cv::Mat HOGMatrix(1, ncells * nbins, CV_32FC1, descriptors.data());
+        std::vector<cv::Mat> HOGVector = {HOGMatrix};
+        cv::hconcat(HOGVector, HOGDescriptor);
     }
 
     /**
@@ -208,16 +216,20 @@ namespace tfg {
      * is at (0.5, 0.5).
      */
     void Region::computeRelativeCoordinates() {
-        float centerX = (boundaries.x + boundaries.width)/2;
-        float centerY = (boundaries.y + boundaries.height)/2;
+        this->relativeCoordinatesDescriptor.release();
+
+        const float centerX = (boundaries.x + boundaries.width)/2;
+        const float centerY = (boundaries.y + boundaries.height)/2;
 
         // Normalize the position of the center of the superpixel with respect to the center of the image
         // That way, the center of the image is at (0.5, 0.5)
-        float relativeCenterX = centerX / image.cols;
-        float relativeCenterY = centerY / image.rows;
+        const float relativeCenterX = centerX / image.cols;
+        const float relativeCenterY = centerY / image.rows;
 
         std::vector<float> relativePosition = {relativeCenterX, relativeCenterY};
-        this->relativeCoordinatesDescriptor = cv::Mat(1, 2, CV_32FC1, &relativePosition[0]);
+        cv::Mat relativePositionMat(1, 2, CV_32FC1, relativePosition.data());
+        std::vector<cv::Mat> relativePositionVector = {relativePositionMat};
+        cv::hconcat(relativePositionVector, relativeCoordinatesDescriptor);
     }
 
     /**
@@ -225,7 +237,7 @@ namespace tfg {
      */
     cv::Mat Region::getDescriptor() const {
         std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor, HOGDescriptor, relativeCoordinatesDescriptor};
-        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, relativeCoordinatesDescriptor};
+        // std::vector<cv::Mat> descriptorVec = {colorHistBGRDescriptor, colorHistLABDescriptor};
         cv::Mat descriptorMat;
         cv::hconcat(descriptorVec, descriptorMat);
         return descriptorMat;

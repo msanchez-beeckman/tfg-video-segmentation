@@ -67,7 +67,7 @@ namespace tfg {
                 cv::Vec3f pred = (homographies[trackTable->firstFrameOfTrack(t) + i])*pointL;
                 pred(0) = pred(0)/pred(2); pred(1) = pred(1) / pred(2); pred(2) = 1.0f;
                 
-                float reprojectionError2 = cv::norm(pointR - pred, cv::NORM_L2SQR);
+                const float reprojectionError2 = cv::norm(pointR - pred, cv::NORM_L2SQR);
                 if(reprojectionError2 > maxReprojectionError2) maxReprojectionError2 = reprojectionError2;
             }
 
@@ -79,7 +79,7 @@ namespace tfg {
         cost = 0.0f;
         for(unsigned int i = 0; i < residuals2.size(); i++) {
             // Cost given by eq. (4) of Szeliski's paper
-            float trackCost = tau2 < residuals2[i] ? tau2/4 : (residuals2[i]/2)*(1-residuals2[i]/(2*tau2));
+            const float trackCost = tau2 < residuals2[i] ? tau2/4 : (residuals2[i]/2)*(1-residuals2[i]/(2*tau2));
             cost += trackCost;
         }
     }
@@ -121,8 +121,8 @@ namespace tfg {
             for(int j = 0; j < 3; j++) {
                 std::cout << homographies[n](i, j) << " ";
             }
-            std::cout << std::endl;
+            std::cout << '\n';
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }  
 }

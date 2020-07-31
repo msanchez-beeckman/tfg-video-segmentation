@@ -126,7 +126,7 @@ namespace tfg {
             const cv::Vec2f flowYDerivs = (1-originAlphaY)*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowFloor, pointColCeil)))
                                            + originAlphaY*((1-originAlphaX)*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColFloor)) + originAlphaX*(fwdFlowDerivY.at<cv::Vec2f>(pointRowCeil, pointColCeil)));
             const float sqrFlowGradientSum = cv::norm(flowXDerivs, cv::NORM_L2SQR) + cv::norm(flowYDerivs, cv::NORM_L2SQR);
-            if((sqrFlowGradientSum > 0.01f * fwdFlowNorm + 0.002f) && !trackMotionBoundaries) continue;
+            if((sqrFlowGradientSum > 0.1f * fwdFlowNorm + 0.002f) && !trackMotionBoundaries) continue;
 
             trackTable.addPointToTrack(destinationPoint, i);
         }

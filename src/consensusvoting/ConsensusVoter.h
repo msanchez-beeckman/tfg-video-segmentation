@@ -36,12 +36,13 @@ namespace tfg {
 
             bool initializeMotionSaliencyScores(std::ifstream &flowFile, float minimumPercentageValidity);
             void saveSaliencies(const std::string &folder, const std::string &fileName);
+            void mergeSaliencyWithImages(const std::vector<cv::Mat> &images, std::vector<cv::Mat> &mergedImages);
 
             void addRegionsByFrame(std::vector<tfg::Region> &spInFrame);
             void initializeVotesInFrame(int frame, const cv::Mat &pixelLabels, int numberOfSuperpixels);
             void computeTransitionMatrix(int F, int L, float sigma2);
             void reachConsensus(int iterations);
-            void getSegmentation(std::vector<cv::Mat> &masks, float threshold, bool removeSmallBlobs);
+            void getSegmentation(std::vector<cv::Mat> &masks, float threshold, float smallBlobsThreshold);
 
     };
 }

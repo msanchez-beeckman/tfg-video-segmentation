@@ -11,6 +11,9 @@ build/*
 bin/*
 results/*
 
+# Data
+data/*
+
 # External dependencies
 external/lib/*
 

@@ -16,12 +16,13 @@ int main(int argc, char* argv[]) {
         "{o outfolder        |     | Folder where the results of the track segmentation should be stored }"
         "{d minDomMotion     | 0.5 | Minimum ratio of frames with dominant motion to use motion saliency }"
         "{s spsize           | 16  | Superpixel size }"
+        "{O slico            |     | Use SLICO instead of SLIC for superpixel computation }"
         "{F frameWindow      | 15  | Number of frames for KDTree's window }"
         "{L likelyMatches    | 4   | Number of nearest neighbours for each frame in KDTree's window }"
         "{S sigma2           | 0.1 | Value used for the denominator when computing costs between nearest neighbours }"
         "{T iterations       | 50  | Number of iterations to reach consensus }"
         "{t threshold        | 0.3 | Minimum value of a vote for a superpixel to be considered foreground }"
-        "{r removeblobs      |     | Remove small non-connected blobs after segmentation }"
+        "{r removeBlobsTh    | 0.1 | Remove small non-connected blobs after segmentation }"
         "{@images            |     | Text file containing the path to the images to be segmented }"
         "{@flows             |     | Text file containing the path to the computed flows for each frame }"
         ;
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
     const float minDominantMotionRatio = parser.get<float>("minDomMotion");
     if(!consensusVoter.initializeMotionSaliencyScores(flowListFile, minDominantMotionRatio)) {
         flowListFile.close();
-        std::cout << "No dominant motion has been found in the video" << std::endl;
+        std::cout << "No dominant motion has been found in the video" << '\n';
         return EXIT_FAILURE;
     }
     flowListFile.close();
@@ -63,22 +64,33 @@ int main(int argc, char* argv[]) {
     const std::string fileNameCrudeSaliency = "crudeSaliency";
     consensusVoter.saveSaliencies(resultsFolder, fileNameCrudeSaliency);
     std::chrono::steady_clock::time_point flag2 = std::chrono::steady_clock::now();
-    std::cout << "Motion saliency scores computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Motion saliency scores computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag2-flag1).count())/1000000.0 << " seconds." << '\n';
 
+    std::vector<cv::Mat> imageMotionInfo;
+    consensusVoter.mergeSaliencyWithImages(images, imageMotionInfo);
+    const int SLICType = parser.has("slico") ? cv::ximgproc::SLICO : cv::ximgproc::SLIC;
+    std::vector<cv::Mat> spContourMasks(images.size());
+    
     // Extract superpixels for each frame, compute their descriptors, and initialize their votes from the saliency scores
     for(unsigned int f = 0; f < images.size(); f++) {
 
         std::chrono::steady_clock::time_point flag3 = std::chrono::steady_clock::now();
-        std::cout << "Frame " << f << ":" << std::endl;
-        cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, SUPERPIXEL_SIZE);
+        std::cout << "Frame " << f << ":" << '\n';
+        // cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(images[f], cv::ximgproc::SLICO, SUPERPIXEL_SIZE);
+        cv::Ptr<cv::ximgproc::SuperpixelSLIC> sp = cv::ximgproc::createSuperpixelSLIC(imageMotionInfo[f], SLICType, SUPERPIXEL_SIZE);
         sp->iterate();
+        // sp->enforceLabelConnectivity();
         std::chrono::steady_clock::time_point flag4 = std::chrono::steady_clock::now();
 
-        std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag4-flag3).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << "Superpixels computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag4-flag3).count())/1000000.0 << " seconds." << '\n';
 
         const int SUPERPIXELS_IN_FRAME = sp->getNumberOfSuperpixels();
         cv::Mat pixelLabels;
         sp->getLabels(pixelLabels);
+        cv::Mat spContourMask;
+        sp->getLabelContourMask(spContourMask);
+        spContourMasks[f] = 255 - spContourMask;
+
         std::vector<tfg::Region> regionsInFrame;
         regionsInFrame.reserve(SUPERPIXELS_IN_FRAME);
         for(int s = 0; s < SUPERPIXELS_IN_FRAME; s++) {
@@ -87,12 +99,12 @@ int main(int argc, char* argv[]) {
         }
         consensusVoter.addRegionsByFrame(regionsInFrame);
         std::chrono::steady_clock::time_point flag5 = std::chrono::steady_clock::now();
-        std::cout << "Region descriptors computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << std::endl;
+        std::cout << "Region descriptors computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag5-flag4).count())/1000000.0 << " seconds." << '\n';
 
         consensusVoter.initializeVotesInFrame(f, pixelLabels, SUPERPIXELS_IN_FRAME);
         std::chrono::steady_clock::time_point flag6 = std::chrono::steady_clock::now();
-        std::cout << "Initial region votes established in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << std::endl;
-        std::cout << std::endl;
+        std::cout << "Initial region votes established in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag6-flag5).count())/1000000.0 << " seconds." << '\n';
+        std::cout << '\n';
     }
 
     // Compute the transition matrix, and reach consensus iteratively multiplying the votes by it
@@ -102,20 +114,20 @@ int main(int argc, char* argv[]) {
     const float sigma2 = parser.get<float>("sigma2");
     consensusVoter.computeTransitionMatrix(F, L, sigma2);
     std::chrono::steady_clock::time_point flag8 = std::chrono::steady_clock::now();
-    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Transition matrix computed in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag8-flag7).count())/1000000.0 << " seconds." << '\n';
 
     const int T = parser.get<int>("T");
     consensusVoter.reachConsensus(T);
     std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
-    std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Reached consensus in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag9-flag8).count())/1000000.0 << " seconds." << '\n';
 
     // Get final segmentation from the final votes
     std::vector<cv::Mat> finalMasks;
     const float THRESHOLD = parser.get<float>("threshold");
-    const bool REMOVE_BLOBS = parser.has("removeblobs");
-    consensusVoter.getSegmentation(finalMasks, THRESHOLD, REMOVE_BLOBS);
+    const float REMOVE_BLOBS_TH = parser.get<float>("removeBlobsTh");
+    consensusVoter.getSegmentation(finalMasks, THRESHOLD, REMOVE_BLOBS_TH);
     std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
-    std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Created segmentation from votes in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << '\n';
 
     // TEST: reach consensus by batches, so that votes of small blobs are corrected before continuing with the iterations
     // std::chrono::steady_clock::time_point flag9 = std::chrono::steady_clock::now();
@@ -125,9 +137,11 @@ int main(int argc, char* argv[]) {
     //     consensusVoter.getSegmentation(finalMasks, THRESHOLD);
     // }
     // std::chrono::steady_clock::time_point flag10 = std::chrono::steady_clock::now();
-    // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << std::endl;
+    // std::cout << "Reached consensus and segmented video in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag10-flag9).count())/1000000.0 << " seconds." << '\n';
 
     // Save results
+    const std::string fileNameSpContour = "slic";
+    tfg::saveMaskedImages(images, spContourMasks, resultsFolder, fileNameSpContour);
     const std::string fileNameMask = "mask";
     tfg::saveMaskedImages(finalMasks, finalMasks, resultsFolder, fileNameMask);
     const std::string fileNameSegmentation = "foreground";
@@ -135,7 +149,7 @@ int main(int argc, char* argv[]) {
     const std::string fileNameOverlaidImages = "resultOverlaid";
     tfg::saveOverlaidImages(images, finalMasks, resultsFolder, fileNameOverlaidImages);
     std::chrono::steady_clock::time_point flag11 = std::chrono::steady_clock::now();
-    std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << std::endl;
+    std::cout << "Saved final results in " << (std::chrono::duration_cast<std::chrono::microseconds>(flag11-flag10).count())/1000000.0 << " seconds." << '\n';
 
     return EXIT_SUCCESS;
 }
