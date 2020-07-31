@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         "{o outfolder        |        | Folder where the results of the track segmentation should be stored }"
         "{w outweights       |        | Text file where the resulting weights should be stored }"
         "{b brox             |        | Parse tracks using Brox's codification }"
-        "{d minTrackDuration | 10     | Minimum track duration to take it into account }"
+        "{d minTrackDuration | 5      | Minimum track duration to take it into account }"
         "{i ransacIterations | 500    | Number of iterations for RANSAC }"
         "{e ransacEpsilon    | 2      | Tolerance used in RANSAC }"
         "{t tau2             | 16     | Square of the inlier threshold used to limit the cost of the residuals }"
