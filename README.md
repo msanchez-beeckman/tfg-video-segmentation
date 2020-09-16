@@ -9,12 +9,12 @@ The project uses the following external libraries:
 
 It is recommended to use the versions above, since all the testing has been performed using them.
 Earlier versions of Eigen may work, but the project uses some calls from OpenCV's API that do not exist in version 2 and have not been tested in version 3.
-As for maxflow v3.04, unzip the contents of the compressed folder so that the source code files are in **external/maxflow-v3.04/** (relative to the project's root folder).
+As for maxflow v3.04, unzip the contents of the compressed folder so that the source code files are in **external/lib/maxflow-v3.04/** (relative to the project's root folder).
 
 To compile the code, the following software is required:
 * CMake 3.5
 
-Additionally, some scripts are provided to automatize the different segmentation processes. These require:
+Additionally, some scripts are provided to automate the different segmentation processes. These require:
 * Bash (or some other shell implementation that can interpret the scripts)
 * Python
 * ImageMagick
@@ -77,7 +77,7 @@ In this project, only the densification from [3] has been implemented, which in 
    CVPR, 2016  
    DOI: 10.1109/CVPR.2016.87
 
-Within the project folders there are some video sequences included for testing, located inside **data/**, that belong to the DAVIS dataset. Every frame from each sequence is named with a five digit number, starting with 00000: this convention should be used for other video sequences, since the scripts that come with the project rely on it.
+Within the project folders there are some video sequences included for testing, located inside **data/**, that belong to the DAVIS dataset. Every frame from each sequence is named with a five digit number, starting with 00000. This convention should be used for other video sequences, since the scripts that come with the project rely on it. Also some scribbles are provided, which follow the same naming standard.
 
 ## Setup
 
@@ -155,7 +155,7 @@ The project includes the following scripts to automate the segmentation process:
     [user@pc tfg_video_segmentation]$ bash scripts/trackSegmentSzeliski.sh bear 31
     ```
 * densifyMaerki.sh  
-  Densifies the track segmentation using [7]. This script needs the resulting track weights from either Szeliski's or Naveen's track segmentation, which must be stored in **results/weights/**, so either one of them have to be called before this script.  
+  Densifies the track segmentation using [7]. This script needs the resulting track weights from either Szeliski's or Naveen's track segmentation, which must be stored in **results/weights/**, so either of them has to be called before this script. Keep in mind that only the last set of segmented trajectories will be densified.  
   The segmented images can be found in **results/bvsegmentation/&lt;datasetname&gt;/**  
   The script takes two parameters: the dataset name and the number of frames to segment, which has to be the same as the number used for the point tracking and track segmentation.  
   An optional flag -M can be used if the track weights have been obtained with Naveen's method, to segment multiple labels separately instead of doing a simple foreground/background division. A -b flag can (and must) also be used if the track file format is that of Brox's original executable. Calling the script without arguments gives more information about other options.  

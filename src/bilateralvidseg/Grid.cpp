@@ -55,14 +55,14 @@ namespace tfg {
         // at a distance of at most texturelessRadius pixels. Otherwise, the region is considered textureless.
         for(unsigned int f = 0; f < images.size(); f++) {
             cv::Mat texture(images[f].rows, images[f].cols, CV_8UC1);
-            texture.setTo(255);
-            // texture.setTo(0);
-            // for(int r = 0; r < images[f].rows; r += 8) {
-            //     cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
-            //     for(int c = 0; c < images[f].cols; c += 8) {
-            //         rowPtr[c] = 255;
-            //     }
-            // }
+            // texture.setTo(255);
+            texture.setTo(0);
+            for(int r = 0; r < images[f].rows; r += 8) {
+                cv::Vec3b* rowPtr = images[f].ptr<cv::Vec3b>(r);
+                for(int c = 0; c < images[f].cols; c += 8) {
+                    rowPtr[c] = 255;
+                }
+            }
             texturelessIndicators.push_back(texture);
         }
 
