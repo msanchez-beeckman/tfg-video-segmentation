@@ -13,6 +13,7 @@ results/*
 
 # Data
 data/*
+!data/bmx-bumps/
 
 # External dependencies
 external/lib/*
