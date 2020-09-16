@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
                 labelMasks[f].setTo(cv::Scalar(l), binaryMasks[f]);
             }
         }
-        tfg::saveOverlaidMultilabeledImages(images, labelMasks, numberOfLastLabel + 1, resultsFolder, fileNameOverlaidImages, 0.7f, firstNameIndex);
+        tfg::saveOverlaidMultilabeledImages(images, labelMasks, numberOfLastLabel + 1, resultsFolder, fileNameOverlaidImages, 0.4f, firstNameIndex);
     } else {
         tfg::saveOverlaidImages(images, foregroundMasks, resultsFolder, fileNameOverlaidImages, 0.4f, firstNameIndex);
     }
