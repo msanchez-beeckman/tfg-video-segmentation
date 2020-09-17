@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         "{w outweights       |     | Text file where the resulting weights should be stored }"
         "{b brox             |     | Parse tracks using Brox's codification }"
         "{D davis            |     | Use Davis' ground truth as seeds }"
-        "{d minTrackDuration | 10  | Minimum track duration to take it into account }"
+        "{d minTrackDuration | 5   | Minimum track duration to take it into account }"
         "{l lambda           | 0.1 | Scale parameter for affinity computations }"
         "{F firstNameIndex   | 0   | The first index that should be appended at the end of the images' names }"
         "{@images            |     | Text file containing the path to the images to be segmented }"

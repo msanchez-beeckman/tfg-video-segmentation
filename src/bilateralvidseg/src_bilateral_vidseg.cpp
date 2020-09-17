@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
         "{h help usage ?     |       | Print usage }"
         "{o outfolder        |       | Folder where the results of the segmentation should be stored }"
         "{b brox             |       | Parse tracks using Brox's codification }"
-        "{d minTrackDuration | 10    | Minimum track duration to take it into account }"
+        "{d minTrackDuration | 5     | Minimum track duration to take it into account }"
         "{r tradius          | 32    | Minimum distance from region to tracks for it to be considered textureless }"
         "{g tbgbias          | 0.05  | Synthetic background observation for regions without reliable tracks }"
         "{u lambdau          | 100   | Unary cost weight for energy minimization }"
