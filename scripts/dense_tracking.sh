@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-# The following variables should be adjusted to the absolute path of the project's directory,
-# to the directory containing the data, and to the directory containing the tracks file, respectively.
-TFGLOCATION="/home/marco/Projects/tfg_video_segmentation"
+TFGLOCATION="$(dirname $0)/.."
 DATALOCATION="${TFGLOCATION}/data"
 FLOWLOCATION="${TFGLOCATION}/results/flows"
 
