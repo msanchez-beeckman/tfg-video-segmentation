@@ -40,4 +40,4 @@ python ${TFGLOCATION}/scripts/list_flows.py ${FLOWLOCATION}/${DATASETNAME}/ ${fl
 python ${TFGLOCATION}/scripts/list_flows.py ${FLOWLOCATION}/${DATASETNAME}/ ${flowFormat} 0 ${FRAMELIMIT} ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt True
 
 mkdir -p ${TFGLOCATION}/results/tracks/${DATASETNAME}
-${TFGLOCATION}/bin/continueTracks ${BFLAG} ${SFLAG} ${cFLAG} ${dFLAG} ${fFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/tracks/${DATASETNAME}/ --trackFilePath=${TFGLOCATION}/results/tracks/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}.txt ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt
+${TFGLOCATION}/bin/continue_tracks ${BFLAG} ${SFLAG} ${cFLAG} ${dFLAG} ${fFLAG} ${rFLAG} --outfolder=${TFGLOCATION}/results/tracks/${DATASETNAME}/ --trackFilePath=${TFGLOCATION}/results/tracks/${DATASETNAME}/${DATASETNAME}${FRAMELIMIT}.txt ${DATALOCATION}/${DATASETNAME}/images.txt ${FLOWLOCATION}/${DATASETNAME}/flows.txt ${FLOWLOCATION}/${DATASETNAME}/flowsr.txt
