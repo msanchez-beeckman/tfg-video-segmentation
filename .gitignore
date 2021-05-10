@@ -28,3 +28,4 @@ external/lib/*
 # Editor/IDE specific
 .vscode
 .idea
+.cache
