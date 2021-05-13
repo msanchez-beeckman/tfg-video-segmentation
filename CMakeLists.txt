@@ -8,6 +8,7 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/utils)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/flow)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/tracks)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/bgmm)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/random-walking)

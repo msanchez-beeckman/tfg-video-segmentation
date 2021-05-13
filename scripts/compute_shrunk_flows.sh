@@ -5,14 +5,13 @@ DATALOCATION="${TFGLOCATION}/data"
 
 usage () { echo "Usage: $0 [-b] [-r WIDTHxHEIGHT] datasetName frameLimit surroundFrames"; }
 
-LDOF=0
-IMAGEFORMAT="jpg"
 NEWSIZE="854x480"
+SPEED=0
 
-while getopts :br: opt; do
+while getopts :r:s: opt; do
     case $opt in
-        b) IMAGEFORMAT="ppm"; LDOF=1;;
-        R) NEWSIZE="$OPTARG";;
+        r) NEWSIZE="$OPTARG";;
+        s) SPEED="$OPTARG";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -32,7 +31,7 @@ echo "${FRAMELIMIT}" > ${FLOWFOLDER}/surroundingFlows.txt
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do
     IMAGE=$(printf "%05d" $i)
-    convert ${DATALOCATION}/${DATASETNAME}/${IMAGE}.jpg -resize ${NEWSIZE}\> ${FLOWFOLDER}/shrink_${IMAGE}.${IMAGEFORMAT}
+    convert ${DATALOCATION}/${DATASETNAME}/${IMAGE}.jpg -resize ${NEWSIZE}\> ${FLOWFOLDER}/shrink_${IMAGE}.jpg
 done
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do
@@ -47,12 +46,7 @@ for (( i=0; i<${FRAMELIMIT}; i++ )); do
         TARGETIMAGE=$(printf "%05d" $j)
         echo "          using ${TARGETIMAGE} as destination"
 
-        if [ $LDOF -eq 1 ]; then
-            ${TFGLOCATION}/external/src_flow_ldof ${FLOWFOLDER}/shrink_${CURRENTIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/shrink_${TARGETIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}.flo
-            ${TFGLOCATION}/external/src_flow_read_flo ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}.flo ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff
-        else
-            ${TFGLOCATION}/external/src_flow_tv_l1 -l 0.1 ${FLOWFOLDER}/shrink_${CURRENTIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/shrink_${TARGETIMAGE}.${IMAGEFORMAT} ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff ${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff;
-        fi
+        ${TFGLOCATION}/bin/optical_flow_dis --speed=${SPEED} "${FLOWFOLDER}/shrink_${CURRENTIMAGE}.jpg" "${FLOWFOLDER}/shrink_${TARGETIMAGE}.jpg" "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff" "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff"
 
         echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}u.tiff" >> ${FLOWFOLDER}/surroundingFlows.txt
         echo "${FLOWFOLDER}/${CURRENTIMAGE}to${TARGETIMAGE}v.tiff" >> ${FLOWFOLDER}/surroundingFlows.txt
@@ -61,5 +55,5 @@ done
 
 for (( i=0; i<${FRAMELIMIT}; i++ )); do
     IMAGE=$(printf "%05d" $i)
-    rm ${FLOWFOLDER}/shrink_${IMAGE}.${IMAGEFORMAT}
+    rm ${FLOWFOLDER}/shrink_${IMAGE}.jpg
 done

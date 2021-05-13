@@ -39,40 +39,31 @@ The project currently contains an implementation for three different video segme
    BMVC, 2017.  
    DOI: 10.5244/C.31.96
 
-[1] Requires the computation of optical flows between images of the dataset. Inside the **external/** folder there are three Linux executables to do so: **src_flow_tv_l1** outputs the flows in two .tiff files (horizontal and vertical flow), and is much faster than **src_flow_ldof**, which outputs the flows in a single .flo file.
-Since the project's NLC implementation requires two .tiff files, **src_flow_read_flo** is provided to transform a .flo file into two .tiff files. The two methods to compute the optical flow are described in the following references:
+Method [1] needs the computation of optical flows between pairs of frames of a dataset, while [2] and [3] require tracking points for the duration of the whole video. An executable to calculate and store optical flows is created upon compilation of the project, wrapping OpenCV's implementation of the method described in the following reference:
 
-4. TV_L1:  
-   C. Zach, T. Pock, and H. Bischof  
-   A duality based approach for realtime TV-L1 optical flow,  
-   Pattern Recognition (Proc. of the 29th DAGM-Symposium),  
-   Lecture Notes in Computer Science. Springer, 2007.  
-   DOI: 10.1007/978-3-540-74936-3_22
+4. Till Kroeger, Radu Timofte, Dengxin Dai, and Luc Van Gool 
+   Fast Optical Flow using Dense Inverse Search
+   ECCV, 2016.
+   DOI: 10.1007/978-3-319-46493-0_29
 
-5. LDOF:  
-   T. Brox, C. Bregler, and J. Malik  
-   Large displacement optical flow  
-   CVPR, 2009.  
-   DOI: 10.1109/CVPR.2009.5206697
+An implementation of a dense point tracking strategy is also included in this project, so as to compute trajectories and use them in the segmentation approaches that need them.
+It is important to note that point tracking requires to have previously computed the optical flows of a sequence. The following paper contains all the details regarding the tracking method:
 
-[2] and [3] use trajectories to perform the segmentations, and require files containing tracked points. An implementation of a dense point tracking strategy is also included inside the project, so as to compute these trajectories and use them in the segmentation approaches that need them.
-It is important to note that point tracking requires to have previously computed the optical flows of a sequence. The following reference contains all the details regarding the tracking method.
-
-6. N. Sundaram, T. Brox, and K. Keutzer  
+5. N. Sundaram, T. Brox, and K. Keutzer  
    Dense point trajectories by GPU-accelerated large displacement optical flow,  
    ECCV, 2010.  
    DOI: 10.1007/978-3-642-15549-9_32
 
-By default, track files are searched in **/results/tracks/**, are assumed to have been computed using **dense_tracking.sh**, and must have the same name as the dataset they are referencing, followed by the number of frames they encompass.
+By default, track files are searched for in **results/tracks/**, are assumed to have been computed using **dense_tracking.sh**, and must have the same name as the dataset they are referencing, followed by the number of frames they encompass.
 A second format for the track file is accepted, consisting in the output .dat file of Sundaram, Brox, and Keutzer's original executable for GPU Accelerated Point Tracking (which can be found in <https://lmb.informatik.uni-freiburg.de/resources/software.php>). If used, its name must be datasetnameNumberBrox.dat (e.g. *bearBrox82.dat*).
 
 Moreover, the video segmentation defined by [2] is semi-supervised, so seeds (usually user scribbles) are needed for it to work. Those should be placed in **data/&lt;datasetname&gt;/seeds/**, with each seed named after the image the seed is for (e.g. *data/bear/seeds/00000.png*).
 Another available option is to use annotations displaying the ground truth for some frames using the DAVIS' dataset format, in which case the corresponding flags must be set when calling the executables/scripts.
 
-[2] and [3] divide the segmentation process in two phases: the segmentation of the tracked points, and a densification phase after which every pixel ends up segmented. Although both papers perform the densification differently, the strategy from one paper can be used for the other one.
+Methods [2] and [3] divide the segmentation process in two phases: the segmentation of the tracked points, and a densification phase after which every pixel ends up segmented. Although both papers perform the densification differently, the strategy from one paper can be used for the other one.
 In this project, only the densification from [3] has been implemented, which in turn adapts the bilateral grid approach found in the following paper to use it with point trajectories:
 
-7. N. Maerki, F. Perazzi, O. Wang, and A. Sorkine-Hornung  
+6. N. Maerki, F. Perazzi, O. Wang, and A. Sorkine-Hornung  
    Bilateral space video segmentation  
    CVPR, 2016  
    DOI: 10.1109/CVPR.2016.87
