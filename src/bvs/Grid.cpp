@@ -2,13 +2,9 @@
 #include <cmath>
 #include <algorithm>
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <boost/property_map/property_map.hpp>
-#include <boost/graph/boykov_kolmogorov_max_flow.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <opencv4/opencv2/imgproc/detail/gcgraph.hpp>
 
-#include "maxflow-v3.04/graph.h"
 #include "ImageUtils.h"
 #include "Grid.h"
 
@@ -218,20 +214,6 @@ namespace tfg {
 
     void Grid::graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W) {
 
-        using Traits = boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
-        struct VertexProps {
-            std::size_t index;
-            boost::default_color_type color;
-            long distance;
-            Traits::edge_descriptor predecessor;
-        };
-        struct EdgeProps {
-            double capacity;
-            double residual_capacity;
-            Traits::edge_descriptor reverse;
-        };
-        using BoostGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProps, EdgeProps>;
-
         cv::SparseMat graphNodes(DIMENSIONS, data.size(), CV_32SC1);
         int n = 0;
 
@@ -241,12 +223,9 @@ namespace tfg {
         }
 
         const int NUMBER_OF_NODES = data.nzcount();
-        Graph<float, float, float> graph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
-        graph.add_node(NUMBER_OF_NODES);
 
-        BoostGraph boostGraph(NUMBER_OF_NODES);
-        Traits::vertex_descriptor source = boost::add_vertex(boostGraph);
-        Traits::vertex_descriptor sink = boost::add_vertex(boostGraph);
+        cv::detail::GCGraph<double> cvGraph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
+        for (int i = 0; i < NUMBER_OF_NODES; ++i) cvGraph.addVtx();
 
         for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
@@ -256,21 +235,7 @@ namespace tfg {
             const float bgCost = nodeValue(1) * lambda_u;
             const float nodeMass = nodeValue(2);
             const int nodeNumber = graphNodes.value<int>(node->idx);
-            graph.add_tweights(nodeNumber, fgCost, bgCost);
-
-            Traits::edge_descriptor edgeSource;
-            Traits::edge_descriptor edgeSourceBw;
-            Traits::edge_descriptor edgeSink;
-            Traits::edge_descriptor edgeSinkBw;
-            bool inserted;
-            boost::tie(edgeSource, inserted) = boost::add_edge(source, boost::vertex(nodeNumber, boostGraph), {fgCost, 0}, boostGraph);
-            boost::tie(edgeSourceBw, inserted) = boost::add_edge(boost::vertex(nodeNumber, boostGraph), source, {0, 0}, boostGraph);
-            boost::tie(edgeSink, inserted) = boost::add_edge(boost::vertex(nodeNumber, boostGraph), sink, {bgCost, 0}, boostGraph);
-            boost::tie(edgeSinkBw, inserted) = boost::add_edge(sink, boost::vertex(nodeNumber, boostGraph), {0, 0}, boostGraph);
-            boostGraph[edgeSource].reverse = edgeSourceBw;
-            boostGraph[edgeSourceBw].reverse = edgeSource;
-            boostGraph[edgeSink].reverse = edgeSinkBw;
-            boostGraph[edgeSinkBw].reverse = edgeSink;
+            cvGraph.addTermWeights(nodeNumber, fgCost, bgCost);
 
             for(int d = 0; d < DIMENSIONS; d++) {
                 for(int dir = -1; dir <= 1; dir += 2) {
@@ -286,44 +251,24 @@ namespace tfg {
                     float edgeCost = lambda_s * nodeMass * neighbourMass * std::exp(-0.5f * W[d]);
                     edgeCost = std::max(edgeCost, minEdgeCost);
                     const int neighbourNodeNumber = graphNodes.value<int>(neighbourIndex.data());
-                    graph.add_edge(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);
-
-                    Traits::edge_descriptor edgeFw;
-                    Traits::edge_descriptor edgeBw;
-                    boost::tie(edgeFw, inserted) = boost::add_edge(boost::vertex(nodeNumber, boostGraph), boost::vertex(neighbourNodeNumber, boostGraph), {edgeCost, 0}, boostGraph);
-                    boost::tie(edgeBw, inserted) = boost::add_edge(boost::vertex(neighbourNodeNumber, boostGraph), boost::vertex(nodeNumber, boostGraph), {edgeCost, 0}, boostGraph);
-                    boostGraph[edgeFw].reverse = edgeBw;
-                    boostGraph[edgeBw].reverse = edgeFw;
+                    cvGraph.addEdges(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);
                 }
             }
         }
 
-        std::cout << "Built graph with " << graph.get_node_num() << " nodes and " << graph.get_arc_num() << " edges" << '\n';
-        const float cost = graph.maxflow();
+        const double cost = cvGraph.maxFlow();
         std::cout << "Solved max flow with cost " << cost << '\n';
-
-        std::cout << '\n' << "Built Boost graph with " << boost::num_vertices(boostGraph) << " nodes and " << boost::num_edges(boostGraph) << " edges" << '\n';
-        const double boost_cost = boost::boykov_kolmogorov_max_flow(boostGraph,
-                                                                    boost::get(&EdgeProps::capacity, boostGraph),
-                                                                    boost::get(&EdgeProps::residual_capacity, boostGraph),
-                                                                    boost::get(&EdgeProps::reverse, boostGraph),
-                                                                    boost::get(&VertexProps::predecessor, boostGraph),
-                                                                    boost::get(&VertexProps::color, boostGraph),
-                                                                    boost::get(&VertexProps::distance, boostGraph),
-                                                                    boost::get(&VertexProps::index, boostGraph),
-                                                                    source, sink);
-        std::cout << "Solved BOOST max flow with cost " << boost_cost << '\n';
 
         int count = 0;
         for(cv::SparseMatConstIterator_<int> it = graphNodes.begin<int>(); it != graphNodes.end<int>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
 
             const int nodeNumber = it.value<int>();
-            bool nodeIsBackground = graph.what_segment(nodeNumber) == Graph<float, float, float>::SINK;
-            if(!nodeIsBackground) count++;
+            const bool nodeIsForeground = cvGraph.inSourceSegment(nodeNumber);
+            if(nodeIsForeground) count++;
 
             Value& nodeValue = data.ref<Value>(node->idx);
-            nodeValue(3) = nodeIsBackground ? 0.0f : 1.0f;
+            nodeValue(3) = nodeIsForeground ? 1.0f : 0.0f;
         }
         std::cout << count << " nodes are foreground" << '\n';
     }
