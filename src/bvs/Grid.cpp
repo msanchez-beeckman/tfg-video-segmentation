@@ -1,8 +1,10 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+
 #include <opencv4/opencv2/imgproc.hpp>
-#include "maxflow-v3.04/graph.h"
+#include <opencv4/opencv2/imgproc/detail/gcgraph.hpp>
+
 #include "ImageUtils.h"
 #include "Grid.h"
 
@@ -211,6 +213,7 @@ namespace tfg {
     }
 
     void Grid::graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W) {
+
         cv::SparseMat graphNodes(DIMENSIONS, data.size(), CV_32SC1);
         int n = 0;
 
@@ -220,8 +223,10 @@ namespace tfg {
         }
 
         const int NUMBER_OF_NODES = data.nzcount();
-        Graph<float, float, float> graph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
-        graph.add_node(NUMBER_OF_NODES);
+
+        cv::detail::GCGraph<double> cvGraph(NUMBER_OF_NODES, NUMBER_OF_NODES * std::pow(2, DIMENSIONS));
+        for (int i = 0; i < NUMBER_OF_NODES; ++i) cvGraph.addVtx();
+
         for(cv::SparseMatConstIterator_<Value> it = data.begin<Value>(); it != data.end<Value>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
 
@@ -230,7 +235,7 @@ namespace tfg {
             const float bgCost = nodeValue(1) * lambda_u;
             const float nodeMass = nodeValue(2);
             const int nodeNumber = graphNodes.value<int>(node->idx);
-            graph.add_tweights(nodeNumber, fgCost, bgCost);
+            cvGraph.addTermWeights(nodeNumber, fgCost, bgCost);
 
             for(int d = 0; d < DIMENSIONS; d++) {
                 for(int dir = -1; dir <= 1; dir += 2) {
@@ -246,24 +251,24 @@ namespace tfg {
                     float edgeCost = lambda_s * nodeMass * neighbourMass * std::exp(-0.5f * W[d]);
                     edgeCost = std::max(edgeCost, minEdgeCost);
                     const int neighbourNodeNumber = graphNodes.value<int>(neighbourIndex.data());
-                    graph.add_edge(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);
+                    cvGraph.addEdges(nodeNumber, neighbourNodeNumber, edgeCost, edgeCost);
                 }
             }
         }
 
-        std::cout << "Built graph with " << graph.get_node_num() << " nodes and " << graph.get_arc_num() << " edges" << '\n';
-        const float cost = graph.maxflow();
+        const double cost = cvGraph.maxFlow();
         std::cout << "Solved max flow with cost " << cost << '\n';
+
         int count = 0;
         for(cv::SparseMatConstIterator_<int> it = graphNodes.begin<int>(); it != graphNodes.end<int>(); ++it) {
             const cv::SparseMat::Node* node = it.node();
 
             const int nodeNumber = it.value<int>();
-            bool nodeIsBackground = graph.what_segment(nodeNumber) == Graph<float, float, float>::SINK;
-            if(!nodeIsBackground) count++;
+            const bool nodeIsForeground = cvGraph.inSourceSegment(nodeNumber);
+            if(nodeIsForeground) count++;
 
             Value& nodeValue = data.ref<Value>(node->idx);
-            nodeValue(3) = nodeIsBackground ? 0.0f : 1.0f;
+            nodeValue(3) = nodeIsForeground ? 1.0f : 0.0f;
         }
         std::cout << count << " nodes are foreground" << '\n';
     }
