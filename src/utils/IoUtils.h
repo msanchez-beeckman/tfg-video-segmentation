@@ -8,11 +8,12 @@
 
 namespace tfg {
 
-    void splitString(const std::string &line, std::vector<std::string> &words, char delimiter=' ');
-    void readWeights(std::ifstream &weightFile, std::vector<float> &weights);
-    void writeWeights(const std::vector<float> &weights, std::ofstream &weightFile);
-    void readWeightsMultilabel(std::ifstream &weightFile, std::vector<std::vector<float>> &weights);
-    void groupLabelWeights(const std::vector<std::vector<float>> &weights, std::vector<float> &groupedWeights, int foregroundLabel);
-}
+void splitString(const std::string &line, std::vector<std::string> &words, char delimiter=' ');
+void readWeights(std::ifstream &weightFile, std::vector<float> &weights);
+void writeWeights(const std::vector<float> &weights, std::ofstream &weightFile);
+void readWeightsMultilabel(std::ifstream &weightFile, std::vector<std::vector<float>> &weights);
+void groupLabelWeights(const std::vector<std::vector<float>> &weights, std::vector<float> &groupedWeights, int foregroundLabel);
 
-#endif //TFG_VIDEO_SEGMENTATION_IOUTILS_H
+} // namespace tfg
+
+#endif // TFG_VIDEO_SEGMENTATION_IOUTILS_H

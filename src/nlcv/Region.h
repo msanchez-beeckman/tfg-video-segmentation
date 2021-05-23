@@ -1,53 +1,57 @@
-
 #ifndef TFG_VIDEO_SEGMENTATION_REGION_H
 #define TFG_VIDEO_SEGMENTATION_REGION_H
 
-#include <opencv4/opencv2/core.hpp>
+#include <iostream>
+
+#include <opencv2/core.hpp>
+
 
 namespace tfg {
-    class Region {
-        private:
-            int number;
-            int frame;
-            cv::Mat image;
-            cv::Mat frameSuperpixelLabels;
-            cv::Rect boundaries;
 
-            cv::Mat colorHistBGRDescriptor;
-            cv::Mat colorHistLABDescriptor;
-            cv::Mat HOGDescriptor;
-            cv::Mat relativeCoordinatesDescriptor;
+class Region {
+private:
+    int number;
+    int frame;
+    cv::Mat image;
+    cv::Mat frameSuperpixelLabels;
+    cv::Rect boundaries;
 
-            void computeSuperpixelBoundaries();
-            void computeColorHistogramBGR(int nbins);
-            void computeColorHistogramLAB(int nbins);
-            void computeHOG(int ncells, int nbins, int patchSize);
-            cv::Mat computeRegionOfInterest(int patchSize);
-            void computeRelativeCoordinates();
+    cv::Mat colorHistBGRDescriptor;
+    cv::Mat colorHistLABDescriptor;
+    cv::Mat HOGDescriptor;
+    cv::Mat relativeCoordinatesDescriptor;
 
-        public:
-            Region();
-            Region(int number, int frame, const cv::Mat &image, const cv::Mat &frameSuperpixelLabels);
-            ~Region();
+    void computeSuperpixelBoundaries();
+    void computeColorHistogramBGR(int nbins);
+    void computeColorHistogramLAB(int nbins);
+    void computeHOG(int ncells, int nbins, int patchSize);
+    cv::Mat computeRegionOfInterest(int patchSize);
+    void computeRelativeCoordinates();
 
-            cv::Mat getDescriptor() const;
+public:
+    Region();
+    Region(int number, int frame, const cv::Mat &image, const cv::Mat &frameSuperpixelLabels);
+    ~Region();
 
-            inline int getNumber() const {
-                return number;
-            };
+    cv::Mat getDescriptor() const;
 
-            inline unsigned int getFrame() const {
-                return frame;
-            };
-
-            inline cv::Mat getFrameLabels() const {
-                return frameSuperpixelLabels;
-            };
-
-            inline void printCoordDescriptor() const {
-                std::cout << relativeCoordinatesDescriptor << '\n';
-            };
+    inline int getNumber() const {
+        return number;
     };
-}
 
-#endif //TFG_VIDEO_SEGMENTATION_REGION_H
+    inline unsigned int getFrame() const {
+        return frame;
+    };
+
+    inline cv::Mat getFrameLabels() const {
+        return frameSuperpixelLabels;
+    };
+
+    inline void printCoordDescriptor() const {
+        std::cout << relativeCoordinatesDescriptor << '\n';
+    };
+};
+
+} // namespace tfg
+
+#endif // TFG_VIDEO_SEGMENTATION_REGION_H

@@ -1,14 +1,17 @@
-#include <iostream>
-#include <fstream>
-#include <opencv4/opencv2/core.hpp>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <algorithm>
-#include "TrackTable.h"
+#include <fstream>
+#include <iostream>
+
+#include <opencv2/core.hpp>
+
 #include "Homography.h"
 #include "ImageUtils.h"
 #include "IoUtils.h"
 #include "MotionModel.h"
+#include "TrackTable.h"
+
 
 int main(int argc, char* argv[]) {
 

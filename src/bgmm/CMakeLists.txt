@@ -7,6 +7,7 @@ set(BGMM_LIBS
 add_library(${PROJECT_NAME} ${BGMM_LIBS})
 target_link_libraries(${PROJECT_NAME}
         tfg::tracks
+        Eigen3::Eigen
         ${OpenCV_LIBRARIES})
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${PROJECT_SOURCE_DIR})

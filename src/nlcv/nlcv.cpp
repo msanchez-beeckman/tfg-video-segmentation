@@ -1,12 +1,15 @@
-#include <iostream>
-#include <fstream>
 #include <algorithm>
 #include <chrono>
-#include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/ximgproc/slic.hpp>
-#include "Region.h"
+#include <fstream>
+#include <iostream>
+
+#include <opencv2/core.hpp>
+#include <opencv2/ximgproc/slic.hpp>
+
 #include "ConsensusVoter.h"
 #include "ImageUtils.h"
+#include "Region.h"
+
 
 int main(int argc, char* argv[]) {
 

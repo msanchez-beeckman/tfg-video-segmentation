@@ -1,6 +1,8 @@
-#include <iostream>
 #include <fstream>
-#include <opencv4/opencv2/core.hpp>
+#include <iostream>
+
+#include <opencv2/core.hpp>
+
 #include "ImageUtils.h"
 #include "IoUtils.h"
 #include "Tracking.h"

@@ -1,12 +1,15 @@
-#include <iostream>
-#include <fstream>
 #include <chrono>
-#include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/imgcodecs.hpp>
+#include <fstream>
+#include <iostream>
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+
+#include "Grid.h"
 #include "ImageUtils.h"
 #include "IoUtils.h"
 #include "TrackTable.h"
-#include "Grid.h"
+
 
 int main(int argc, char* argv[]) {
 

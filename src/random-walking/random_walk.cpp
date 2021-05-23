@@ -1,8 +1,10 @@
-#include <iostream>
-#include <fstream>
-#include <opencv4/opencv2/core.hpp>
-#include <unordered_map>
 #include <chrono>
+#include <fstream>
+#include <iostream>
+#include <unordered_map>
+
+#include <opencv2/core.hpp>
+
 #include "TrackTable.h"
 #include "RandomWalker.h"
 #include "ImageUtils.h"

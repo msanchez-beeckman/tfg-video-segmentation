@@ -5,7 +5,8 @@ set(RANDOMWALKER_LIBS
 
 add_library(${PROJECT_NAME} ${RANDOMWALKER_LIBS})
 target_link_libraries(${PROJECT_NAME}
-        tfg::tracks)
+        tfg::tracks
+        Eigen3::Eigen)
 target_include_directories(${PROJECT_NAME}
         PUBLIC ${PROJECT_SOURCE_DIR})
 add_library(tfg::rdwalking ALIAS ${PROJECT_NAME})
