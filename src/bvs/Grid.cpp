@@ -15,6 +15,12 @@ namespace tfg {
 Grid::Grid() {}
 Grid::~Grid() {}
 
+/**
+ * Create a sparse 6-dimensional bilateral grid where the pixels of a sequence of color images will be lifted.
+ * @param scales A 6-element array containing the scaling for each dimension of the grid.
+ * @param images A sequence of images.
+ * @param masks A sequence of masks for the images.
+ */
 Grid::Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &images, const std::vector<cv::Mat> &masks) {
     this->scales = scales;
     this->images = images;
@@ -38,6 +44,9 @@ Grid::Grid(const std::array<float, 6> &scales, const std::vector<cv::Mat> &image
     data.create(DIMENSIONS, sizes.data(), CV_32FC4);
 }
 
+/**
+ * Distribute a point of mass among the grid cells corresponding to each image pixel.
+ */
 void Grid::splatMass() {
     const Value value(0.0f, 0.0f, 1.0f, 0.0f);
     for(unsigned int f = 0; f < images.size(); f++) {
@@ -52,6 +61,15 @@ void Grid::splatMass() {
     }
 }
 
+/**
+ * Distribute the evidence of each grid cell belonging to the foreground or background.
+ * The evidence is determined by the weights of the sequence's tracked points.
+ * Pixels that do not pertain to a trajectory do not contribute any evidence (but they do distribute some mass using Grid::splatMass).
+ * @param trackTable The table containing information about the point trajectories.
+ * @param weights The weights of each track.
+ * @param texturelessRadius The minimum pixel distance to the nearest track from which a region can be considered textureless, making it likely to be background.
+ * @param bgBias A bias (in favour of a background label) to add to textureless regions to compensate for the lack of evidence.
+ */
 void Grid::splatTrackWeights(const tfg::TrackTable &trackTable, const std::vector<float> &weights, int texturelessRadius, float bgBias) {
     std::vector<cv::Mat> texturelessIndicators;
     texturelessIndicators.reserve(images.size());
@@ -111,6 +129,11 @@ void Grid::splatTrackWeights(const tfg::TrackTable &trackTable, const std::vecto
     }
 }
 
+/**
+ * Splat some value to the neighbours of a grid cell using adjacent interpolation.
+ * @param index The lifted cell index.
+ * @param value The value to splat.
+ */
 void Grid::splatValue(const Index &index, const Value &value) {
     std::vector<Index> neighbours;
     std::vector<float> weights;
@@ -121,6 +144,11 @@ void Grid::splatValue(const Index &index, const Value &value) {
     }
 }
 
+/**
+ * Slice the foreground/background labels out of the bilateral grid.
+ * @param outMasks The segmentation masks for the image sequence.
+ * @param threshold The foreground evidence needed for a frame to be considered foreground.
+ */
 void Grid::slice(std::vector<cv::Mat> &outMasks, float threshold) {
     outMasks.clear();
     outMasks.reserve(images.size());
@@ -143,6 +171,11 @@ void Grid::slice(std::vector<cv::Mat> &outMasks, float threshold) {
     }
 }
 
+/**
+ * Slice the value out of a grid cell, in proportion to the adjacent interpolation used for splatting.
+ * @param index The lifted cell index.
+ * @param value The sliced value.
+ */
 void Grid::sliceIndex(const Index &index, Value &value) {
     std::vector<Index> neighbours;
     std::vector<float> weights;
@@ -155,6 +188,12 @@ void Grid::sliceIndex(const Index &index, Value &value) {
     }
 }
 
+/**
+ * Get the neighouring indices of a grid cell along with their weights relative to their distance when using adjacent interpolation.
+ * @param index The lifted cell index.
+ * @param neighbours The neighbouring indices.
+ * @param weights The interpolation weights for each neighbour.
+ */
 void Grid::getNeighbours(const Index &index, std::vector<Index> &neighbours, std::vector<float> &weights) const {
     std::array<float, 6> scaledIndex;
     scaleIndex(index, scaledIndex);
@@ -199,6 +238,11 @@ void Grid::getNeighbours(const Index &index, std::vector<Index> &neighbours, std
 
 }
 
+/**
+ * Scale the value of an index according to each dimension's scaling parameters.
+ * @param index The lifted cell index.
+ * @param scaledIndex The scaled index.
+ */
 void Grid::scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) const {
     for(int d = 0; d < DIMENSIONS; d++) {
         const float scaledComponent = index[d] * this->scales[d];
@@ -206,6 +250,12 @@ void Grid::scaleIndex(const Index &index, std::array<float, 6> &scaledIndex) con
     }
 }
 
+/**
+ * Get the weight of a neighbouring cell relative to its distance to a starting sub-cell index using adjacent interpolation.
+ * @param scaledIndex The scaled sub-cell index.
+ * @param neighbourIndex The neighbouring index.
+ * @return The weight of the neighbour using adjacent interpolation.
+ */
 float Grid::getNeighbourWeight(const std::array<float, 6> &scaledIndex, const Index &neighbourIndex) const {
     float weight = 1.0f;
     for(int d = 0; d < DIMENSIONS; d++) {
@@ -214,6 +264,22 @@ float Grid::getNeighbourWeight(const std::array<float, 6> &scaledIndex, const In
     return weight;
 }
 
+/**
+ * Apply the  Boykov-Kolmogorov max-flow algorithm to perform a graph cut on the bilateral grid to distribute the foreground/background
+ * evidence of each cell and collapse it into two single possible values per cell.
+ *
+ * More information on the algorithm can be found in:
+ *
+ * Y. Boykov and V. Kolmogorov.
+ * An experimental comparison of min-cut/max-flow algorithms for energy minimization in vision.
+ * IEEE Transactions on Pattern Analysis and Machine Intelligence, 26(9): 1124-1137, 2004
+ * DOI: 10.1109/TPAMI.2004.60
+ *
+ * @param lambda_u The node term coefficient for the flow problem.
+ * @param lambda_s The edge term coefficient for the flow problem.
+ * @param minEdgeCost The minimum edge cost of the graph. Smaller costs are raised to this value.
+ * @param W Scale weights to compute edge costs.
+ */
 void Grid::graphCut(float lambda_u, float lambda_s, float minEdgeCost, const std::array<float, 6> &W) {
     cv::SparseMat graphNodes(DIMENSIONS, data.size(), CV_32SC1);
     int n = 0;
