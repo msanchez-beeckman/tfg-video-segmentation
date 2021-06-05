@@ -2,16 +2,18 @@
 
 TFGLOCATION="$(dirname $0)/.."
 DATALOCATION="${TFGLOCATION}/data"
+RESULTSFOLDER="${TFGLOCATION}/results"
 
 usage () { echo "Usage: $0 [-b] [-r WIDTHxHEIGHT] datasetName frameLimit surroundFrames"; }
 
 NEWSIZE="854x480"
 SPEED=0
 
-while getopts :r:s: opt; do
+while getopts :r:s:o: opt; do
     case $opt in
         r) NEWSIZE="$OPTARG";;
         s) SPEED="$OPTARG";;
+        o) RESULTSFOLDER="$OPTARG";;
         :) echo "Missing argument for option -$OPTARG"; exit 1;;
        \?) echo "Unknown option -$OPTARG"; exit 1;;
     esac
@@ -25,7 +27,7 @@ DATASETNAME=$1
 FRAMELIMIT=$2
 SURROUNDFRAMES=$3
 
-FLOWFOLDER="${TFGLOCATION}/results/flows/${DATASETNAME}"
+FLOWFOLDER="${RESULTSFOLDER}/flows/${DATASETNAME}"
 mkdir -p ${FLOWFOLDER}
 echo "${FRAMELIMIT}" > ${FLOWFOLDER}/surroundingFlows.txt
 

@@ -151,3 +151,7 @@ The project includes the following scripts to automate the segmentation process:
     ```console
     [user@pc tfg-video-segmentation]$ bash scripts/densify_maerki.sh -M bmx-bumps 90
     ```
+
+## Demos
+
+Demos for the three full segmentation pipelines can be found in **demos/**. Calling any of the scripts inside that folder will execute the corresponding complete segmentation process on the first 31 frames of the sequence *bmx-bumps* and store the results inside an isolated folder in **demo-results/**.

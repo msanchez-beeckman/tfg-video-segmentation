@@ -10,6 +10,7 @@ Makefile
 build/*
 bin/*
 results/*
+demo-results/*
 
 # Data
 data/*
