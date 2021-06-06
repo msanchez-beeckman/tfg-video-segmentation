@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020-2021, Marco Sánchez Beeckman
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 
 #ifndef TFG_VIDEO_SEGMENTATION_MAPPING_H
 #define TFG_VIDEO_SEGMENTATION_MAPPING_H

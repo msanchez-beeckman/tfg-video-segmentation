@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2020-2021, Marco Sánchez Beeckman
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 #include <algorithm>
 #include <chrono>
 #include <fstream>
