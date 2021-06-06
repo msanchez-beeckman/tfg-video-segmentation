@@ -1,21 +1,6 @@
 # Collection of video segmentation algorithms
 
-## Project dependencies
-
-The project uses the following external libraries:
-* OpenCV 4
-* Eigen 3.3
-
-It is recommended to use the versions above, since all the testing has been performed using them.
-Earlier versions of Eigen may work, but the project uses some calls from OpenCV's API that do not exist in version 2 and have not been tested in version 3.
-
-To compile the code, the following software is required:
-* CMake 3.5
-
-Additionally, some scripts are provided to automate the different segmentation processes. These require:
-* Bash (or some other shell implementation that can interpret the scripts)
-* Python
-* ImageMagick
+This repository contains the code that accompanies my final project for the double degree in Mathematics and Telematics Engineering at the University of the Balearic Islands (UIB). The full report can be found inside the **report/** folder.
 
 ## Contents
 
@@ -37,11 +22,11 @@ The project currently contains an implementation for three different video segme
    BMVC, 2017.  
    DOI: 10.5244/C.31.96
 
-Method [1] needs the computation of optical flows between pairs of frames of a dataset, while [2] and [3] require tracking points for the duration of the whole video. An executable to calculate and store optical flows is created upon compilation of the project, wrapping OpenCV's implementation of the method described in the following reference:
+Method [1] needs the computation of optical flows between pairs of frames of a dataset, while [2] and [3] require tracking points for the duration of the whole video. An executable to calculate and store optical flows is created upon compilation of the project, wrapping OpenCV's implementation of the method described in the following article:
 
-4. Till Kroeger, Radu Timofte, Dengxin Dai, and Luc Van Gool 
-   Fast Optical Flow using Dense Inverse Search
-   ECCV, 2016.
+4. Till Kroeger, Radu Timofte, Dengxin Dai, and Luc Van Gool  
+   Fast Optical Flow using Dense Inverse Search  
+   ECCV, 2016.  
    DOI: 10.1007/978-3-319-46493-0_29
 
 An implementation of a dense point tracking strategy is also included in this project, so as to compute trajectories and use them in the segmentation approaches that need them.
@@ -62,11 +47,28 @@ Methods [2] and [3] divide the segmentation process in two phases: the segmentat
 In this project, only the densification from [3] has been implemented, which in turn adapts the bilateral grid approach found in the following paper to use it with point trajectories:
 
 6. Nicolas Maerki, Federico Perazzi, Oliver Wang, and Alexander Sorkine-Hornung  
-   Bilateral space video segmentation  
+   Bilateral space video segmentation,  
    CVPR, 2016  
    DOI: 10.1109/CVPR.2016.87
 
 Within the project folders there are some video sequences included for testing, located inside **data/**, that belong to the DAVIS dataset. Every frame from each sequence is named with a five digit number, starting with 00000. This convention should be used for other video sequences, since the scripts that come with the project rely on it. Also some scribbles are provided, which follow the same naming standard.
+
+## Project dependencies
+
+The project uses the following external libraries:
+* OpenCV 4
+* Eigen 3.3
+
+It is recommended to use the versions above, since all the testing has been performed using them.
+Earlier versions of Eigen may work, but the project uses some calls from OpenCV's API that do not exist in version 2 and have not been tested in version 3.
+
+To compile the code, the following software is required:
+* CMake 3.5
+
+Additionally, some scripts are provided to automate the different segmentation processes. These require:
+* Bash (or some other shell implementation that can interpret the scripts)
+* Python
+* ImageMagick
 
 ## Setup
 
