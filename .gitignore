@@ -10,6 +10,7 @@ Makefile
 build/*
 bin/*
 results/*
+demo-results/*
 
 # Data
 data/*
@@ -28,3 +29,4 @@ external/lib/*
 # Editor/IDE specific
 .vscode
 .idea
+.cache

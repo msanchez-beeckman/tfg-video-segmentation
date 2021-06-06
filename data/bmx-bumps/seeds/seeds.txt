@@ -1,0 +1,1 @@
+scripts/../data/bmx-bumps/seeds/00010.png 10
